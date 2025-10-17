@@ -1,0 +1,18 @@
+{
+  "id": "uw-client-checks",
+  "require": {
+    "net": false,
+    "debug": true
+  },
+  "i18n": {
+    "title": {
+      "en": "unfoldingWord Checks"
+    },
+    "summary": {
+      "en": "unfoldingWord Checks"
+    },
+    "stub_content": {
+      "en": "Content goes here"
+    }
+  }
+}
