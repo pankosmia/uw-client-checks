@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { NT_ORIG_LANG } from './uwSrc/common/constants';
-import Checker, { translationNotes } from './uwSrc/components/Checker'
-import { lookupTranslationForKey } from './uwSrc/utils/translations'
+import React, { useState } from 'react';
+import { Checker, TranslationUtils } from 'checking-tool-rcl'
 import { groupDataHelpers } from 'word-aligner-lib'
 
 // Load sample data from fixtures
@@ -15,26 +13,8 @@ const enGlBible = require('./uwSrc/__tests__/fixtures/bibles/1jn/enGlBible.json'
 const checkingData = groupDataHelpers.extractGroupData(glTn)
 const targetBible = require('./uwSrc/__tests__/fixtures/bibles/1jn/targetBible.json')
 
-// Translation helper function for UI strings
-const translate = (key) => {
-  const translation = lookupTranslationForKey(translations, key)
-  return translation
-};
-
-// Callback for when settings are saved
-const saveSettings = (settings) => {
-  console.log(`saveSettings`, settings)
-};
-
-// Callback for when checking data changes
-const saveCheckingData = (newState) => {
-  const selections = newState && newState.selections
-  console.log(`saveCheckingData - new selections`, selections)
-  const currentContextId = newState && newState.currentContextId
-  console.log(`saveCheckingData - current context data`, currentContextId)
-}
-
 // Configuration settings
+const checkingTranslationWords = false;
 const showDocument = true // set to false to disable showing ta or tw document
 const bookId = "1jn"
 const bookName = "1 John"
@@ -43,6 +23,8 @@ const targetLanguageName = "English"
 const targetLanguageDirection = "ltr"
 const gatewayLanguageId = "en"
 const gatewayLanguageOwner = "unfoldingWord"
+
+const checkingType = checkingTranslationWords ? Checker.translationNotes : Checker.translationNotes;
 
 // Initial context for checking (verse and word to check)
 const contextId_ =
@@ -99,16 +81,32 @@ const bibles = [
   }
 ]
 
+// Translation helper function for UI strings
+const translate = (key) => {
+  const translation = TranslationUtils.lookupTranslationForKey(translations, key)
+  return translation
+};
+
+// Callback for when settings are saved
+const saveSettings = (settings) => {
+  console.log(`saveSettings`, settings)
+};
+
+// Callback for when checking data changes
+const saveCheckingData = (newState) => {
+  const selections = newState && newState.selections
+  console.log(`saveCheckingData - new selections`, selections)
+  const currentContextId = newState && newState.currentContextId
+  console.log(`saveCheckingData - current context data`, currentContextId)
+}
+
 console.log('CheckerTN.md - startup')
 
 const App = () => {
   // State management for current context
   const [contextId, setCcontextId] = useState(contextId_)
 
-  // Lexicon lookup functions
-  const loadLexiconEntry = (key) => {
-    console.log(`loadLexiconEntry(${key})`)
-  };
+  // Lexicon lookup
   const getLexiconData_ = (lexiconId, entryId) => {
     console.log(`loadLexiconEntry(${lexiconId}, ${entryId})`)
     const entryData = (LexiconData && LexiconData[lexiconId]) ? LexiconData[lexiconId][entryId] : null;
@@ -123,7 +121,7 @@ const App = () => {
           alignedGlBible={enGlBible}
           bibles={bibles}
           checkingData={checkingData}
-          checkType={translationNotes}
+          checkType={checkingType}
           contextId={contextId}
           getLexiconData={getLexiconData_}
           glWordsData={glTaData}
@@ -138,3 +136,5 @@ const App = () => {
     </>
   );
 };
+
+export default App;
