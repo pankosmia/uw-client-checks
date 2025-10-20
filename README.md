@@ -16,33 +16,8 @@ npm run build
 ```
 ## Development
 
-### Start development server
-```
-bash
-# With Yarn
-yarn start
+TODO
 
-# With npm
-npm start
-```
-### Build with Vite
-```
-bash
-# With Yarn
-yarn build:vite
-
-# With npm
-npm run build:vite
-```
-### Start Vite dev server
-```
-bash
-# With Yarn
-yarn dev
-
-# With npm
-npm run dev
-```
 ## Notes
 
 - Use `--legacy-peer-deps` flag with npm due to dependency version conflicts in some packages
