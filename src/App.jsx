@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Checker, TranslationUtils } from 'checking-tool-rcl'
+import {Checker, TranslationUtils} from 'tc-checking-tool-rcl';
 import { groupDataHelpers } from 'word-aligner-lib'
 
 // Load sample data from fixtures
