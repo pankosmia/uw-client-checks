@@ -13,16 +13,16 @@
     "pithekos-lib": "^0.11.16",
     "react": "^17.0.0 || ^18.0.0",
     "react-dom": "^17.0.0 || ^18.0.0",
-    "tc-checking-tool-rcl": "^0.9.41",
+    "tc-checking-tool-rcl": "^0.9.96",
     "word-aligner-lib": "1.0.0"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@vitejs/plugin-react": "^4.3.4",
-    "vite-plugin-node-polyfills": "^0.24.0",
     "react-scripts": "5.0.1",
     "util": "^0.12.5",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "vite-plugin-node-polyfills": "^0.24.0"
   },
   "scripts": {
     "start": "react-scripts start",

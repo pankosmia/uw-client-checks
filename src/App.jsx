@@ -6,15 +6,17 @@ import { groupDataHelpers } from 'word-aligner-lib'
 const LexiconData = require("./uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 const translations = require('./uwSrc/locales/English-en_US.json')
 const glTn = require('./uwSrc/__tests__/fixtures/translationNotes/enTn_1JN.json')
+const glTw = require('./uwSrc/__tests__/fixtures/translationWords/twl_1jn_parsed.json')
 const glTaData = require('./uwSrc/__tests__/fixtures/translationAcademy/en_ta.json')
+const glTwData = require('./uwSrc/__tests__/fixtures/translationWords/en_tw.json')
 const ugntBible = require('./uwSrc/__tests__/fixtures/bibles/1jn/ugntBible.json')
 const enGlBible = require('./uwSrc/__tests__/fixtures/bibles/1jn/enGlBible.json')
 // Extract checking data from the translation notes
-const checkingData = groupDataHelpers.extractGroupData(glTn)
+const checkingData = groupDataHelpers.extractGroupData(glTw)
 const targetBible = require('./uwSrc/__tests__/fixtures/bibles/1jn/targetBible.json')
 
 // Configuration settings
-const checkingTranslationWords = false;
+const checkingTranslationWords = 'translationWords';
 const showDocument = true // set to false to disable showing ta or tw document
 const bookId = "1jn"
 const bookName = "1 John"
@@ -112,7 +114,9 @@ const App = () => {
     const entryData = (LexiconData && LexiconData[lexiconId]) ? LexiconData[lexiconId][entryId] : null;
     return { [lexiconId]: { [entryId]: entryData } };
   };
-
+  console.log(glTwData)
+  console.log(targetLanguageDetails)
+  console.log(checkingTranslationWords)
   return (
     <>
       <div style={{ height: '600px', width: '1200px' }}>
@@ -121,10 +125,10 @@ const App = () => {
           alignedGlBible={enGlBible}
           bibles={bibles}
           checkingData={checkingData}
-          checkType={checkingType}
+          checkType={checkingTranslationWords}
           contextId={contextId}
           getLexiconData={getLexiconData_}
-          glWordsData={glTaData}
+          glWordsData={glTwData}
           saveCheckingData={saveCheckingData}
           saveSettings={saveSettings}
           showDocument={showDocument}
