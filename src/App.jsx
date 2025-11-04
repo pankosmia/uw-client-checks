@@ -119,7 +119,7 @@ const App = () => {
   console.log(checkingTranslationWords)
   return (
     <>
-      <div style={{ height: '600px', width: '1200px' }}>
+      <div style={{ height: '94vh', width: '100%' }}>
         <Checker
           styles={{ width: '100%', height: '100%', overflowX: 'auto', overflowY: 'auto' }}
           alignedGlBible={enGlBible}
