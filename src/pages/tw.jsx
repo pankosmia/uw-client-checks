@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import {Checker, TranslationUtils} from 'tc-checking-tool-rcl';
 import { groupDataHelpers } from 'word-aligner-lib'
-
+import { Box } from '@mui/material';
 // Load sample data from fixtures
-const LexiconData = require("./uwSrc/__tests__/fixtures/lexicon/lexicons.json");
-const translations = require('./uwSrc/locales/English-en_US.json')
-const glTn = require('./uwSrc/__tests__/fixtures/translationNotes/enTn_1JN.json')
-const glTw = require('./uwSrc/__tests__/fixtures/translationWords/twl_1jn_parsed.json')
-const glTaData = require('./uwSrc/__tests__/fixtures/translationAcademy/en_ta.json')
-const glTwData = require('./uwSrc/__tests__/fixtures/translationWords/en_tw.json')
-const ugntBible = require('./uwSrc/__tests__/fixtures/bibles/1jn/ugntBible.json')
-const enGlBible = require('./uwSrc/__tests__/fixtures/bibles/1jn/enGlBible.json')
+const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
+const translations = require('../uwSrc/locales/English-en_US.json')
+const glTn = require('../uwSrc/__tests__/fixtures/translationNotes/enTn_1JN.json')
+const glTw = require('../uwSrc/__tests__/fixtures/translationWords/twl_1jn_parsed.json')
+const glTaData = require('../uwSrc/__tests__/fixtures/translationAcademy/en_ta.json')
+const glTwData = require('../uwSrc/__tests__/fixtures/translationWords/en_tw.json')
+const ugntBible = require('../uwSrc/__tests__/fixtures/bibles/1jn/ugntBible.json')
+const enGlBible = require('../uwSrc/__tests__/fixtures/bibles/1jn/enGlBible.json')
 // Extract checking data from the translation notes
+// const checkingData = groupDataHelpers.extractGroupData(glTn) 
 const checkingData = groupDataHelpers.extractGroupData(glTw)
-const targetBible = require('./uwSrc/__tests__/fixtures/bibles/1jn/targetBible.json')
+const targetBible = require('../uwSrc/__tests__/fixtures/bibles/1jn/targetBible.json')
 
 // Configuration settings
 const checkingTranslationWords = 'translationWords';
+const translationNotes = 'translationNotes'
 const showDocument = true // set to false to disable showing ta or tw document
 const bookId = "1jn"
 const bookName = "1 John"
@@ -104,7 +106,7 @@ const saveCheckingData = (newState) => {
 
 console.log('CheckerTN.md - startup')
 
-const App = () => {
+const TwChecker = () => {
   // State management for current context
   const [contextId, setCcontextId] = useState(contextId_)
 
@@ -114,21 +116,21 @@ const App = () => {
     const entryData = (LexiconData && LexiconData[lexiconId]) ? LexiconData[lexiconId][entryId] : null;
     return { [lexiconId]: { [entryId]: entryData } };
   };
-  console.log(glTwData)
-  console.log(targetLanguageDetails)
-  console.log(checkingTranslationWords)
+
   return (
-    <>
-      <div style={{ height: '94vh', width: '100%' }}>
+  
+      <div className="page">
         <Checker
-          styles={{ width: '100%', height: '100%', overflowX: 'auto', overflowY: 'auto' }}
+          styles={{ width: '100%', height: '100%', overflowX: 'scroll', overflowY: 'auto' }}
           alignedGlBible={enGlBible}
           bibles={bibles}
           checkingData={checkingData}
           checkType={checkingTranslationWords}
+          // checkType={translationNotes}
           contextId={contextId}
           getLexiconData={getLexiconData_}
           glWordsData={glTwData}
+        //   glWordsData={glTaData}
           saveCheckingData={saveCheckingData}
           saveSettings={saveSettings}
           showDocument={showDocument}
@@ -137,8 +139,8 @@ const App = () => {
           translate={translate}
         />
       </div>
-    </>
+    
   );
 };
 
-export default App;
+export default TwChecker;

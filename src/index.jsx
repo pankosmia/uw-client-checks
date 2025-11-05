@@ -1,15 +1,85 @@
-import {createRoot} from "react-dom/client";
-import {SpSpa} from "pithekos-lib";
-import App from "./App";
-import './index.css';
+import { createRoot } from "react-dom/client";
+import {
+  createHashRouter,
+  RouterProvider,
+  Outlet,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+import TwChecker from "./pages/tw";
+import TnChecker from "./pages/tn";
+import Main from "./pages/main";
+import SpaContainer from "pithekos-lib/dist/components/SpaContainer";
+import "./index.css";
+import { Header } from "pithekos-lib";
+function TabButtons() {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-createRoot(document.getElementById("root"))
-    .render(
-        <SpSpa
-            requireNet={false}
-            titleKey="pages:uw-client-checks:title"
-            currentId="uw-client-checks"
+  const tabs = [
+    { name: "Main", path: "/" },
+    { name: "TN Checker", path: "TnChecker" },
+    { name: "TW Checker", path: "TwChecker" },
+  ];
+
+  return (
+    <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+      {tabs.map((tab) => (
+        <button
+          key={tab.path}
+          onClick={() => navigate(tab.path)}
+          style={{
+            padding: "8px 16px",
+            fontWeight: location.pathname.endsWith(tab.path)
+              ? "bold"
+              : "normal",
+            backgroundColor: location.pathname.endsWith(tab.path)
+              ? "#1976d2"
+              : "#e0e0e0",
+            color: location.pathname.endsWith(tab.path) ? "white" : "black",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
         >
-            <App/>
-        </SpSpa>
-    );
+          {tab.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function AppLayout() {
+  return (
+    <div>
+      <Header
+        titleKey="pages:uw-client-checks:title"
+        requireNet={false}
+        currentId="uw-client-checks"
+      />
+      <h1 style={{ marginBottom: "20px" }}>Dashboard</h1>
+      <TabButtons />
+      <div style={{ marginTop: "20px" }}>
+        <Outlet />
+      </div>
+    </div>
+  );
+}
+
+const router = createHashRouter([
+  {
+    path: "/",
+    element: <AppLayout/>,
+    children: [
+      { path: "/", element: <Main /> },
+      { path: "TnChecker/*", element: <TnChecker /> },
+      { path: "TwChecker/*", element: <TwChecker /> },
+    ],
+  },
+]);
+
+createRoot(document.getElementById("root")).render(
+  <SpaContainer>
+    <RouterProvider router={router} />
+  </SpaContainer>
+);

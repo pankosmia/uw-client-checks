@@ -2,7 +2,7 @@
   "name": "uw-client-checks",
   "version": "0.0.1",
   "private": true,
-  "homepage": "/clients/uw-client-checks",
+  "homepage": "/clients/main",
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
@@ -10,9 +10,10 @@
     "bible-reference-range": "^1.1.0",
     "eslint-config-react-app": "^7.0.1",
     "path-browserify": "^1.0.1",
-    "pithekos-lib": "^0.11.16",
+    "pithekos-lib": "^0.11.20",
     "react": "^17.0.0 || ^18.0.0",
     "react-dom": "^17.0.0 || ^18.0.0",
+    "react-router-dom": "^6.27.0",
     "tc-checking-tool-rcl": "^0.9.96",
     "word-aligner-lib": "1.0.0"
   },
