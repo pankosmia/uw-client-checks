@@ -95,6 +95,22 @@ export const {
 export default projectInformationSlice.reducer;
 
 // === Selectors ===
+// === New thunk to load manifest into project information ===
+export const loadProjectFromManifest = (manifest) => (dispatch) => {
+  const targetLanguage = manifest.target_language || {};
+  dispatch(setLanguageName(targetLanguage.name || ""));
+  dispatch(setLanguageId(targetLanguage.id || ""));
+  dispatch(setLanguageDirection(targetLanguage.direction || ""));
+  dispatch(setProjectFont(manifest.projectFont || "default"));
+
+  const project = manifest.project || {};
+  const resource = manifest.resource || {};
+  dispatch(setBookId(project.id || ""));
+  dispatch(setResourceId(resource.id || ""));
+  dispatch(setNickname(resource.name || ""));
+  dispatch(setContributors(manifest.translators || []));
+  dispatch(setCheckers(manifest.checkers || []));
+};
 export const getIsUsfmProject = (state) => state.projectInformation.usfmProject;
 export const getIsOverwritePermitted = (state) =>
   state.projectInformation.overwritePermitted;

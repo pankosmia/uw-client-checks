@@ -1,43 +1,45 @@
-import React, { useState } from "react";
+import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  setBookId,
-  setResourceId,
-  setNickname,
-  setAllLanguageInfo,
-  setLocalImport,
-} from "../slice/projectInformationSlice";
-import {
-  setSelectedProjectFilename,
-  setSourceProjectPath,
-} from "../slice/localImportSlice";
+import { loadProjectFromManifest } from "../slice/projectInformationSlice";
+import { setSourceProjectPath, setSelectedProjectFilename } from "../slice/localImportSlice";
+import { convertToProjectFormat } from "../slice/creatProject"; // <-- import your function
 
 const ReduxStateViewer = () => {
   const dispatch = useDispatch();
   const state = useSelector((state) => state);
 
-  const [projectPath, setProjectPath] = useState("");
-  const [projectName, setProjectName] = useState("");
-
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(state, null, 2));
   };
 
-  const handleImport = () => {
-    if (!projectPath || !projectName) return alert("Enter project path and name");
+  const handleManifestUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-    // Update local import slice
-    dispatch(setSourceProjectPath(projectPath));
-    dispatch(setSelectedProjectFilename(projectName));
+    try {
+      const text = await file.text();
+      const manifest = JSON.parse(text);
+      dispatch(loadProjectFromManifest(manifest));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load manifest JSON: " + err.message);
+    }
+  };
 
-    // Update project info slice
-    dispatch(setBookId("book123")); // Example: dynamically load from manifest
-    dispatch(setResourceId("resource456"));
-    dispatch(setNickname(projectName));
-    dispatch(setAllLanguageInfo({ id: "en", name: "English", direction: "ltr" }));
-    dispatch(setLocalImport(true));
+  // 👉 this will run your convertToProjectFormat
+  const handleTryConvert = async () => {
+    const sourceProjectPath =
+      "burrito/ingredient/raw/git.door43.org/BurritoTruck/en_bsb?ipath=";
+    const selectedProjectFilename = "MAT.usfm";
 
-    alert(`Project "${projectName}" imported successfully!`);
+    try {
+      console.log("🧩 Starting conversion...");
+      await convertToProjectFormat(sourceProjectPath, selectedProjectFilename);
+      alert("✅ Project conversion complete!");
+    } catch (error) {
+      console.error("❌ Conversion failed:", error);
+      alert("Conversion failed — see console for details.");
+    }
   };
 
   return (
@@ -52,41 +54,15 @@ const ReduxStateViewer = () => {
     >
       <h2 style={{ color: "#90caf9" }}>🧠 Redux Live State Viewer</h2>
 
-      {/* Project Import Form */}
+      {/* File input for manifest */}
       <div style={{ marginBottom: "20px" }}>
-        <input
-          type="text"
-          placeholder="Project Path"
-          value={projectPath}
-          onChange={(e) => setProjectPath(e.target.value)}
-          style={{ marginRight: "10px", padding: "6px" }}
-        />
-        <input
-          type="text"
-          placeholder="Project Name"
-          value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
-          style={{ marginRight: "10px", padding: "6px" }}
-        />
-        <button
-          onClick={handleImport}
-          style={{
-            padding: "6px 12px",
-            border: "none",
-            borderRadius: "4px",
-            background: "#388e3c",
-            color: "white",
-            cursor: "pointer",
-          }}
-        >
-          Import Project
-        </button>
+        <input type="file" accept=".json" onChange={handleManifestUpload} />
       </div>
 
       <button
         onClick={handleCopy}
         style={{
-          marginBottom: "10px",
+          marginRight: "10px",
           padding: "6px 12px",
           border: "none",
           borderRadius: "4px",
@@ -98,12 +74,28 @@ const ReduxStateViewer = () => {
         Copy JSON
       </button>
 
+      {/* 🧩 Button to run convertToProjectFormat */}
+      <button
+        onClick={handleTryConvert}
+        style={{
+          padding: "6px 12px",
+          border: "none",
+          borderRadius: "4px",
+          background: "#43a047",
+          color: "white",
+          cursor: "pointer",
+        }}
+      >
+        Try ConvertToProject
+      </button>
+
       <pre
         style={{
           background: "#1e1e1e",
           padding: "15px",
           borderRadius: "8px",
           overflowX: "auto",
+          marginTop: "20px",
         }}
       >
         {JSON.stringify(state, null, 2)}

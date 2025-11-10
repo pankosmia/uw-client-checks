@@ -21,6 +21,7 @@
     "redux-promise": "^0.6.0",
     "redux-thunk": "^3.1.0",
     "tc-checking-tool-rcl": "^0.9.96",
+    "usfm-js": "^3.4.3",
     "word-aligner-lib": "1.0.0"
   },
   "devDependencies": {
