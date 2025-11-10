@@ -15,7 +15,8 @@
     "react-dom": "^17.0.0 || ^18.0.0",
     "react-router-dom": "^6.27.0",
     "tc-checking-tool-rcl": "^0.9.96",
-    "word-aligner-lib": "1.0.0"
+    "word-aligner-lib": "1.0.0",
+    "wordmap": "^0.6.1-beta.10"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",

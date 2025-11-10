@@ -5,10 +5,11 @@ import {
   Outlet,
   useNavigate,
   useLocation,
+  Navigate,
 } from "react-router-dom";
 import TwChecker from "./pages/tw";
 import TnChecker from "./pages/tn";
-import Main from "./pages/main";
+import WordAligner from "./wordAligner/WordAligner";
 import SpaContainer from "pithekos-lib/dist/components/SpaContainer";
 import "./index.css";
 import { Header } from "pithekos-lib";
@@ -17,7 +18,7 @@ function TabButtons() {
   const location = useLocation();
 
   const tabs = [
-    { name: "Main", path: "/" },
+    { name: "Word Aligner", path: "/" },
     { name: "TN Checker", path: "TnChecker" },
     { name: "TW Checker", path: "TwChecker" },
   ];
@@ -69,15 +70,17 @@ function AppLayout() {
 const router = createHashRouter([
   {
     path: "/",
-    element: <AppLayout/>,
+    element: <AppLayout />,
     children: [
-      { path: "/", element: <Main /> },
+      // Redirect from "/" to "/WordAligner"
+      { index: true, element: <Navigate to="WordAligner" replace /> },
+
+      { path: "WordAligner/*", element: <WordAligner /> },
       { path: "TnChecker/*", element: <TnChecker /> },
       { path: "TwChecker/*", element: <TwChecker /> },
     ],
   },
 ]);
-
 createRoot(document.getElementById("root")).render(
   <SpaContainer>
     <RouterProvider router={router} />
