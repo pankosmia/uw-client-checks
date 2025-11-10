@@ -8,9 +8,13 @@ import {
 } from "react-router-dom";
 import TwChecker from "./pages/tw";
 import TnChecker from "./pages/tn";
+import ReduxStateViewer from "./pages/ReduxStateViewer";
+
 import Main from "./pages/main";
 import SpaContainer from "pithekos-lib/dist/components/SpaContainer";
 import "./index.css";
+import { Provider } from "react-redux";
+import store from "./store";
 import { Header } from "pithekos-lib";
 function TabButtons() {
   const navigate = useNavigate();
@@ -18,6 +22,8 @@ function TabButtons() {
 
   const tabs = [
     { name: "Main", path: "/" },
+    { name: "ReduxStateViewer", path: "/" },
+
     { name: "TN Checker", path: "TnChecker" },
     { name: "TW Checker", path: "TwChecker" },
   ];
@@ -69,9 +75,9 @@ function AppLayout() {
 const router = createHashRouter([
   {
     path: "/",
-    element: <AppLayout/>,
+    element: <AppLayout />,
     children: [
-      { path: "/", element: <Main /> },
+      { path: "/", element: <ReduxStateViewer /> },
       { path: "TnChecker/*", element: <TnChecker /> },
       { path: "TwChecker/*", element: <TwChecker /> },
     ],
@@ -79,7 +85,9 @@ const router = createHashRouter([
 ]);
 
 createRoot(document.getElementById("root")).render(
-  <SpaContainer>
-    <RouterProvider router={router} />
-  </SpaContainer>
+  <Provider store={store}>
+    <SpaContainer>
+      <RouterProvider router={router} />
+    </SpaContainer>
+  </Provider>
 );
