@@ -306,7 +306,10 @@ export const loadChapterResource = async function (
 
         bibleData[chapter] = bibleChapterData;
         // get bibles manifest file
-        bibleData["manifest"] = await getBibleManifest(bibleVersionPath, bibleID);
+        bibleData["manifest"] = await getBibleManifest(
+          bibleVersionPath,
+          bibleID
+        );
       } else {
         console.log(
           "No such file or directory was found, " +
@@ -355,7 +358,7 @@ const trimNewLine = function (text) {
  * @param {string} chapter
  * @return {Object} resources for chapter
  */
-export const getOriginalLanguageChapterResources =  function (
+export const getOriginalLanguageChapterResources = function (
   projectBibleID,
   chapter
 ) {
@@ -383,7 +386,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
     let fsQueue = [];
     const alignQueue = [];
 
-    Object.keys(chaptersObject).forEach((chapter) => {
+    for (const chapter of Object.keys(chaptersObject)) {
       let chapterAlignments = {};
       const bibleChapter = {};
       const verses = Object.keys(chaptersObject[chapter]);
@@ -405,7 +408,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
       let bibleData;
       console.log(alignmentData);
       if (alignmentData) {
-        bibleData = await getOriginalLanguageChapterResources(bookID, chapter);
+        bibleData = getOriginalLanguageChapterResources(bookID, chapter);
       }
 
       verses.forEach((verse) => {
@@ -461,7 +464,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
           fsWriteRust(IMPORTS_PATH, alignmentDataPath, chapterAlignments)
         );
       }
-    });
+    }
 
     fsQueue.push(
       fsWriteRust(
