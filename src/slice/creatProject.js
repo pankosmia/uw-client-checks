@@ -5,12 +5,234 @@ import _ from "lodash";
 // constants
 import * as Bible from "../common/BooksOfTheBible";
 import usfm from "usfm-js";
+import { verseHelpers } from "tc-ui-toolkit";
+import wordaligner, { VerseObjectUtils } from "word-aligner";
+
 const IMPORTS_PATH =
   "burrito/ingredient/raw/git.door43.org/BurritoTruck/en_bsb?ipath=";
 const USER_RESOURCES_PATH = IMPORTS_PATH;
 const EXIST_PATH = "/burrito/paths/git.door43.org/BurritoTruck/en_bsb";
 const BASE_URL = "http://127.0.0.1:19119";
 
+/**
+ * search through verseAlignments for word and get occurrences
+ * @param {object} verseAlignments
+ * @param {string|number} matchVerse
+ * @param {string} word
+ * @return {number}
+ */
+export function getWordCountInVerse(verseAlignments, matchVerse, word) {
+  let matchedAlignment = null;
+
+  for (let alignment of verseAlignments[matchVerse]) {
+    for (let topWord of alignment.topWords) {
+      if (topWord.word === word) {
+        matchedAlignment = topWord;
+        break;
+      }
+    }
+
+    if (matchedAlignment) {
+      break;
+    }
+  }
+
+  const wordCount = matchedAlignment && matchedAlignment.occurrences;
+  return wordCount || 0;
+}
+
+/**
+ * called in case of invalid alignment that is not valid for the verse span, Sets alignment occurrence to high value
+ *    so that alignment will be invalidated and has to be reviewed.
+ * @param alignment
+ */
+export function invalidateAlignment(alignment) {
+  delete alignment.ref;
+  alignment.occurrences = 100000;
+  alignment.occurrence = 100000;
+}
+
+/**
+ * get all the alignments for verse from nested array (finds zaln objects)
+ * @param {array} verseSpanAlignments
+ * @return {object[]}
+ */
+export function getVerseAlignments(verseSpanAlignments) {
+  let alignments = [];
+
+  if (verseSpanAlignments) {
+    for (let alignment of verseSpanAlignments) {
+      if (alignment.tag === "zaln") {
+        alignments.push(alignment);
+      }
+
+      if (alignment.children) {
+        const subAlignments = getVerseAlignments(alignment.children);
+
+        if (subAlignments.length) {
+          alignments = alignments.concat(subAlignments);
+        }
+      }
+    }
+  }
+  return alignments;
+}
+/**
+ * business logic for convertAlignmentFromVerseToVerseSpan:
+ *     convert aligned data from mapped to verse to mapped to verse span
+ * @param {object} originalVerseSpanData - original bible merged to verse span
+ * @param {object} alignedVerseObjects - aligned verse objects for current verse
+ * @param {number|string} chapter
+ * @param {number} low - low verse number of span
+ * @param {number} hi - high verse number of span
+ * @param blankVerseAlignments - raw verse alignments for extracting word counts for each verse
+ * @return {{verseObjects}}
+ */
+export function convertAlignmentFromVerseToVerseSpanSub(
+  originalVerseSpanData,
+  alignedVerseObjects,
+  chapter,
+  low,
+  hi,
+  blankVerseAlignments
+) {
+  const bibleVerse = { verseObjects: originalVerseSpanData };
+  const alignments = getVerseAlignments(alignedVerseObjects.verseObjects);
+
+  for (let alignment of alignments) {
+    const ref = alignment.ref || "";
+    const refParts = ref.split(":");
+    let verseRef;
+    let chapterRef = chapter; // default to current chapter
+    const word = alignment.content;
+    let occurrence = alignment.occurrence;
+    let occurrences = 0;
+
+    if (refParts.length > 1) {
+      // if both chapter and verse
+      verseRef = parseInt(refParts[1]);
+      chapterRef = refParts[0];
+    } else {
+      // verse only
+      verseRef = parseInt(refParts[0]);
+    }
+
+    if (chapterRef.toString() !== chapter.toString()) {
+      console.warn(
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - chapter in ref "${ref}" does not match current chapter ${chapter} for verse span "${low}-${hi}" - skipping`
+      );
+      invalidateAlignment(alignment);
+      continue;
+    }
+
+    if (!(occurrence > 0)) {
+      console.warn(
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - invalid occurrence in current verse span "${low}-${hi}" - skipping`
+      );
+      invalidateAlignment(alignment);
+      continue;
+    }
+
+    if (!(verseRef >= low || verseRef <= hi)) {
+      console.warn(
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - verse in ref ${ref} is not within current verse span "${low}-${hi}" - skipping`
+      );
+      invalidateAlignment(alignment);
+      continue;
+    }
+
+    // transform occurrence(s) from verse based to verse span
+    for (let verse = low; verse <= hi; verse++) {
+      const wordCount = getWordCountInVerse(blankVerseAlignments, verse, word);
+      occurrences += wordCount;
+
+      if (verse < verseRef) {
+        occurrence += wordCount; // add word counts for lower verses to occurrence
+      }
+    }
+
+    if (occurrence > occurrences) {
+      console.warn(
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - beyond ocurrences ${occurrences} in current verse span "${low}-${hi}" - skipping`
+      );
+      invalidateAlignment(alignment);
+    } else {
+      delete alignment.ref;
+      alignment.occurrences = occurrences;
+      alignment.occurrence = occurrence;
+    }
+  }
+  return bibleVerse;
+}
+
+/**
+ * generate blank alignments for all the verses in a verse span
+ * @param {string} verseSpan
+ * @param {object} origLangChapterJson
+ * @param {object} blankVerseAlignments - object to return verse alignments
+ * @return {{low, hi}} get range of verses in verse span
+ */
+export function getRawAlignmentsForVerseSpan(
+  verseSpan,
+  origLangChapterJson,
+  blankVerseAlignments
+) {
+  const { low, high } = verseHelpers.getVerseSpanRange(verseSpan);
+
+  // generate raw alignment data for each verse in range
+  for (let verse = low; verse <= high; verse++) {
+    const originalVerse = origLangChapterJson[verse];
+
+    if (originalVerse) {
+      const blankAlignments =
+        wordaligner.generateBlankAlignments(originalVerse);
+      blankVerseAlignments[verse] = blankAlignments;
+    }
+  }
+
+  return { low, hi: high };
+}
+
+/**
+ * convert aligned data from mapped to verse to mapped to verse span
+ * @param {string} verseSpan - current verse
+ * @param {object} originalChapterData
+ * @param {object} alignedVerseObjects - aligned verse objects for current verse
+ * @param {string|number} chapter - current data
+ * @return {{verseObjects: object[]}} returns original language verses in verse span merged together
+ */
+function convertAlignmentFromVerseToVerseSpan(
+  verseSpan,
+  originalChapterData,
+  alignedVerseObjects,
+  chapter
+) {
+  const blankVerseAlignments = {};
+  const { low, hi } = getRawAlignmentsForVerseSpan(
+    verseSpan,
+    originalChapterData,
+    blankVerseAlignments
+  );
+  let originalVerseSpanData = [];
+
+  // combine all original language verses into a verse span
+  for (let verse_ = low; verse_ <= hi; verse_++) {
+    const verseData = originalChapterData[verse_];
+    originalVerseSpanData = originalVerseSpanData.concat(
+      (verseData && verseData.verseObjects) || []
+    );
+  }
+
+  const bibleVerse = convertAlignmentFromVerseToVerseSpanSub(
+    originalVerseSpanData,
+    alignedVerseObjects,
+    chapter,
+    low,
+    hi,
+    blankVerseAlignments
+  );
+  return bibleVerse;
+}
 /**
  * get chapter from specific resource
  * @param {String} bibleID
@@ -19,7 +241,7 @@ const BASE_URL = "http://127.0.0.1:19119";
  * @param {String} chapter
  * @return {Object} contains chapter data
  */
-export const loadChapterResource = function (
+export const loadChapterResource = async function (
   bibleID,
   bookId,
   languageId,
@@ -28,31 +250,27 @@ export const loadChapterResource = function (
   try {
     let bibleData;
     let bibleFolderPath = join(languageId, "bibles", bibleID); // ex. user/NAME/translationCore/resources/en/bibles/ult
-
-    if (fsExistsRust(USER_RESOURCES_PATH, bibleFolderPath)) {
+    let exist = await fsExistsRust(USER_RESOURCES_PATH, bibleFolderPath);
+    if (exist) {
       let versionNumbers;
-      fsGetRust(USER_RESOURCES_PATH, bibleFolderPath).then((e) => {
-        versionNumbers = e.filter(
-          (
-            folder // filter out .DS_Store
-          ) => folder !== ".DS_Store"
-        );
-      });
-      // ex. v9}
+      let result = await fsGetRust(USER_RESOURCES_PATH, bibleFolderPath);
+      versionNumbers = result.filter(
+        (
+          folder // filter out .DS_Store
+        ) => folder !== ".DS_Store"
+      );
 
-      console.log(versionNumbers);
+      // ex. v9}
       const versionNumber = versionNumbers[versionNumbers.length - 1];
       let bibleVersionPath = join(languageId, "bibles", bibleID, versionNumber);
       let fileName = chapter + ".json";
-
-      if (
-        fsExistsRust(
-          USER_RESOURCES_PATH,
-          join(bibleVersionPath, bookId, fileName)
-        )
-      ) {
+      let exist = await fsExistsRust(
+        USER_RESOURCES_PATH,
+        join(bibleVersionPath, bookId, fileName)
+      );
+      if (exist) {
         bibleData = {};
-        let bibleChapterData = fsGetRust(
+        let bibleChapterData = await fsGetRust(
           USER_RESOURCES_PATH,
           join(bibleVersionPath, bookId, fileName)
         );
@@ -88,7 +306,7 @@ export const loadChapterResource = function (
 
         bibleData[chapter] = bibleChapterData;
         // get bibles manifest file
-        bibleData["manifest"] = getBibleManifest(bibleVersionPath, bibleID);
+        bibleData["manifest"] = await getBibleManifest(bibleVersionPath, bibleID);
       } else {
         console.log(
           "No such file or directory was found, " +
@@ -137,7 +355,7 @@ const trimNewLine = function (text) {
  * @param {string} chapter
  * @return {Object} resources for chapter
  */
-export const getOriginalLanguageChapterResources = function (
+export const getOriginalLanguageChapterResources =  function (
   projectBibleID,
   chapter
 ) {
@@ -185,37 +403,44 @@ export const generateTargetLanguageBibleFromUsfm = async (
       });
       const alignmentData = alignmentIndex >= 0;
       let bibleData;
-
+      console.log(alignmentData);
       if (alignmentData) {
-        bibleData = getOriginalLanguageChapterResources(bookID, chapter);
+        bibleData = await getOriginalLanguageChapterResources(bookID, chapter);
       }
 
       verses.forEach((verse) => {
         const verseParts = chaptersObject[chapter][verse];
         let verseText;
-        verseText = convertVerseDataToUSFM(verseParts);
 
-        // if (alignmentData) {
-        //   verseText = getUsfmForVerseContent(verseParts);
-        // } else {
-        // }
+        if (alignmentData) {
+          verseText = getUsfmForVerseContent(verseParts);
+        } else {
+          verseText = convertVerseDataToUSFM(verseParts);
+        }
         bibleChapter[verse] = trimNewLine(verseText);
+        console.log(alignmentData && bibleData && bibleData[chapter]);
+        console.log(alignmentData, bibleData, bibleData[chapter]);
+        if (alignmentData && bibleData && bibleData[chapter]) {
+          const chapterData = bibleData[chapter];
+          let bibleVerse = chapterData[verse];
 
-        // if (alignmentData && bibleData && bibleData[chapter]) {
-        //   const chapterData = bibleData[chapter];
-        //   let bibleVerse = chapterData[verse];
+          if (isVerseSpan(verse)) {
+            bibleVerse = convertAlignmentFromVerseToVerseSpan(
+              verse,
+              chapterData,
+              verseParts,
+              chapter
+            );
+          }
 
-        //   if (isVerseSpan(verse)) {
-        //     bibleVerse = convertAlignmentFromVerseToVerseSpan(verse, chapterData, verseParts, chapter);
-        //   }
+          const object = wordaligner.unmerge(verseParts, bibleVerse);
 
-        //   const object = wordaligner.unmerge(verseParts, bibleVerse);
-
-        //   chapterAlignments[verse] = {
-        //     alignments: object.alignment,
-        //     wordBank: object.wordBank,
-        //   };
-        // }
+          chapterAlignments[verse] = {
+            alignments: object.alignment,
+            wordBank: object.wordBank,
+          };
+          console.log(chapterAlignments);
+        }
         verseFound = true;
       });
 
@@ -224,10 +449,18 @@ export const generateTargetLanguageBibleFromUsfm = async (
         fsWriteRust(IMPORTS_PATH, join(bookID, filename), bibleChapter)
       );
 
-      // if (alignmentData) {
-      //   const alignmentDataPath = path.join(IMPORTS_PATH, selectedProjectFilename, '.apps', 'translationCore', 'alignmentData', bookID, filename);
-      //   alignQueue.push(fs.outputJson(alignmentDataPath, chapterAlignments, { spaces: 2 }));
-      // }
+      if (alignmentData) {
+        const alignmentDataPath = join(
+          "apps",
+          "translationCore",
+          "alignmentData",
+          bookID,
+          filename
+        );
+        alignQueue.push(
+          fsWriteRust(IMPORTS_PATH, alignmentDataPath, chapterAlignments)
+        );
+      }
     });
 
     fsQueue.push(
@@ -434,13 +667,13 @@ export function isOldTestament(bookId) {
  * @param {string} bibleVersionPath - path to a bibles version folder.
  * @param {string} bibleID - bible name. ex. bhp, uhb, udt, ult.
  */
-export function getBibleManifest(bibleVersionPath, bibleID) {
+export async function getBibleManifest(bibleVersionPath, bibleID) {
   let fileName = "manifest.json";
   let bibleManifestPath = pathJoin([bibleVersionPath, fileName]);
   let manifest;
-
-  if (fsExistsRust(bibleManifestPath)) {
-    manifest = fsGetRust(bibleManifestPath, "");
+  let exist = await fsExistsRust(bibleManifestPath);
+  if (exist) {
+    manifest = await fsGetRust(bibleManifestPath, "");
   } else {
     console.error(
       `getBibleManifest() - Could not find manifest for ${bibleID} at ${bibleManifestPath}`
@@ -728,19 +961,35 @@ export const moveUsfmFileFromSourceToImports = async (
  * @param {string} ipath - internal file path, e.g. "MAT.usfm" or "manifest.json"
  * @returns {Promise<string>} raw file content
  */
-export function fsGetRust(repoPath, ipath) {
+export async function fsGetRust(repoPath, ipath) {
   try {
     console.log(ipath.split("."));
-    if (ipath.split(".").length == 1) {
-      let url = EXIST_PATH;
-      fetch(url).then((res) => {
-        let data = res.json();
-        return data.filter((item) => !item.includes(ipath));
-      });
+    if (ipath.split(".").length === 1) {
+      const lengthPath = ipath.split("/").length;
+      const url = EXIST_PATH;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      // Filter to keep only items in or under this path
+      const children = data
+        .filter((item) => item.startsWith(ipath + "/"))
+        // Remove the ipath prefix
+        .map((item) => item.replace(ipath + "/", ""));
+
+      // Collect unique first-level entries only
+      const inDirectory = new Set();
+
+      for (const entry of children) {
+        const firstPart = entry.split("/")[0];
+        if (firstPart) inDirectory.add(firstPart);
+      }
+
+      return Array.from(inDirectory);
     } else {
       let url = `${BASE_URL}/${repoPath}${ipath}`;
-
-      fetch(url).then((res) => {
+      console.log(url);
+      return fetch(url).then((res) => {
         if (!res.ok) {
           throw new Error(`GET failed: ${res.status} ${res.statusText}`);
         }
@@ -789,14 +1038,11 @@ export async function fsExistsRust(repoPath, ipath) {
   try {
     let url = EXIST_PATH;
     const res = await fetch(url);
-    const data = res.json();
-    for (let path in data) {
-      if (ipath in path) {
-        return true;
-      }
-    }
-    return false;
-  } catch {
+    const data = await res.json();
+    const found = data.some((item) => item.includes(ipath));
+    return found;
+  } catch (err) {
+    console.error(`fsExistsRust(${repoPath}, ${ipath}) error:`, err);
     return false;
   }
 }
