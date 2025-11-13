@@ -1,46 +1,304 @@
 /* eslint-disable no-async-promise-executor, no-throw-literal */
-import _ from 'lodash';
+import _ from "lodash";
 // helpers
 // actions
 // constants
-import * as Bible from '../common/BooksOfTheBible';
-import usfm from 'usfm-js';
-const IMPORTS_PATH = "burrito/ingredient/raw/git.door43.org/BurritoTruck/en_bsb?ipath=MAT.usfm";
+import * as Bible from "../common/BooksOfTheBible";
+import usfm from "usfm-js";
+const IMPORTS_PATH =
+  "burrito/ingredient/raw/git.door43.org/BurritoTruck/en_bsb?ipath=";
+const USER_RESOURCES_PATH = IMPORTS_PATH;
+const EXIST_PATH = "/burrito/paths/git.door43.org/BurritoTruck/en_bsb";
+const BASE_URL = "http://127.0.0.1:19119";
 
+/**
+ * get chapter from specific resource
+ * @param {String} bibleID
+ * @param {String} bookId
+ * @param {String} languageId
+ * @param {String} chapter
+ * @return {Object} contains chapter data
+ */
+export const loadChapterResource = function (
+  bibleID,
+  bookId,
+  languageId,
+  chapter
+) {
+  try {
+    let bibleData;
+    let bibleFolderPath = join(languageId, "bibles", bibleID); // ex. user/NAME/translationCore/resources/en/bibles/ult
+
+    if (fsExistsRust(USER_RESOURCES_PATH, bibleFolderPath)) {
+      let versionNumbers;
+      fsGetRust(USER_RESOURCES_PATH, bibleFolderPath).then((e) => {
+        versionNumbers = e.filter(
+          (
+            folder // filter out .DS_Store
+          ) => folder !== ".DS_Store"
+        );
+      });
+      // ex. v9}
+
+      console.log(versionNumbers);
+      const versionNumber = versionNumbers[versionNumbers.length - 1];
+      let bibleVersionPath = join(languageId, "bibles", bibleID, versionNumber);
+      let fileName = chapter + ".json";
+
+      if (
+        fsExistsRust(
+          USER_RESOURCES_PATH,
+          join(bibleVersionPath, bookId, fileName)
+        )
+      ) {
+        bibleData = {};
+        let bibleChapterData = fsGetRust(
+          USER_RESOURCES_PATH,
+          join(bibleVersionPath, bookId, fileName)
+        );
+
+        for (
+          let i = 0, len = Object.keys(bibleChapterData).length;
+          i < len;
+          i++
+        ) {
+          const verse = Object.keys(bibleChapterData)[i];
+
+          if (typeof verse !== "string") {
+            if (!verse.verseObjects) {
+              // using old format so convert
+              let newVerse = [];
+
+              for (let word of verse) {
+                if (word) {
+                  if (typeof word !== "string") {
+                    newVerse.push(word);
+                  } else {
+                    newVerse.push({
+                      type: "text",
+                      text: word,
+                    });
+                  }
+                }
+              }
+              bibleChapterData[i] = newVerse;
+            }
+          }
+        }
+
+        bibleData[chapter] = bibleChapterData;
+        // get bibles manifest file
+        bibleData["manifest"] = getBibleManifest(bibleVersionPath, bibleID);
+      } else {
+        console.log(
+          "No such file or directory was found, " +
+            join(bibleVersionPath, bookId, fileName)
+        );
+      }
+    } else {
+      console.log("Directory not found, " + bibleFolderPath);
+    }
+    return bibleData;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+/**
+ * determine Original Language and Original Language bible for book
+ * @param bookId
+ * @return {{resourceLanguage: string, bibleID: string}}
+ */
+export function getOrigLangforBook(bookId) {
+  const isOT = isOldTestament(bookId);
+  const languageId = isOT ? Bible.OT_ORIG_LANG : Bible.NT_ORIG_LANG;
+  const bibleId = isOT ? Bible.OT_ORIG_LANG_BIBLE : Bible.NT_ORIG_LANG_BIBLE;
+  return { languageId, bibleId };
+}
+
+//
+/**
+ * remove single trailing newline from end of string
+ * @param text
+ */
+const trimNewLine = function (text) {
+  if (text && text.length) {
+    let lastChar = text.substr(-1);
+
+    if (lastChar === "\n") {
+      text = text.substr(0, text.length - 1);
+    }
+  }
+  return text;
+};
+/**
+ * get the original language chapter resources for project book
+ * @param {string} projectBibleID
+ * @param {string} chapter
+ * @return {Object} resources for chapter
+ */
+export const getOriginalLanguageChapterResources = function (
+  projectBibleID,
+  chapter
+) {
+  const { languageId, bibleId } = getOrigLangforBook(projectBibleID);
+  return loadChapterResource(bibleId, projectBibleID, languageId, chapter);
+};
+
+/**
+ * generate the target language bible from parsed USFM and manifest data
+ * @param {Object} parsedUsfm - The object containing usfm parsed by chapters
+ * @param {Object} manifest
+ * @param {String} selectedProjectFilename
+ * @return {Promise<any>}
+ */
+export const generateTargetLanguageBibleFromUsfm = async (
+  parsedUsfm,
+  manifest,
+  selectedProjectFilename
+) => {
+  try {
+    const chaptersObject = parsedUsfm.chapters;
+    const bookID = manifest.project.id || selectedProjectFilename;
+    let verseFound = false;
+
+    let fsQueue = [];
+    const alignQueue = [];
+
+    Object.keys(chaptersObject).forEach((chapter) => {
+      let chapterAlignments = {};
+      const bibleChapter = {};
+      const verses = Object.keys(chaptersObject[chapter]);
+
+      // check if chapter has alignment data
+      const alignmentIndex = verses.findIndex((verse) => {
+        const verseParts = chaptersObject[chapter][verse];
+        let alignmentData = false;
+
+        for (let part of verseParts.verseObjects) {
+          if (part.type === "milestone") {
+            alignmentData = true;
+            break;
+          }
+        }
+        return alignmentData;
+      });
+      const alignmentData = alignmentIndex >= 0;
+      let bibleData;
+
+      if (alignmentData) {
+        bibleData = getOriginalLanguageChapterResources(bookID, chapter);
+      }
+
+      verses.forEach((verse) => {
+        const verseParts = chaptersObject[chapter][verse];
+        let verseText;
+        verseText = convertVerseDataToUSFM(verseParts);
+
+        // if (alignmentData) {
+        //   verseText = getUsfmForVerseContent(verseParts);
+        // } else {
+        // }
+        bibleChapter[verse] = trimNewLine(verseText);
+
+        // if (alignmentData && bibleData && bibleData[chapter]) {
+        //   const chapterData = bibleData[chapter];
+        //   let bibleVerse = chapterData[verse];
+
+        //   if (isVerseSpan(verse)) {
+        //     bibleVerse = convertAlignmentFromVerseToVerseSpan(verse, chapterData, verseParts, chapter);
+        //   }
+
+        //   const object = wordaligner.unmerge(verseParts, bibleVerse);
+
+        //   chapterAlignments[verse] = {
+        //     alignments: object.alignment,
+        //     wordBank: object.wordBank,
+        //   };
+        // }
+        verseFound = true;
+      });
+
+      const filename = parseInt(chapter, 10) + ".json";
+      fsQueue.push(
+        fsWriteRust(IMPORTS_PATH, join(bookID, filename), bibleChapter)
+      );
+
+      // if (alignmentData) {
+      //   const alignmentDataPath = path.join(IMPORTS_PATH, selectedProjectFilename, '.apps', 'translationCore', 'alignmentData', bookID, filename);
+      //   alignQueue.push(fs.outputJson(alignmentDataPath, chapterAlignments, { spaces: 2 }));
+      // }
+    });
+
+    fsQueue.push(
+      fsWriteRust(
+        IMPORTS_PATH,
+        join(bookID, "headers.json"),
+        parsedUsfm.headers
+      )
+    );
+
+    if (alignQueue.length) {
+      fsQueue.push.apply(fsQueue, alignQueue); // fast concat
+    }
+
+    if (!verseFound) {
+      throw (
+        <div>
+          {selectedProjectFilename
+            ? `No chapter & verse found in project (${selectedProjectFilename}).`
+            : `No chapter & verse found in your project.`}
+        </div>
+      );
+    }
+    await Promise.all(fsQueue);
+  } catch (error) {
+    console.log("generateTargetLanguageBibleFromUsfm() error:", error);
+    throw error;
+  }
+};
+
+//
 /**
  * dive down into milestone to extract words and text
  * @param {Object} verseObject - milestone to parse
  * @return {string} text content of milestone
  */
-const parseMilestone = verseObject => {
-  let text = verseObject.text || '';
-  let wordSpacing = '';
+const parseMilestone = (verseObject) => {
+  let text = verseObject.text || "";
+  let wordSpacing = "";
   const length = verseObject.children ? verseObject.children.length : 0;
 
   for (let i = 0; i < length; i++) {
     let child = verseObject.children[i];
 
     switch (child.type) {
-    case 'word':
-      text += wordSpacing + child.text;
-      wordSpacing = ' ';
-      break;
+      case "word":
+        text += wordSpacing + child.text;
+        wordSpacing = " ";
+        break;
 
-    case 'milestone':
-      text += wordSpacing + parseMilestone(child);
-      wordSpacing = ' ';
-      break;
+      case "milestone":
+        text += wordSpacing + parseMilestone(child);
+        wordSpacing = " ";
+        break;
 
-    default:
-      if (child.text) {
-        text += child.text;
-        const lastChar = text.substr(-1);
+      default:
+        if (child.text) {
+          text += child.text;
+          const lastChar = text.substr(-1);
 
-        if ((lastChar !== ',') && (lastChar !== '.') && (lastChar !== '?') && (lastChar !== ';')) { // legacy support, make sure padding before word
-          wordSpacing = '';
+          if (
+            lastChar !== "," &&
+            lastChar !== "." &&
+            lastChar !== "?" &&
+            lastChar !== ";"
+          ) {
+            // legacy support, make sure padding before word
+            wordSpacing = "";
+          }
         }
-      }
-      break;
+        break;
     }
   }
   return text;
@@ -52,9 +310,8 @@ const parseMilestone = verseObject => {
  * @return {boolean}
  */
 export function isVerseSpan(verse) {
-  return verse.toString().includes('-');
+  return verse.toString().includes("-");
 }
-
 
 /**
  * get text from word and milestone markers
@@ -63,41 +320,46 @@ export function isVerseSpan(verse) {
  * @return {*} new verseObject and word spacing
  */
 const replaceWordsAndMilestones = (verseObject, wordSpacing) => {
-  let text = '';
+  let text = "";
 
-  if (verseObject.type === 'word') {
+  if (verseObject.type === "word") {
     text = wordSpacing + verseObject.text;
-  } else if (verseObject.type === 'milestone') {
+  } else if (verseObject.type === "milestone") {
     text = wordSpacing + parseMilestone(verseObject);
   }
 
-  if (text) { // replace with text object
+  if (text) {
+    // replace with text object
     verseObject = {
-      type: 'text',
+      type: "text",
       text,
     };
-    wordSpacing = ' ';
+    wordSpacing = " ";
   } else {
-    wordSpacing = ' ';
+    wordSpacing = " ";
 
     if (verseObject.nextChar) {
-      wordSpacing = ''; // no need for spacing before next word if this item has it
+      wordSpacing = ""; // no need for spacing before next word if this item has it
     } else if (verseObject.text) {
       const lastChar = verseObject.text.substr(-1);
 
-      if (![',', '.', '?', ';'].includes(lastChar)) { // legacy support, make sure padding before next word if punctuation
-        wordSpacing = '';
+      if (![",", ".", "?", ";"].includes(lastChar)) {
+        // legacy support, make sure padding before next word if punctuation
+        wordSpacing = "";
       }
     }
 
-    if (verseObject.children) { // handle nested
+    if (verseObject.children) {
+      // handle nested
       const verseObject_ = _.cloneDeep(verseObject);
-      let wordSpacing_ = '';
+      let wordSpacing_ = "";
       const length = verseObject.children.length;
 
       for (let i = 0; i < length; i++) {
-        const flattened =
-          replaceWordsAndMilestones(verseObject.children[i], wordSpacing_);
+        const flattened = replaceWordsAndMilestones(
+          verseObject.children[i],
+          wordSpacing_
+        );
         wordSpacing_ = flattened.wordSpacing;
         verseObject_.children[i] = flattened.verseObject;
       }
@@ -107,8 +369,6 @@ const replaceWordsAndMilestones = (verseObject, wordSpacing) => {
   return { verseObject, wordSpacing };
 };
 
-
-
 /**
  * converts verse from verse objects to USFM string
  * @param verseData
@@ -116,24 +376,24 @@ const replaceWordsAndMilestones = (verseObject, wordSpacing) => {
  */
 function convertVerseDataToUSFM(verseData) {
   const outputData = {
-    'chapters': {},
-    'headers': [],
-    'verses': { '1': verseData },
+    chapters: {},
+    headers: [],
+    verses: { 1: verseData },
   };
   const USFM = usfm.toUSFM(outputData, { chunk: true });
-  const split = USFM.split('\\v 1');
+  const split = USFM.split("\\v 1");
 
   if (split.length > 1) {
     let content = split[1];
 
-    if (content.substr(0, 1) === ' ') { // remove space separator
+    if (content.substr(0, 1) === " ") {
+      // remove space separator
       content = content.substr(1);
     }
     return content;
   }
-  return ''; // error on JSON to USFM
+  return ""; // error on JSON to USFM
 }
-
 
 /**
  * @description convert verse from verse objects to USFM string, removing milestones and word markers
@@ -142,7 +402,7 @@ function convertVerseDataToUSFM(verseData) {
  */
 export const getUsfmForVerseContent = (verseData) => {
   if (verseData.verseObjects) {
-    let wordSpacing = '';
+    let wordSpacing = "";
     const flattenedData = [];
     const length = verseData.verseObjects.length;
 
@@ -152,13 +412,13 @@ export const getUsfmForVerseContent = (verseData) => {
       wordSpacing = flattened.wordSpacing;
       flattenedData.push(flattened.verseObject);
     }
-    verseData = { // use flattened data
+    verseData = {
+      // use flattened data
       verseObjects: flattenedData,
     };
   }
   return convertVerseDataToUSFM(verseData);
 };
-
 
 /**
  * tests if book is a Old Testament book
@@ -169,26 +429,25 @@ export function isOldTestament(bookId) {
   return bookId in Bible.BIBLE_BOOKS.oldTestament;
 }
 
-
 /**
  * @description Helper function to get a bibles manifest file from the bible resources folder.
  * @param {string} bibleVersionPath - path to a bibles version folder.
  * @param {string} bibleID - bible name. ex. bhp, uhb, udt, ult.
  */
 export function getBibleManifest(bibleVersionPath, bibleID) {
-  let fileName = 'manifest.json';
+  let fileName = "manifest.json";
   let bibleManifestPath = pathJoin([bibleVersionPath, fileName]);
   let manifest;
 
   if (fsExistsRust(bibleManifestPath)) {
-    manifest = fsGetRust(bibleManifestPath,"");
+    manifest = fsGetRust(bibleManifestPath, "");
   } else {
     console.error(
-      `getBibleManifest() - Could not find manifest for ${bibleID} at ${bibleManifestPath}`);
+      `getBibleManifest() - Could not find manifest for ${bibleID} at ${bibleManifestPath}`
+    );
   }
   return manifest;
 }
-
 
 export function convertToFullBookName(bookAbbr) {
   if (!bookAbbr) {
@@ -196,7 +455,6 @@ export function convertToFullBookName(bookAbbr) {
   }
   return Bible.ALL_BIBLE_BOOKS[bookAbbr.toString().toLowerCase()];
 }
-
 
 /**
  * @description get tag item from headers array
@@ -206,7 +464,7 @@ export function convertToFullBookName(bookAbbr) {
  */
 export function getHeaderTag(headers, tag) {
   if (headers) {
-    const retVal = headers.find(header => header.tag === tag);
+    const retVal = headers.find((header) => header.tag === tag);
 
     if (retVal) {
       return retVal.content;
@@ -214,7 +472,6 @@ export function getHeaderTag(headers, tag) {
   }
   return null;
 }
-
 
 /**
  * @description Sets up a USFM project manifest according to tC standards.
@@ -224,54 +481,54 @@ export function generateManifestForUsfmProject(parsedUSFM) {
   let usfmDetails = getUSFMDetails(parsedUSFM);
   return {
     generator: {
-      name: 'tc-desktop',
-      build: '',
+      name: "tc-desktop",
+      build: "",
     },
     target_language: {
-      id: usfmDetails.language.id || '',
-      name: usfmDetails.language.name || '',
-      direction: usfmDetails.language.direction || '',
-      book: { name: usfmDetails.target_languge.book.name || '' },
+      id: usfmDetails.language.id || "",
+      name: usfmDetails.language.name || "",
+      direction: usfmDetails.language.direction || "",
+      book: { name: usfmDetails.target_languge.book.name || "" },
     },
     ts_project: {
-      id: usfmDetails.book.id || '',
-      name: usfmDetails.book.name || '',
+      id: usfmDetails.book.id || "",
+      name: usfmDetails.book.name || "",
     },
     project: {
-      id: usfmDetails.book.id || '',
-      name: usfmDetails.book.name || '',
+      id: usfmDetails.book.id || "",
+      name: usfmDetails.book.name || "",
     },
     type: {
-      id: 'text',
-      name: 'Text',
+      id: "text",
+      name: "Text",
     },
     source_translations: [
       {
-        language_id: 'en',
-        resource_id: 'ult',
-        checking_level: '',
+        language_id: "en",
+        resource_id: "ult",
+        checking_level: "",
         date_modified: new Date(),
-        version: '',
+        version: "",
       },
     ],
     resource: {
-      id: '',
-      name: '',
+      id: "",
+      name: "",
     },
     translators: [],
     checkers: [],
     time_created: new Date(),
     tools: [],
-    repo: '',
+    repo: "",
     tcInitialized: true,
   };
 }
 /**
-* Most important function for creating a project from a USFM file alone. This function gets the
-* book name, id, language name and direction for starting a tC project.
-* @param {object} usfmObject - Object created by USFM to JSON module. Contains information
-* for parsing and using in tC such as book name.
-*/
+ * Most important function for creating a project from a USFM file alone. This function gets the
+ * book name, id, language name and direction for starting a tC project.
+ * @param {object} usfmObject - Object created by USFM to JSON module. Contains information
+ * for parsing and using in tC such as book name.
+ */
 export function getUSFMDetails(usfmObject) {
   let details = {
     book: {
@@ -281,35 +538,35 @@ export function getUSFMDetails(usfmObject) {
     language: {
       id: undefined,
       name: undefined,
-      direction: 'ltr',
+      direction: "ltr",
     },
     target_languge: { book: { name: undefined } },
   };
 
   // adding target language book name from usfm headers
-  const targetLangugeBookName = getHeaderTag(usfmObject.headers, 'h');
+  const targetLangugeBookName = getHeaderTag(usfmObject.headers, "h");
   details.target_languge.book.name = targetLangugeBookName;
 
   let headerIDArray = [];
-  const tag = 'id';
+  const tag = "id";
   const id = getHeaderTag(usfmObject.headers, tag);
 
   if (id) {
     // Conditional to determine how USFM should be parsed.
-    let isSpaceDelimited = id.split(' ').length > 1;
-    let isCommaDelimited = id.split(',').length > 1;
+    let isSpaceDelimited = id.split(" ").length > 1;
+    let isCommaDelimited = id.split(",").length > 1;
 
     if (isSpaceDelimited) {
       // i.e. TIT EN_ULB sw_Kiswahili_ltr Wed Jul 26 2017 22:14:55 GMT-0700 (PDT) tc.
       // Could have attached commas if both comma delimited and space delimited
-      headerIDArray = id.split(' ');
+      headerIDArray = id.split(" ");
       headerIDArray.forEach((element, index) => {
-        headerIDArray[index] = element.replace(',', '');
+        headerIDArray[index] = element.replace(",", "");
       });
       details.book.id = headerIDArray[0].trim().toLowerCase();
     } else if (isCommaDelimited) {
       // i.e. TIT, sw_Kiswahili_ltr, EN_ULB, Thu Jul 20 2017 16:03:48 GMT-0700 (PDT), tc.
-      headerIDArray = id.split(',');
+      headerIDArray = id.split(",");
       details.book.id = headerIDArray[0].trim().toLowerCase();
     } else {
       // i.e. EPH
@@ -330,18 +587,18 @@ export function getUSFMDetails(usfmObject) {
       }
     }
 
-    let tcField = headerIDArray[headerIDArray.length - 1] || '';
+    let tcField = headerIDArray[headerIDArray.length - 1] || "";
 
-    if (tcField.trim() === 'tc') {
+    if (tcField.trim() === "tc") {
       details.repo = headerIDArray[1];
 
       // Checking for tC field to parse with more information than standard usfm.
       for (let index in headerIDArray) {
-        let languageCodeArray = headerIDArray[index].trim().split('_');
+        let languageCodeArray = headerIDArray[index].trim().split("_");
 
         if (languageCodeArray.length === 3) {
           details.language.id = languageCodeArray[0].toLowerCase();
-          details.language.name = languageCodeArray[1].split('⋅').join(' '); // restore spaces
+          details.language.name = languageCodeArray[1].split("⋅").join(" "); // restore spaces
           details.language.direction = languageCodeArray[2].toLowerCase();
         }
       }
@@ -357,15 +614,14 @@ export function getUSFMDetails(usfmObject) {
 export function getParsedUSFM(usfmData) {
   try {
     if (usfmData) {
-      return usfm.toJSON(usfmData, { convertToInt: ['occurrence', 'occurrences'] });
+      return usfm.toJSON(usfmData, {
+        convertToInt: ["occurrence", "occurrences"],
+      });
     }
   } catch (e) {
     console.error(e);
   }
 }
-
-
-
 
 /**
  * generate manifest from USFM data
@@ -374,18 +630,23 @@ export function getParsedUSFM(usfmData) {
  * @param {string} selectedProjectFilename
  * @return {Promise<any>}
  */
-export const generateManifestForUsfm = async (parsedUsfm, sourceProjectPath, selectedProjectFilename) => {
+export const generateManifestForUsfm = async (
+  parsedUsfm,
+  sourceProjectPath,
+  selectedProjectFilename
+) => {
   try {
     const manifest = generateManifestForUsfmProject(parsedUsfm);
-    console.log(manifest)
+    console.log(manifest);
     const manifestPath = sourceProjectPath;
-    await fsWriteRust(manifestPath,'manifest.json',manifest);
+    await fsWriteRust(manifestPath, "manifest.json", manifest);
     return manifest;
   } catch (error) {
     console.log(error);
     throw (
       <div>
-          Something went wrong when generating a manifest for ({sourceProjectPath}).
+        Something went wrong when generating a manifest for ({sourceProjectPath}
+        ).
       </div>
     );
   }
@@ -396,13 +657,15 @@ export const generateManifestForUsfm = async (parsedUsfm, sourceProjectPath, sel
 export const verifyIsValidUsfmFile = async (sourceProjectPath) => {
   const usfmData = await loadUSFMFileAsync(pathJoin([sourceProjectPath]));
 
-  if (usfmData.includes('\\h ') || usfmData.includes('\\id ')) { // moved verse checking to generateTargetLanguageBibleFromUsfm
+  if (usfmData.includes("\\h ") || usfmData.includes("\\id ")) {
+    // moved verse checking to generateTargetLanguageBibleFromUsfm
     return usfmData;
   } else {
     throw (
       <div>
-          The project you selected ({sourceProjectPath}) is an invalid usfm project. <br/>
-          Please verify the project you selected is a valid usfm file.
+        The project you selected ({sourceProjectPath}) is an invalid usfm
+        project. <br />
+        Please verify the project you selected is a valid usfm file.
       </div>
     );
   }
@@ -414,43 +677,49 @@ export const verifyIsValidUsfmFile = async (sourceProjectPath) => {
  */
 export async function loadUSFMFileAsync(usfmFilePath) {
   try {
-    const usfmText = await fsGetRust(usfmFilePath,"");
-    if (!usfmText) throw new Error(`Failed to get USFM content from Rust endpoint: ${usfmFilePath}`);
+    const usfmText = await fsGetRust(IMPORTS_PATH, usfmFilePath);
+    if (!usfmText)
+      throw new Error(
+        `Failed to get USFM content from Rust endpoint: ${usfmFilePath}`
+      );
     return usfmText;
   } catch (e) {
-    console.error('Error loading USFM via Rust:', e);
+    console.error("Error loading USFM via Rust:", e);
     return null;
   }
 }
 
-
-
 /*
 ##########################################moveUsfmFileFromSourceToImports########################*/
-export const moveUsfmFileFromSourceToImports = async (sourceProjectPath, manifest, selectedProjectFilename) => {
+export const moveUsfmFileFromSourceToImports = async (
+  sourceProjectPath,
+  manifest,
+  selectedProjectFilename
+) => {
   try {
-    const usfmData = await fetch(sourceProjectPath);
-    const projectId = manifest && manifest.project && manifest.project.id ? manifest.project.id : undefined;
-    const usfmFilename = projectId ? projectId + '.usfm' : selectedProjectFilename + '.usfm';
-    const newUsfmProjectImportsPath = pathJoin([IMPORTS_PATH, selectedProjectFilename]);
-    await fsWriteRust(newUsfmProjectImportsPath,usfmFilename,usfmData);
+    const usfmData = await fsGetRust(
+      sourceProjectPath,
+      selectedProjectFilename
+    );
+    const projectId =
+      manifest && manifest.project && manifest.project.id
+        ? manifest.project.id
+        : undefined;
+    const usfmFilename = projectId
+      ? projectId + ".usfm"
+      : selectedProjectFilename + ".usfm";
+    await fsWriteRust(sourceProjectPath, usfmFilename, usfmData);
   } catch (error) {
-    console.log('moveUsfmFileFromSourceToImports()', error);
+    console.log("moveUsfmFileFromSourceToImports()", error);
     throw (
       <div>
-        {
-          sourceProjectPath ?
-            `Something went wrong when importing (${sourceProjectPath}).`
-            :
-            `Something went wrong when importing your project.`
-        }
+        {sourceProjectPath
+          ? `Something went wrong when importing (${sourceProjectPath}).`
+          : `Something went wrong when importing your project.`}
       </div>
     );
   }
 };
-
-
-const BASE_URL = "http://127.0.0.1:19119";
 
 /**
  * GET /ingredient/raw/<repo_path>?ipath=<ipath>
@@ -459,17 +728,25 @@ const BASE_URL = "http://127.0.0.1:19119";
  * @param {string} ipath - internal file path, e.g. "MAT.usfm" or "manifest.json"
  * @returns {Promise<string>} raw file content
  */
-export async function fsGetRust(repoPath, ipath) {
+export function fsGetRust(repoPath, ipath) {
   try {
-    let url = `${BASE_URL}/${repoPath}${ipath}`
+    console.log(ipath.split("."));
+    if (ipath.split(".").length == 1) {
+      let url = EXIST_PATH;
+      fetch(url).then((res) => {
+        let data = res.json();
+        return data.filter((item) => !item.includes(ipath));
+      });
+    } else {
+      let url = `${BASE_URL}/${repoPath}${ipath}`;
 
-    const res = await fetch(url);
-
-    if (!res.ok) {
-      throw new Error(`GET failed: ${res.status} ${res.statusText}`);
+      fetch(url).then((res) => {
+        if (!res.ok) {
+          throw new Error(`GET failed: ${res.status} ${res.statusText}`);
+        }
+        return res.text();
+      });
     }
-
-    return await res.text();
   } catch (err) {
     console.error(`fsGetRust(${repoPath}, ${ipath}) error:`, err);
     throw err;
@@ -486,8 +763,8 @@ export async function fsGetRust(repoPath, ipath) {
  */
 export async function fsWriteRust(repoPath, ipath, data) {
   try {
-    let url = `${BASE_URL}/${repoPath}${ipath}`
-    
+    let url = `${BASE_URL}/${repoPath}${ipath}`;
+
     const body = {
       payload: typeof data === "object" ? JSON.stringify(data, null, 2) : data,
     };
@@ -501,7 +778,6 @@ export async function fsWriteRust(repoPath, ipath, data) {
     if (!res.ok) {
       throw new Error(`POST failed: ${res.status} ${res.statusText}`);
     }
-    console.log(url)
     console.log(`✅ fsWriteRust: Wrote ${ipath} successfully`);
   } catch (err) {
     console.error(`fsWriteRust(${repoPath}, ${ipath}) error:`, err);
@@ -511,22 +787,44 @@ export async function fsWriteRust(repoPath, ipath, data) {
 
 export async function fsExistsRust(repoPath, ipath) {
   try {
-    await fsGetRust(repoPath, ipath);
-    return true;
+    let url = EXIST_PATH;
+    const res = await fetch(url);
+    const data = res.json();
+    for (let path in data) {
+      if (ipath in path) {
+        return true;
+      }
+    }
+    return false;
   } catch {
     return false;
   }
 }
 const join = (...args) => args.join("/").replace(/\/+/g, "/");
 
-function pathJoin(table){
+function pathJoin(table) {
   return table.join("/").replace(/\/+/g, "/");
 }
 /*################################################################*/
-export const convertToProjectFormat = async (sourceProjectPath, selectedProjectFilename) => {
-  const usfmData = await verifyIsValidUsfmFile(sourceProjectPath+selectedProjectFilename);
+export const convertToProjectFormat = async (
+  sourceProjectPath,
+  selectedProjectFilename
+) => {
+  const usfmData = await verifyIsValidUsfmFile(selectedProjectFilename);
   const parsedUsfm = getParsedUSFM(usfmData);
-  const manifest = await generateManifestForUsfm(parsedUsfm, sourceProjectPath, selectedProjectFilename);
-  // await moveUsfmFileFromSourceToImports(sourceProjectPath, manifest, selectedProjectFilename);
-  // await generateTargetLanguageBibleFromUsfm(parsedUsfm, manifest, selectedProjectFilename);
+  const manifest = await generateManifestForUsfm(
+    parsedUsfm,
+    sourceProjectPath,
+    +selectedProjectFilename
+  );
+  await moveUsfmFileFromSourceToImports(
+    sourceProjectPath,
+    manifest,
+    selectedProjectFilename
+  );
+  await generateTargetLanguageBibleFromUsfm(
+    parsedUsfm,
+    manifest,
+    selectedProjectFilename
+  );
 };
