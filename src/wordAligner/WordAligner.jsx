@@ -45,7 +45,7 @@ const {targetWords, verseAlignments} = parseUsfmToWordAlignerData(targetVerseUSF
 const alignmentComplete = areAlgnmentsComplete(targetWords, verseAlignments);
 console.log(`Alignments are ${alignmentComplete ? 'COMPLETE!' : 'incomplete'}`);
 
-function App() {
+function WordAligner() {
   const [maxWindowHeight, setMaxWindowHeight] = useState(window.innerHeight - 64);
   const handleWindowResize = useCallback(event => {
     setMaxWindowHeight(window.innerHeight - 64);
@@ -115,4 +115,4 @@ function App() {
   </Grid2>
 }
 
-export default App;
+export default WordAligner;

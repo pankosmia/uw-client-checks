@@ -8,7 +8,11 @@ import {
 } from "react-router-dom";
 import TwChecker from "./pages/tw";
 import TnChecker from "./pages/tn";
+import WordAligner from "./wordAligner/WordAligner"
+import ToolsManagementContainer from "./pages/ToolsManagementContainer";
 import ReduxStateViewer from "./pages/ReduxStateViewer";
+import { doI18n,i18nContext } from 'pithekos-lib';
+import { useContext } from 'react';
 
 import Main from "./pages/main";
 import SpaContainer from "pithekos-lib/dist/components/SpaContainer";
@@ -16,15 +20,16 @@ import "./index.css";
 import { Provider } from "react-redux";
 import store from "./store";
 import { Header } from "pithekos-lib";
-  
+import SelectBook from "./pages/SelectBook";
+
 function TabButtons() {
+  
   const navigate = useNavigate();
   const location = useLocation();
 
   const tabs = [
     { name: "Main", path: "/" },
     { name: "ReduxStateViewer", path: "/" },
-
     { name: "TN Checker", path: "TnChecker" },
     { name: "TW Checker", path: "TwChecker" },
   ];
@@ -57,6 +62,8 @@ function TabButtons() {
 }
 
 function AppLayout() {
+  const { i18nRef } = useContext(i18nContext);
+
   return (
     <div>
       <Header
@@ -64,11 +71,7 @@ function AppLayout() {
         requireNet={false}
         currentId="uw-client-checks"
       />
-      <h1 style={{ marginBottom: "20px" }}>Dashboard</h1>
-      <TabButtons />
-      <div style={{ marginTop: "20px" }}>
-        <Outlet />
-      </div>
+      <Outlet />
     </div>
   );
 }
@@ -78,9 +81,17 @@ const router = createHashRouter([
     path: "/",
     element: <AppLayout />,
     children: [
+      {
+        path: "ToolsManagementContainer",
+        element: <ToolsManagementContainer   translate={(key) => key} 
+/>,
+      },
       { path: "/", element: <ReduxStateViewer /> },
       { path: "TnChecker/*", element: <TnChecker /> },
+      { path: "SelectBook/:name", element: <SelectBook /> }, // <-- NEW ROUTE
       { path: "TwChecker/*", element: <TwChecker /> },
+      { path: "WordAligner/*", element: <WordAligner /> },
+
     ],
   },
 ]);

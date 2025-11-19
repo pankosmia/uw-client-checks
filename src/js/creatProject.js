@@ -8,11 +8,12 @@ import usfm from "usfm-js";
 import { verseHelpers } from "tc-ui-toolkit";
 import wordaligner, { VerseObjectUtils } from "word-aligner";
 
-const IMPORTS_PATH =
-  "burrito/ingredient/raw/git.door43.org/BurritoTruck/en_bsb?ipath=";
-const USER_RESOURCES_PATH = IMPORTS_PATH;
-const EXIST_PATH = "/burrito/paths/git.door43.org/BurritoTruck/en_bsb";
-const BASE_URL = "http://127.0.0.1:19119";
+let treeCache = []; // cache tree data across calls
+
+let IMPORTS_PATH = "burrito/ingredient/raw/_local_/_local_/en_bsb?ipath=";
+let USER_RESOURCES_PATH = IMPORTS_PATH;
+let EXIST_PATH = "/burrito/paths/_local_/_local_/";
+let BASE_URL = "http://127.0.0.1:19119";
 
 /**
  * search through verseAlignments for word and get occurrences
@@ -270,18 +271,18 @@ export const loadChapterResource = async function (
       );
       if (exist) {
         bibleData = {};
-        let bibleChapterData = await fsGetRust(
-          USER_RESOURCES_PATH,
-          join(bibleVersionPath, bookId, fileName)
+        let bibleChapterData = JSON.parse(
+          await fsGetRust(
+            USER_RESOURCES_PATH,
+            join(bibleVersionPath, bookId, fileName)
+          )
         );
-
         for (
           let i = 0, len = Object.keys(bibleChapterData).length;
           i < len;
           i++
         ) {
           const verse = Object.keys(bibleChapterData)[i];
-
           if (typeof verse !== "string") {
             if (!verse.verseObjects) {
               // using old format so convert
@@ -358,12 +359,17 @@ const trimNewLine = function (text) {
  * @param {string} chapter
  * @return {Object} resources for chapter
  */
-export const getOriginalLanguageChapterResources = function (
+export const getOriginalLanguageChapterResources = async function (
   projectBibleID,
   chapter
 ) {
   const { languageId, bibleId } = getOrigLangforBook(projectBibleID);
-  return loadChapterResource(bibleId, projectBibleID, languageId, chapter);
+  return await loadChapterResource(
+    bibleId,
+    projectBibleID,
+    languageId,
+    chapter
+  );
 };
 
 /**
@@ -406,9 +412,8 @@ export const generateTargetLanguageBibleFromUsfm = async (
       });
       const alignmentData = alignmentIndex >= 0;
       let bibleData;
-      console.log(alignmentData);
       if (alignmentData) {
-        bibleData = getOriginalLanguageChapterResources(bookID, chapter);
+        bibleData = await getOriginalLanguageChapterResources(bookID, chapter);
       }
 
       verses.forEach((verse) => {
@@ -421,8 +426,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
           verseText = convertVerseDataToUSFM(verseParts);
         }
         bibleChapter[verse] = trimNewLine(verseText);
-        console.log(alignmentData && bibleData && bibleData[chapter]);
-        console.log(alignmentData, bibleData, bibleData[chapter]);
+
         if (alignmentData && bibleData && bibleData[chapter]) {
           const chapterData = bibleData[chapter];
           let bibleVerse = chapterData[verse];
@@ -442,7 +446,6 @@ export const generateTargetLanguageBibleFromUsfm = async (
             alignments: object.alignment,
             wordBank: object.wordBank,
           };
-          console.log(chapterAlignments);
         }
         verseFound = true;
       });
@@ -674,9 +677,9 @@ export async function getBibleManifest(bibleVersionPath, bibleID) {
   let fileName = "manifest.json";
   let bibleManifestPath = pathJoin([bibleVersionPath, fileName]);
   let manifest;
-  let exist = await fsExistsRust(bibleManifestPath);
+  let exist = await fsExistsRust(USER_RESOURCES_PATH, bibleManifestPath);
   if (exist) {
-    manifest = await fsGetRust(bibleManifestPath, "");
+    manifest = await fsGetRust(USER_RESOURCES_PATH, bibleManifestPath);
   } else {
     console.error(
       `getBibleManifest() - Could not find manifest for ${bibleID} at ${bibleManifestPath}`
@@ -873,7 +876,6 @@ export const generateManifestForUsfm = async (
 ) => {
   try {
     const manifest = generateManifestForUsfmProject(parsedUsfm);
-    console.log(manifest);
     const manifestPath = sourceProjectPath;
     await fsWriteRust(manifestPath, "manifest.json", manifest);
     return manifest;
@@ -966,20 +968,21 @@ export const moveUsfmFileFromSourceToImports = async (
  */
 export async function fsGetRust(repoPath, ipath) {
   try {
-    console.log(ipath.split("."));
-    if (ipath.split(".").length === 1) {
-      const lengthPath = ipath.split("/").length;
-      const url = EXIST_PATH;
-
-      const res = await fetch(url);
-      const data = await res.json();
-
+    if (ipath.split("/").slice(-1)[0].split('.').length === 1) {
+      if (treeCache.length <= 0) {
+        let repo = repoPath.split('/').slice(-1)[0].split('?')[0]
+        const url = EXIST_PATH+repo;
+        const res = await fetch(url);
+        const data = await res.json();
+        treeCache = data;
+      }
+      console.log(repoPath,ipath)
       // Filter to keep only items in or under this path
-      const children = data
+      const children = treeCache
         .filter((item) => item.startsWith(ipath + "/"))
         // Remove the ipath prefix
         .map((item) => item.replace(ipath + "/", ""));
-
+      console.log(children)
       // Collect unique first-level entries only
       const inDirectory = new Set();
 
@@ -987,11 +990,10 @@ export async function fsGetRust(repoPath, ipath) {
         const firstPart = entry.split("/")[0];
         if (firstPart) inDirectory.add(firstPart);
       }
-
+      
       return Array.from(inDirectory);
     } else {
       let url = `${BASE_URL}/${repoPath}${ipath}`;
-      console.log(url);
       return fetch(url).then((res) => {
         if (!res.ok) {
           throw new Error(`GET failed: ${res.status} ${res.statusText}`);
@@ -1030,7 +1032,6 @@ export async function fsWriteRust(repoPath, ipath, data) {
     if (!res.ok) {
       throw new Error(`POST failed: ${res.status} ${res.statusText}`);
     }
-    console.log(`✅ fsWriteRust: Wrote ${ipath} successfully`);
   } catch (err) {
     console.error(`fsWriteRust(${repoPath}, ${ipath}) error:`, err);
     throw err;
@@ -1039,10 +1040,15 @@ export async function fsWriteRust(repoPath, ipath, data) {
 
 export async function fsExistsRust(repoPath, ipath) {
   try {
-    let url = EXIST_PATH;
-    const res = await fetch(url);
-    const data = await res.json();
-    const found = data.some((item) => item.includes(ipath));
+    if (treeCache.length <= 0) {
+      let repo = repoPath.split('/').slice(-1)[0].split('?')[0]
+      let url = EXIST_PATH+repo;
+      const res = await fetch(url);
+      const data = await res.json();
+      treeCache = data;
+    }
+
+    const found = treeCache.some((item) => item.includes(ipath));
     return found;
   } catch (err) {
     console.error(`fsExistsRust(${repoPath}, ${ipath}) error:`, err);
@@ -1059,12 +1065,15 @@ export const convertToProjectFormat = async (
   sourceProjectPath,
   selectedProjectFilename
 ) => {
+  IMPORTS_PATH = sourceProjectPath;
+  USER_RESOURCES_PATH = IMPORTS_PATH.split('=')[0] + '=';
+
   const usfmData = await verifyIsValidUsfmFile(selectedProjectFilename);
   const parsedUsfm = getParsedUSFM(usfmData);
   const manifest = await generateManifestForUsfm(
     parsedUsfm,
     sourceProjectPath,
-    +selectedProjectFilename
+    selectedProjectFilename
   );
   await moveUsfmFileFromSourceToImports(
     sourceProjectPath,

@@ -1,8 +1,7 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { loadProjectFromManifest } from "../slice/projectInformationSlice";
-import { setSourceProjectPath, setSelectedProjectFilename } from "../slice/localImportSlice";
-import { convertToProjectFormat } from "../slice/creatProject"; // <-- import your function
+import { loadProjectFromManifest } from "../js/reducers/projectInformationReducer";
+import { convertToProjectFormat } from "../js/creatProject"; // <-- import your function
 
 const ReduxStateViewer = () => {
   const dispatch = useDispatch();
@@ -33,7 +32,6 @@ const ReduxStateViewer = () => {
     const selectedProjectFilename = "MAT.usfm";
 
     try {
-      console.log("🧩 Starting conversion...");
       await convertToProjectFormat(sourceProjectPath, selectedProjectFilename);
       alert("✅ Project conversion complete!");
     } catch (error) {
@@ -45,6 +43,7 @@ const ReduxStateViewer = () => {
   return (
     <div
       style={{
+        overflow:'scroll',
         padding: "20px",
         background: "#121212",
         color: "#f1f1f1",

@@ -17,7 +17,7 @@ const initialState = {
   projectFont: "default",
 };
 
-const projectInformationSlice = createSlice({
+const projectInformationReducer = createSlice({
   name: "projectInformation",
   initialState,
   reducers: {
@@ -90,9 +90,9 @@ export const {
   setSkipProjectNameCheck,
   setProjectFont,
   clearProjectInformation,
-} = projectInformationSlice.actions;
+} = projectInformationReducer.actions;
 
-export default projectInformationSlice.reducer;
+export default projectInformationReducer.reducer;
 
 // === Selectors ===
 // === New thunk to load manifest into project information ===
@@ -113,6 +113,6 @@ export const loadProjectFromManifest = (manifest) => (dispatch) => {
 };
 export const getIsUsfmProject = (state) => state.projectInformation.usfmProject;
 export const getIsOverwritePermitted = (state) =>
-  state.projectInformation.overwritePermitted;
+  state.overwritePermitted;
 export const getIsProjectAlreadyImported = (state) =>
-  state.projectInformation.alreadyImported;
+  state.alreadyImported;

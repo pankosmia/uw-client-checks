@@ -6,7 +6,7 @@ const initialState = {
   oldSelectedProjectFileName: null,
 };
 
-const localImportSlice = createSlice({
+const localImportReducer = createSlice({
   name: "localImport",
   initialState,
   reducers: {
@@ -28,9 +28,9 @@ export const {
   setOldSelectedProjectFileName,
   setSourceProjectPath,
   resetLocalImport,
-} = localImportSlice.actions;
+} = localImportReducer.actions;
 
-export default localImportSlice.reducer;
+export default localImportReducer.reducer;
 
 // === Selectors ===
 export const getSelectedProjectFilename = (state) =>
