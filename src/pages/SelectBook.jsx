@@ -4,6 +4,8 @@ import { doI18n, i18nContext } from "pithekos-lib";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, Button } from "@mui/material";
 import { convertToProjectFormat } from "../js/creatProject"; // <-- import your function
+import { useNavigate } from "react-router-dom";
+
 
 export default function SelectBook() {
   const { name } = useParams();
@@ -12,6 +14,7 @@ export default function SelectBook() {
   const [loading, setLoading] = useState(true);
   const [tree, setTree] = useState([]);
   const [rows, setRows] = useState([]);
+  const navigate = useNavigate();
   
   async function fetchData() {
       try {
@@ -80,7 +83,8 @@ export default function SelectBook() {
       renderCell: (params) => {
         // params.row.actions is just a string or boolean
         const hasManifest = params.row.actions; // true/false
-        return hasManifest ? <Button>is</Button> : <Button
+        return hasManifest ? <Button variant="contained" onClick={() => navigate("/TwChecker",{ state: { name:  params.row.path} })}>TranslationWords</Button> : <Button
+        variant="contained"
         onClick={() => handleTryConvert(params.row.path,`${params.row.name}.usfm`)}
         >isnot</Button>;
       },

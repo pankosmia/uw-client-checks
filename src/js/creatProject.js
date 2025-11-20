@@ -862,6 +862,36 @@ export function getParsedUSFM(usfmData) {
   }
 }
 
+const generateHelperForTool = async (
+  helperFolderName,
+  sourceProjectPath,
+  selectedProjectFilename
+) => {
+  console.log(IMPORTS_PATH)
+  let ingredientPath = IMPORTS_PATH.split("?ipath=")[0] + "?ipath=";
+  
+  let path = join(helperFolderName,'translationHelps',"translationWords")
+  console.log('1',path)
+  console.log(ingredientPath+path)
+  let version = (await fsGetRust(ingredientPath,path))[0]
+  console.log(version)
+  path = join(path,version)
+  console.log(path)
+  let categories = (await fsGetRust(ingredientPath,path)).filter(e => !e.includes('.json'))
+  console.log(categories)
+  for (let i =0; i<categories.length;i++){
+    let newPath = join(path,categories[i],"groups",selectedProjectFilename.split('.')[0])
+    let index = await fsGetRust(ingredientPath,newPath)
+    console.log(index)
+    await fsWriteRust(IMPORTS_PATH,join("apps","translationCore","index","TranslationWords",selectedProjectFilename.split('.')[0],"categoryIndex",categories[i]+".json"),index)
+    for (let p = 0; p<index.length;p++){
+      let ressource = await fsGetRust(ingredientPath,join(newPath,index[p]))
+      await fsWriteRust(IMPORTS_PATH,join("apps","translationCore","index","TranslationWords",selectedProjectFilename.split('.')[0],index[p]),ressource)
+    }
+  }
+}
+
+
 /**
  * generate manifest from USFM data
  * @param {Object} parsedUsfm - The object containing usfm parsed by chapters
@@ -968,7 +998,7 @@ export const moveUsfmFileFromSourceToImports = async (
  */
 export async function fsGetRust(repoPath, ipath) {
   try {
-    if (ipath.split("/").slice(-1)[0].split('.').length === 1) {
+    if (ipath.split("/").slice(-1)[0].split(/\.json|\.usfm|\.md/).length === 1) {
       if (treeCache.length <= 0) {
         let repo = repoPath.split('/').slice(-1)[0].split('?')[0]
         const url = EXIST_PATH+repo;
@@ -976,13 +1006,12 @@ export async function fsGetRust(repoPath, ipath) {
         const data = await res.json();
         treeCache = data;
       }
-      console.log(repoPath,ipath)
+      console.log(ipath)
       // Filter to keep only items in or under this path
       const children = treeCache
         .filter((item) => item.startsWith(ipath + "/"))
         // Remove the ipath prefix
         .map((item) => item.replace(ipath + "/", ""));
-      console.log(children)
       // Collect unique first-level entries only
       const inDirectory = new Set();
 
@@ -1085,4 +1114,6 @@ export const convertToProjectFormat = async (
     manifest,
     selectedProjectFilename
   );
+
+  await generateHelperForTool('el-x-koine',sourceProjectPath,selectedProjectFilename)
 };

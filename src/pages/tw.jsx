@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { groupDataHelpers } from "word-aligner-lib";
 import { Box } from "@mui/material";
+import { toJSON } from "usfm-js";
 import { fsGetRust, fsWriteRust, fsExistsRust } from "../js/creatProject";
 // Load sample data from fixtures
 const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
@@ -57,17 +58,16 @@ const saveSettings = (settings) => {
 // Callback for when checking data changes
 const saveCheckingData = (newState) => {
   const selections = newState && newState.selections;
-  console.log(`saveCheckingData - new selections`, selections);
+  console.log(`saveCheckingData - new selections`, newState);
   const currentContextId = newState && newState.currentContextId;
-  console.log(`saveCheckingData - current context data`, currentContextId);
 };
 let IMPORTS_PATH = "burrito/ingredient/raw/_local_/_local_/bsb_tcchecks?ipath=";
 
-console.log("CheckerTN.md - startup");
+const changedCurrentCheck = (newContext) => {
+  console.log(newContext);
+};
 export const getBookFromName = async (nameArr, book) => {
-  console.log(IMPORTS_PATH + `${nameArr}/${book}`);
   const all_part = await fsGetRust(IMPORTS_PATH, `${nameArr}/${book}`);
-  console.log(all_part);
   const json = {};
 
   for (const e of all_part) {
@@ -78,18 +78,21 @@ export const getBookFromName = async (nameArr, book) => {
     }
   }
 
-  json["manifest"] = {
+
+  json["manifest"] = JSON.parse(await fsGetRust(IMPORTS_PATH,`${nameArr}/manifest.json`))
+  // if(json["manifest"]["source_translation"]){
+     json["manifest"] = {
     language_id: "en",
     language_name: "English",
     direction: "ltr",
     resource_id: "targetLanguage",
     description: "Target Language",
-  };
+
+  }
   return json;
 };
 
 export const getResourcesFrom = async (nameArr, book) => {
-  console.log(IMPORTS_PATH + ``);
   const all_part = await fsGetRust(
     IMPORTS_PATH,
     `${nameArr}/translationHelps/translationWords`
@@ -125,7 +128,6 @@ export const getResourcesFrom = async (nameArr, book) => {
   return json;
 };
 export const getglTwData = async (nameArr, book) => {
-  console.log(IMPORTS_PATH + ``);
   const all_part = await fsGetRust(
     IMPORTS_PATH,
     `${nameArr}/translationHelps/translationWords`
@@ -144,16 +146,19 @@ export const getglTwData = async (nameArr, book) => {
     );
     for (const e of folder) {
       if (!e.includes("headers")) {
-        json[t]["articles"][e.split(".")[0]] = await fsGetRust(
+        let p = await fsGetRust(
           IMPORTS_PATH,
           `${nameArr}/translationHelps/translationWords/${version}/${t}/articles/${e}`
         );
+        json[t]["articles"][e.split(".")[0]] = p;
       }
     }
-    json[t]["index"] = JSON.parse(await fsGetRust(
-      IMPORTS_PATH,
-      `${nameArr}/translationHelps/translationWords/${version}/${t}/index.json`
-    ))
+    json[t]["index"] = JSON.parse(
+      await fsGetRust(
+        IMPORTS_PATH,
+        `${nameArr}/translationHelps/translationWords/${version}/${t}/index.json`
+      )
+    );
   }
 
   json["manifest"] = await fsGetRust(
@@ -163,38 +168,81 @@ export const getglTwData = async (nameArr, book) => {
   return json;
 };
 
-const TwChecker = () => {
+export const getCheckingData = async (nameArr, book) => {
+  let path = `${nameArr}/apps/translationCore/index/TranslationWords/${book}/`;
+
+  const json = {
+    kt: { groups: {} },
+    names: { groups: {} },
+    other: { groups: {} },
+  };
+  const things = ["kt.json", "names.json", "other.json"];
+
+  for (const t of things) {
+    const folder = await fsGetRust(IMPORTS_PATH, path + "categoryIndex/" + t);
+    for (const e of folder) {
+      if (!e.includes("headers")) {
+        json[t]["articles"][e.split(".")[0]] = await fsGetRust(
+          IMPORTS_PATH,
+          path + e
+        );
+      }
+    }
+  }
+  return json;
+};
+const changeCurrentVerse = (
+  chapter,
+  verse,
+  newVerseText,
+  targetVerseObjects
+) => {
+  console.log(chapter, verse, newVerseText, targetVerseObjects);
+};
+const contextId_ = {
+  checkId: "sy96",
+  occurrenceNote: "",
+  reference: {
+    bookId: "tit",
+    chapter: 3,
+    verse: 13,
+  },
+  tool: "translationWords",
+  groupId: "apollos",
+  quote: "Ἀπολλῶν",
+  quoteString: "Ἀπολλῶν",
+  glQuote: "",
+  occurrence: 1,
+};
+const TwChecker = (name) => {
   const [targetBible, setTargetBible] = useState(0);
+  const [contextId, setCcontextId] = useState(contextId_);
   const [bibles, setBibles] = useState();
   const [elbibles, setElBibles] = useState();
   const [comp, setComp] = useState();
   const [glTw, setGlTw] = useState();
   const [glTwData, setGlTwData] = useState();
   const [checkingData, setCheckingData] = useState();
-  let name = "en_bsb_tit_book";
+  const [ugntBible, setUgntBible] = useState();
+
   let book = name.split("_")[2];
+
   useEffect(() => {
     async function loadlexicon() {
       const gl = await getglTwData("en", book);
       setGlTwData(gl);
     }
     loadlexicon();
-  }, []);
-  console.log(glTwData)
-  useEffect(() => {
     async function loadRessources() {
       const gl = await getResourcesFrom("el-x-koine", book);
       setGlTw(gl);
     }
     loadRessources();
-  }, []);
-  useEffect(() => {
-    if (glTw) {
-      setCheckingData(groupDataHelpers.extractGroupData(glTw));
+    async function loadCheckingData() {
+      const gl = await getCheckingData("book_projects/en_bsb_tit_book", book);
+      setCheckingData(groupDataHelpers.extractGroupData(gl));
     }
-  }, [glTw]);
-
-  useEffect(() => {
+    loadCheckingData();
     async function loadBible() {
       const bible = await getBookFromName("book_projects/" + name, book);
       setTargetBible(bible);
@@ -205,8 +253,19 @@ const TwChecker = () => {
       setElBibles(el);
     }
     loadBible();
+    async function ugntBibleLoad(){
+      const ugntBible = await getBookFromName("en/bibles/ult/v85.1_unfoldingWord", book);
+      setUgntBible(ugntBible)
+    }
+    ugntBibleLoad()
   }, []);
 
+  useEffect(() => {
+    if (glTw) {
+      setCheckingData(groupDataHelpers.extractGroupData(glTw));
+    }
+  }, [glTw]); 
+  console.log(bibles)
   useEffect(() => {
     setBibles([
       {
@@ -216,7 +275,7 @@ const TwChecker = () => {
         owner: "unfoldingWord",
       },
       {
-        book: enGlBible,
+        book: ugntBible,
         languageId: "en",
         bibleId: "ult",
         owner: "unfoldingWord",
@@ -228,23 +287,7 @@ const TwChecker = () => {
         owner: "unfoldingWord",
       },
     ]);
-  }, [targetBible, elbibles]);
-
-  const contextId_ = {
-    checkId: "sy96",
-    occurrenceNote: "",
-    reference: {
-      bookId: "tit",
-      chapter: 3,
-      verse: 13,
-    },
-    tool: "translationWords",
-    groupId: "apollos",
-    quote: "Ἀπολλῶν",
-    quoteString: "Ἀπολλῶν",
-    glQuote: "",
-    occurrence: 1,
-  };
+  }, [targetBible, elbibles, ugntBible]);
 
   // Target language metadata
   const targetLanguageDetails = {
@@ -258,7 +301,6 @@ const TwChecker = () => {
       name: bookName,
     },
   };
-  console.log(targetBible);
   useEffect(() => {
     if (bibles && targetBible && glTwData && checkingData) {
       setComp(
@@ -269,14 +311,16 @@ const TwChecker = () => {
             overflowX: "scroll",
             overflowY: "auto",
           }}
-          // bibles={bibles}
+          bibles={bibles}
           checkingData={checkingData}
           checkType={checkingTranslationWords}
           // checkType={translationNotes}
-          contextId={contextId_}
+          contextId={contextId}
           getLexiconData={getLexiconData_}
+          changeTargetVerse={changeCurrentVerse}
           glWordsData={glTwData}
           //   glWordsData={glTaData}
+          changedCurrentCheck={changedCurrentCheck}
           saveCheckingData={saveCheckingData}
           saveSettings={saveSettings}
           showDocument={showDocument}
@@ -286,21 +330,16 @@ const TwChecker = () => {
         />
       );
     }
-  }, [targetBible, bibles, glTwData, checkingData]);
+  }, [targetBible, bibles, glTwData, checkingData, contextId]);
   // State management for current context
-  const [contextId, setCcontextId] = useState(contextId_);
-
   // Lexicon lookup
   const getLexiconData_ = (lexiconId, entryId) => {
-    console.log(`loadLexiconEntry(${lexiconId}, ${entryId})`);
     const entryData =
       LexiconData && LexiconData[lexiconId]
         ? LexiconData[lexiconId][entryId]
         : null;
     return { [lexiconId]: { [entryId]: entryData } };
   };
-  console.log(bibles);
-  console.log(targetBible);
   return <div className="page">{comp}</div>;
 };
 
