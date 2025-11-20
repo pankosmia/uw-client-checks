@@ -4,6 +4,7 @@ import { groupDataHelpers } from "word-aligner-lib";
 import { Box } from "@mui/material";
 import { toJSON } from "usfm-js";
 import { fsGetRust, fsWriteRust, fsExistsRust } from "../js/creatProject";
+import { useLocation } from "react-router-dom";
 // Load sample data from fixtures
 const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 
@@ -214,7 +215,7 @@ const contextId_ = {
   glQuote: "",
   occurrence: 1,
 };
-const TwChecker = (name) => {
+const TwChecker = () => {
   const [targetBible, setTargetBible] = useState(0);
   const [contextId, setCcontextId] = useState(contextId_);
   const [bibles, setBibles] = useState();
@@ -224,7 +225,8 @@ const TwChecker = (name) => {
   const [glTwData, setGlTwData] = useState();
   const [checkingData, setCheckingData] = useState();
   const [ugntBible, setUgntBible] = useState();
-
+ const { state } = useLocation();
+  const name = state?.name;  // ← your passed value
   let book = name.split("_")[2];
 
   useEffect(() => {
