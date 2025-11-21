@@ -3,11 +3,10 @@ import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { groupDataHelpers } from "word-aligner-lib";
 import { Box } from "@mui/material";
 import { toJSON } from "usfm-js";
-import { fsGetRust, fsWriteRust, fsExistsRust } from "../js/creatProject";
+import { fsGetRust, fsWriteRust, fsExistsRust } from "../js/serverUtils";
 import { useLocation } from "react-router-dom";
 // Load sample data from fixtures
 const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
-
 const translations = require("../uwSrc/locales/English-en_US.json");
 
 // const glTn = require("../uwSrc/__tests__/fixtures/translationNotes/enTn_1JN.json");
@@ -16,9 +15,8 @@ const translations = require("../uwSrc/locales/English-en_US.json");
 // const glTaData = require("../uwSrc/__tests__/fixtures/translationAcademy/en_ta.json");
 // const glTwData = require("../uwSrc/__tests__/fixtures/translationWords/en_tw.json");
 // const targetBible = require("../uwSrc/__tests__/fixtures/bibles/1jn/targetBible.json");
-// console.log("target", targetBible);
-const ugntBible = require("../uwSrc/__tests__/fixtures/bibles/1jn/ugntBible.json");
-const enGlBible = require("../uwSrc/__tests__/fixtures/bibles/1jn/enGlBible.json");
+// const ugntBible = require("../uwSrc/__tests__/fixtures/bibles/1jn/ugntBible.json");
+// const enGlBible = require("../uwSrc/__tests__/fixtures/bibles/1jn/enGlBible.json");
 // Extract checking data from the translation notes
 // const checkingData = groupDataHelpers.extractGroupData(glTn)
 
@@ -67,35 +65,33 @@ let IMPORTS_PATH = "burrito/ingredient/raw/_local_/_local_/bsb_tcchecks?ipath=";
 const changedCurrentCheck = (newContext) => {
   console.log(newContext);
 };
-export const getBookFromName = async (nameArr, book) => {
-  const all_part = await fsGetRust(IMPORTS_PATH, `${nameArr}/${book}`);
+export const getBookFromName = async (repoPath, nameArr, book) => {
+  const all_part = await fsGetRust(repoPath, `${nameArr}/${book}`);
   const json = {};
 
   for (const e of all_part) {
     if (!e.includes("headers")) {
-      json[e.split(".")[0]] = JSON.parse(
-        await fsGetRust(IMPORTS_PATH, `${nameArr}/${book}/${e}`)
-      );
+      json[e.split(".")[0]] = await fsGetRust(repoPath, `${nameArr}/${book}/${e}`)
+      
     }
   }
 
+  json["manifest"] = await fsGetRust(repoPath, `${nameArr}/manifest.json`)
 
-  json["manifest"] = JSON.parse(await fsGetRust(IMPORTS_PATH,`${nameArr}/manifest.json`))
   // if(json["manifest"]["source_translation"]){
-     json["manifest"] = {
+  json["manifest"] = {
     language_id: "en",
     language_name: "English",
     direction: "ltr",
     resource_id: "targetLanguage",
     description: "Target Language",
-
-  }
+  };
   return json;
 };
 
-export const getResourcesFrom = async (nameArr, book) => {
+export const getResourcesFrom = async (repoName, nameArr, book) => {
   const all_part = await fsGetRust(
-    IMPORTS_PATH,
+    repoName,
     `${nameArr}/translationHelps/translationWords`
   );
   const version = all_part[0];
@@ -107,30 +103,29 @@ export const getResourcesFrom = async (nameArr, book) => {
   const things = ["kt", "names", "other"];
   for (const t of things) {
     const folder = await fsGetRust(
-      IMPORTS_PATH,
+      repoName,
       `${nameArr}/translationHelps/translationWords/${version}/${t}/groups/${book}`
     );
     for (const e of folder) {
       if (!e.includes("headers")) {
-        json[t]["groups"][e.split(".")[0]] = JSON.parse(
-          await fsGetRust(
-            IMPORTS_PATH,
+        json[t]["groups"][e.split(".")[0]] = await fsGetRust(
+            repoName,
             `${nameArr}/translationHelps/translationWords/${version}/${t}/groups/${book}/${e}`
-          )
+          
         );
       }
     }
   }
 
   json["manifest"] = await fsGetRust(
-    IMPORTS_PATH,
+    repoName,
     `${nameArr}/translationHelps/translationWords/${version}/manifest.json`
   );
   return json;
 };
-export const getglTwData = async (nameArr, book) => {
+export const getglTwData = async (repoName, nameArr, book) => {
   const all_part = await fsGetRust(
-    IMPORTS_PATH,
+    repoName,
     `${nameArr}/translationHelps/translationWords`
   );
   const version = all_part[0];
@@ -142,34 +137,33 @@ export const getglTwData = async (nameArr, book) => {
   const things = ["kt", "names", "other"];
   for (const t of things) {
     const folder = await fsGetRust(
-      IMPORTS_PATH,
+      repoName,
       `${nameArr}/translationHelps/translationWords/${version}/${t}/articles`
     );
     for (const e of folder) {
       if (!e.includes("headers")) {
         let p = await fsGetRust(
-          IMPORTS_PATH,
+          repoName,
           `${nameArr}/translationHelps/translationWords/${version}/${t}/articles/${e}`
         );
         json[t]["articles"][e.split(".")[0]] = p;
       }
     }
-    json[t]["index"] = JSON.parse(
-      await fsGetRust(
-        IMPORTS_PATH,
+    json[t]["index"] = await fsGetRust(
+        repoName,
         `${nameArr}/translationHelps/translationWords/${version}/${t}/index.json`
-      )
+      
     );
   }
 
   json["manifest"] = await fsGetRust(
-    IMPORTS_PATH,
+    repoName,
     `${nameArr}/translationHelps/translationWords/${version}/manifest.json`
   );
   return json;
 };
 
-export const getCheckingData = async (nameArr, book) => {
+export const getCheckingData = async (repoName, nameArr, book) => {
   let path = `${nameArr}/apps/translationCore/index/TranslationWords/${book}/`;
 
   const json = {
@@ -180,13 +174,16 @@ export const getCheckingData = async (nameArr, book) => {
   const things = ["kt.json", "names.json", "other.json"];
 
   for (const t of things) {
-    const folder = await fsGetRust(IMPORTS_PATH, path + "categoryIndex/" + t);
+    const folder = await fsGetRust(repoName, path + "categoryIndex/" + t);
     for (const e of folder) {
       if (!e.includes("headers")) {
-        json[t]["articles"][e.split(".")[0]] = await fsGetRust(
-          IMPORTS_PATH,
-          path + e
-        );
+        let arr = e.split(".");
+        if (arr.length > 1) {
+          json[t.split('.')[0]]["groups"][e.split(".")[0]] = await fsGetRust(
+            repoName,
+            path + e
+          );
+        }
       }
     }
   }
@@ -225,49 +222,64 @@ const TwChecker = () => {
   const [glTwData, setGlTwData] = useState();
   const [checkingData, setCheckingData] = useState();
   const [ugntBible, setUgntBible] = useState();
- const { state } = useLocation();
-  const name = state?.name;  // ← your passed value
-  let book = name.split("_")[2];
+  const { state } = useLocation();
+
+  const tCoreName = state?.tCoreName; // ← your passed value
+  const projectName = state?.projectName;
+  let book = tCoreName.split("_")[2];
 
   useEffect(() => {
     async function loadlexicon() {
-      const gl = await getglTwData("en", book);
+      const gl = await getglTwData("Resources", "en", book);
       setGlTwData(gl);
     }
     loadlexicon();
     async function loadRessources() {
-      const gl = await getResourcesFrom("el-x-koine", book);
+      const gl = await getResourcesFrom("Resources", "el-x-koine", book);
       setGlTw(gl);
     }
     loadRessources();
     async function loadCheckingData() {
-      const gl = await getCheckingData("book_projects/en_bsb_tit_book", book);
+      const gl = await getCheckingData(
+        projectName,
+        `book_projects/${tCoreName}`,
+        book
+      );
       setCheckingData(groupDataHelpers.extractGroupData(gl));
     }
     loadCheckingData();
     async function loadBible() {
-      const bible = await getBookFromName("book_projects/" + name, book);
+      const bible = await getBookFromName(
+        projectName,
+        "book_projects/" + tCoreName,
+        book
+      );
       setTargetBible(bible);
       const el = await getBookFromName(
+        "Resources",
         "el-x-koine/bibles/ugnt/v0.34_unfoldingWord",
         book
       );
       setElBibles(el);
     }
     loadBible();
-    async function ugntBibleLoad(){
-      const ugntBible = await getBookFromName("en/bibles/ult/v85.1_unfoldingWord", book);
-      setUgntBible(ugntBible)
+    async function ugntBibleLoad() {
+      const ugntBible = await getBookFromName(
+        "Resources",
+        "en/bibles/ult/v85.1_unfoldingWord",
+        book
+      );
+      setUgntBible(ugntBible);
     }
-    ugntBibleLoad()
+    ugntBibleLoad();
   }, []);
 
   useEffect(() => {
     if (glTw) {
       setCheckingData(groupDataHelpers.extractGroupData(glTw));
     }
-  }, [glTw]); 
-  console.log(bibles)
+  }, [glTw]);
+  console.log(bibles);
   useEffect(() => {
     setBibles([
       {

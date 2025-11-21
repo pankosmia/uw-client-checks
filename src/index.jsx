@@ -9,16 +9,14 @@ import {
 import TwChecker from "./pages/tw";
 import TnChecker from "./pages/tn";
 import WordAligner from "./wordAligner/WordAligner"
-import ToolsManagementContainer from "./pages/ToolsManagementContainer";
-import ReduxStateViewer from "./pages/ReduxStateViewer";
+// import ToolsManagementContainer from "./pages/ToolsManagementContainer";
+// import ReduxStateViewer from "./pages/ReduxStateViewer";
 import { doI18n,i18nContext } from 'pithekos-lib';
 import { useContext } from 'react';
 
 import Main from "./pages/main";
 import SpaContainer from "pithekos-lib/dist/components/SpaContainer";
 import "./index.css";
-import { Provider } from "react-redux";
-import store from "./store";
 import { Header } from "pithekos-lib";
 import SelectBook from "./pages/SelectBook";
 
@@ -29,7 +27,6 @@ function TabButtons() {
 
   const tabs = [
     { name: "Main", path: "/" },
-    { name: "ReduxStateViewer", path: "/" },
     { name: "TN Checker", path: "TnChecker" },
     { name: "TW Checker", path: "TwChecker" },
   ];
@@ -81,25 +78,18 @@ const router = createHashRouter([
     path: "/",
     element: <AppLayout />,
     children: [
-      {
-        path: "ToolsManagementContainer",
-        element: <ToolsManagementContainer   translate={(key) => key} 
-/>,
-      },
-      { path: "/", element: <ReduxStateViewer /> },
+
       { path: "TnChecker/*", element: <TnChecker /> },
       { path: "SelectBook/:name", element: <SelectBook /> }, // <-- NEW ROUTE
       { path: "TwChecker/*", element: <TwChecker /> },
-      { path: "WordAligner/*", element: <WordAligner /> },
+      { path: "/", element: <WordAligner /> },
 
     ],
   },
 ]);
 
 createRoot(document.getElementById("root")).render(
-  <Provider store={store}>
     <SpaContainer>
       <RouterProvider router={router} />
     </SpaContainer>
-  </Provider>
 );

@@ -40,13 +40,10 @@ export default function SelectBook() {
   function find_manifest(path) {
     return tree.includes(`${path}/manifest.json`);
   }
-  const handleTryConvert = async (path,book) => {
-      const sourceProjectPath =
-        `burrito/ingredient/raw/_local_/_local_/${name}?ipath=book_projects/${path}/`;
-      const selectedProjectFilename = book;
-  
+  const handleTryConvert = async (sourceProjectPath,selectedProjectFilename) => {
+      
       try {
-        await convertToProjectFormat(sourceProjectPath, selectedProjectFilename);
+        await convertToProjectFormat(sourceProjectPath, "book_projects/"+selectedProjectFilename+'/');
         fetchData()        
       } catch (error) {
         console.error("❌ Conversion failed:", error);
@@ -83,9 +80,9 @@ export default function SelectBook() {
       renderCell: (params) => {
         // params.row.actions is just a string or boolean
         const hasManifest = params.row.actions; // true/false
-        return hasManifest ? <Button variant="contained" onClick={() => navigate("/TwChecker",{ state: { name:  params.row.path} })}>TranslationWords</Button> : <Button
+        return hasManifest ? <Button variant="contained" onClick={() => navigate("/TwChecker",{ state: { tCoreName:  params.row.tCoreName, projectName: params.row.projectName} })}>TranslationWords</Button> : <Button
         variant="contained"
-        onClick={() => handleTryConvert(params.row.path,`${params.row.name}.usfm`)}
+        onClick={() => handleTryConvert(params.row.projectName,params.row.tCoreName)}
         >isnot</Button>;
       },
     },
@@ -97,6 +94,8 @@ export default function SelectBook() {
         const splitname = rep.split("_");
         return {
           id: n,
+          tCoreName:rep,
+          projectName:name,
           name: splitname[2],
           language: splitname[0],
           actions: find_manifest(rep),
