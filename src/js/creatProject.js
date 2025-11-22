@@ -5,7 +5,6 @@ import _ from "lodash";
 // constants
 import * as Bible from "../common/BooksOfTheBible";
 import usfm from "usfm-js";
-import { verseHelpers } from "tc-ui-toolkit";
 import wordaligner from "word-aligner";
 import { fsExistsRust, fsWriteRust, fsGetRust } from "./serverUtils";
 import { IMPORTS_PATH, USER_RESOURCES_PATH } from "../common/constants";
@@ -164,7 +163,19 @@ export function convertAlignmentFromVerseToVerseSpanSub(
   }
   return bibleVerse;
 }
+export function getVerseSpanRange(verseSpan) {
+  let [low, high] = verseSpan.split('-');
 
+  if (low && high) {
+    low = parseInt(low, 10);
+    high = parseInt(high, 10);
+
+    if ((low > 0) && (high >= low)) {
+      return { low, high };
+    }
+  }
+  return {};
+}
 /**
  * generate blank alignments for all the verses in a verse span
  * @param {string} verseSpan
@@ -177,7 +188,7 @@ export function getRawAlignmentsForVerseSpan(
   origLangChapterJson,
   blankVerseAlignments
 ) {
-  const { low, high } = verseHelpers.getVerseSpanRange(verseSpan);
+  const { low, high } = getVerseSpanRange(verseSpan);
 
   // generate raw alignment data for each verse in range
   for (let verse = low; verse <= high; verse++) {
@@ -870,16 +881,16 @@ export function getParsedUSFM(usfmData) {
 const generateHelperForTool = async (
   helperFolderName,
   sourceProjectPath,
-  selectedProjectFilename
+  selectedProjectFilename,
+  typeOfTools
 ) => {
   let book = getBookFromProjectFileName(selectedProjectFilename)
-  let path = join(helperFolderName, "translationHelps", "translationWords");
+  let path = join(helperFolderName, "translationHelps", typeOfTools);
   let version = (await fsGetRust(sourceProjectPath, path))[0];
   path = join(path, version);
   let categories = (await fsGetRust(sourceProjectPath, path)).filter(
     (e) => !e.includes(".json")
   );
-  console.log(categories);
   for (let i = 0; i < categories.length; i++) {
     let newPath = join(
       path,
@@ -894,7 +905,7 @@ const generateHelperForTool = async (
         "apps",
         "translationCore",
         "index",
-        "TranslationWords",
+        typeOfTools,
         book,
         "categoryIndex",
         categories[i] + ".json"
@@ -909,7 +920,7 @@ const generateHelperForTool = async (
           "apps",
           "translationCore",
           "index",
-          "TranslationWords",
+          typeOfTools,
           book,
           index[p]
         ),
@@ -956,7 +967,6 @@ export const verifyIsValidUsfmFile = async (
   sourceProjectPath,
   selectedProjectFilename
 ) => {
-  console.log(selectedProjectFilename)
   const usfmName = getBookFromProjectFileName(selectedProjectFilename)+".usfm"
   const usfmData = await loadUSFMFileAsync(
     sourceProjectPath,
@@ -1069,6 +1079,13 @@ export const convertToProjectFormat = async (
   await generateHelperForTool(
     "el-x-koine",
     sourceProjectPath,
-    selectedProjectFilename
+    selectedProjectFilename,
+    "translationWords"
+  );
+   await generateHelperForTool(
+    "en",
+    sourceProjectPath,
+    selectedProjectFilename,
+    "translationNotes"
   );
 };

@@ -1,5 +1,4 @@
 import { useContext, useState, useCallback, useEffect } from 'react';
-import { Grid2 } from "@mui/material";
 import { i18nContext, doI18n } from "pithekos-lib";
 import { getBookFromName } from '../pages/tw';
 import SuggestingWordAligner from "./components/SuggestingWordAligner";
@@ -111,8 +110,8 @@ function WordAligner() {
         console.log(`Alignments are ${alignmentComplete ? 'COMPLETE!' : 'incomplete'}`);
     }
 
-  return <Grid2 container spacing={2} sx={{ maxHeight: maxWindowHeight }}>
-      <Grid2 size={12}>
+  return <div>
+      <div size={12}>
           <SuggestingWordAligner
               contextId={contextId}
               suggestionsOnly={suggestionsOnly}
@@ -129,8 +128,8 @@ function WordAligner() {
               targetWords={targetWords}
 
           />
-      </Grid2>
-  </Grid2>
+      </div>
+  </div>
 }
 
 export default WordAligner;

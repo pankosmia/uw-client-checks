@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { groupDataHelpers } from "word-aligner-lib";
-import { Box } from "@mui/material";
-import { toJSON } from "usfm-js";
 import { fsGetRust, fsWriteRust, fsExistsRust } from "../js/serverUtils";
 import { useLocation } from "react-router-dom";
+
 // Load sample data from fixtures
 const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 const translations = require("../uwSrc/locales/English-en_US.json");
@@ -55,12 +54,6 @@ const saveSettings = (settings) => {
 };
 
 // Callback for when checking data changes
-const saveCheckingData = (newState) => {
-  const selections = newState && newState.selections;
-  console.log(`saveCheckingData - new selections`, newState);
-  const currentContextId = newState && newState.currentContextId;
-};
-let IMPORTS_PATH = "burrito/ingredient/raw/_local_/_local_/bsb_tcchecks?ipath=";
 
 const changedCurrentCheck = (newContext) => {
   console.log(newContext);
@@ -71,12 +64,14 @@ export const getBookFromName = async (repoPath, nameArr, book) => {
 
   for (const e of all_part) {
     if (!e.includes("headers")) {
-      json[e.split(".")[0]] = await fsGetRust(repoPath, `${nameArr}/${book}/${e}`)
-      
+      json[e.split(".")[0]] = await fsGetRust(
+        repoPath,
+        `${nameArr}/${book}/${e}`
+      );
     }
   }
 
-  json["manifest"] = await fsGetRust(repoPath, `${nameArr}/manifest.json`)
+  json["manifest"] = await fsGetRust(repoPath, `${nameArr}/manifest.json`);
 
   // if(json["manifest"]["source_translation"]){
   json["manifest"] = {
@@ -109,9 +104,8 @@ export const getResourcesFrom = async (repoName, nameArr, book) => {
     for (const e of folder) {
       if (!e.includes("headers")) {
         json[t]["groups"][e.split(".")[0]] = await fsGetRust(
-            repoName,
-            `${nameArr}/translationHelps/translationWords/${version}/${t}/groups/${book}/${e}`
-          
+          repoName,
+          `${nameArr}/translationHelps/translationWords/${version}/${t}/groups/${book}/${e}`
         );
       }
     }
@@ -150,9 +144,8 @@ export const getglTwData = async (repoName, nameArr, book) => {
       }
     }
     json[t]["index"] = await fsGetRust(
-        repoName,
-        `${nameArr}/translationHelps/translationWords/${version}/${t}/index.json`
-      
+      repoName,
+      `${nameArr}/translationHelps/translationWords/${version}/${t}/index.json`
     );
   }
 
@@ -164,7 +157,7 @@ export const getglTwData = async (repoName, nameArr, book) => {
 };
 
 export const getCheckingData = async (repoName, nameArr, book) => {
-  let path = `${nameArr}/apps/translationCore/index/TranslationWords/${book}/`;
+  let path = `${nameArr}/apps/translationCore/index/translationWords/${book}/`;
 
   const json = {
     kt: { groups: {} },
@@ -179,7 +172,7 @@ export const getCheckingData = async (repoName, nameArr, book) => {
       if (!e.includes("headers")) {
         let arr = e.split(".");
         if (arr.length > 1) {
-          json[t.split('.')[0]]["groups"][e.split(".")[0]] = await fsGetRust(
+          json[t.split(".")[0]]["groups"][e.split(".")[0]] = await fsGetRust(
             repoName,
             path + e
           );
@@ -213,111 +206,177 @@ const contextId_ = {
   occurrence: 1,
 };
 const TwChecker = () => {
-  const [targetBible, setTargetBible] = useState(0);
-  const [contextId, setCcontextId] = useState(contextId_);
-  const [bibles, setBibles] = useState();
-  const [elbibles, setElBibles] = useState();
-  const [comp, setComp] = useState();
+  const [targetBible, setTargetBible] = useState();
+  const [contextId, setContextId] = useState(contextId_);
+  const [bibles, setBibles] = useState([]);
+  const [elBibles, setElBibles] = useState();
   const [glTw, setGlTw] = useState();
   const [glTwData, setGlTwData] = useState();
   const [checkingData, setCheckingData] = useState();
   const [ugntBible, setUgntBible] = useState();
+
   const { state } = useLocation();
-
-  const tCoreName = state?.tCoreName; // ← your passed value
+  const tCoreName = state?.tCoreName;
   const projectName = state?.projectName;
-  let book = tCoreName.split("_")[2];
 
-  useEffect(() => {
-    async function loadlexicon() {
-      const gl = await getglTwData("Resources", "en", book);
-      setGlTwData(gl);
-    }
-    loadlexicon();
-    async function loadRessources() {
-      const gl = await getResourcesFrom("Resources", "el-x-koine", book);
-      setGlTw(gl);
-    }
-    loadRessources();
-    async function loadCheckingData() {
-      const gl = await getCheckingData(
-        projectName,
-        `book_projects/${tCoreName}`,
-        book
-      );
-      setCheckingData(groupDataHelpers.extractGroupData(gl));
-    }
-    loadCheckingData();
-    async function loadBible() {
-      const bible = await getBookFromName(
-        projectName,
-        "book_projects/" + tCoreName,
-        book
-      );
-      setTargetBible(bible);
-      const el = await getBookFromName(
-        "Resources",
-        "el-x-koine/bibles/ugnt/v0.34_unfoldingWord",
-        book
-      );
-      setElBibles(el);
-    }
-    loadBible();
-    async function ugntBibleLoad() {
-      const ugntBible = await getBookFromName(
-        "Resources",
-        "en/bibles/ult/v85.1_unfoldingWord",
-        book
-      );
-      setUgntBible(ugntBible);
-    }
-    ugntBibleLoad();
-  }, []);
+  const book = useMemo(() => tCoreName?.split("_")[2], [tCoreName]);
 
-  useEffect(() => {
-    if (glTw) {
-      setCheckingData(groupDataHelpers.extractGroupData(glTw));
-    }
-  }, [glTw]);
-  console.log(bibles);
-  useEffect(() => {
-    setBibles([
-      {
-        book: targetBible,
-        languageId: "targetLanguage",
-        bibleId: "targetBible",
-        owner: "unfoldingWord",
-      },
-      {
-        book: ugntBible,
-        languageId: "en",
-        bibleId: "ult",
-        owner: "unfoldingWord",
-      },
-      {
-        book: elbibles,
-        languageId: "el-x-koine",
-        bibleId: "ugnt",
-        owner: "unfoldingWord",
-      },
-    ]);
-  }, [targetBible, elbibles, ugntBible]);
+  const saveCheckingData = async (newState) => {
+    // console.log(`saveCheckingData - new selections`, newState);
+    // let data = newState.currentCheck;
+    // let index = data.contextId.groupId;
+    // let json2 = await fsGetRust(
+    //   projectName,
+    //   `book_projects/${tCoreName}/apps/translationCore/index/translationWords/${book}/${index}.json`
+    // );
 
-  // Target language metadata
-  const targetLanguageDetails = {
-    id: targetLanguageId,
-    name: targetLanguageName,
-    direction: targetLanguageDirection,
-    gatewayLanguageId,
-    gatewayLanguageOwner,
-    book: {
-      id: bookId,
-      name: bookName,
-    },
+    // // Ensure it's an array with at least 1 item
+    // if (!Array.isArray(json2) || json2.length === 0) {
+    //   json2 = [{}];
+    // }
+
+    // const current = json2[0]; // the actual object stored in the file
+
+    // const updates = {
+    //   verseEdits: data.verseEdits,
+    //   contextId: data.contextId,
+    //   selections: data.selections,
+    //   comment: data.comment,
+    //   nothingToSelect: data.nothingToSelect,
+    //   reminders: data.reminders,
+    //   invalidated:false
+    // };
+
+    // // Merge into the inner object
+    // json2[0] = {
+    //   ...current,
+    //   ...updates,
+    // };
+
+    // await fsWriteRust(
+    //   projectName,
+    //   `book_projects/${tCoreName}/apps/translationCore/index/translationWords/${book}/${index}.json`,
+    //   json2
+    // );
   };
+  // Load all required data concurrently
   useEffect(() => {
-    if (bibles && targetBible && glTwData && checkingData) {
-      setComp(
+    if (!book) return;
+
+    const loadAll = async () => {
+      const [
+        glTwDataRes,
+        glTwRes,
+        checkingRes,
+        targetBibleRes,
+        elBibleRes,
+        ugntBibleRes,
+      ] = await Promise.all([
+        getglTwData("Resources", "en", book),
+        getResourcesFrom("Resources", "el-x-koine", book),
+        getCheckingData(projectName, `book_projects/${tCoreName}`, book),
+        getBookFromName(projectName, `book_projects/${tCoreName}`, book),
+        getBookFromName(
+          "Resources",
+          "el-x-koine/bibles/ugnt/v0.34_unfoldingWord",
+          book
+        ),
+        getBookFromName("Resources", "en/bibles/ult/v85.1_unfoldingWord", book),
+      ]);
+
+      setGlTwData(glTwDataRes);
+      setGlTw(glTwRes);
+      setCheckingData(groupDataHelpers.extractGroupData(checkingRes));
+      setTargetBible(targetBibleRes);
+      setElBibles(elBibleRes);
+      setUgntBible(ugntBibleRes);
+    };
+
+    loadAll();
+  }, [book, projectName, tCoreName]);
+
+  // Build unified bibles list when dependencies update
+  useEffect(() => {
+    if (targetBible && elBibles && ugntBible) {
+      setBibles([
+        {
+          book: targetBible,
+          languageId: "targetLanguage",
+          bibleId: "targetBible",
+          owner: "unfoldingWord",
+        },
+        {
+          book: ugntBible,
+          languageId: "en",
+          bibleId: "ult",
+          owner: "unfoldingWord",
+        },
+        {
+          book: elBibles,
+          languageId: "el-x-koine",
+          bibleId: "ugnt",
+          owner: "unfoldingWord",
+        },
+      ]);
+    }
+  }, [targetBible, elBibles, ugntBible]);
+
+  // Derived object — useMemo prevents rebuilding on every render
+  const targetLanguageDetails = useMemo(
+    () => ({
+      id: targetLanguageId,
+      name: targetLanguageName,
+      direction: targetLanguageDirection,
+      gatewayLanguageId,
+      gatewayLanguageOwner,
+      book: {
+        id: bookId,
+        name: bookName,
+      },
+    }),
+    []
+  );
+
+  const getLexiconData_ = (lexiconId, entryId) => {
+    const entryData = LexiconData?.[lexiconId]?.[entryId] || null;
+    return { [lexiconId]: { [entryId]: entryData } };
+  };
+  console.log(targetBible)
+  const ready =
+    Array.isArray(bibles) &&
+    bibles.length === 3 &&
+    targetBible != null &&
+    elBibles != null &&
+    ugntBible != null &&
+    glTwData != null &&
+    checkingData != null &&
+    contextId != null;
+
+  // if(ready){
+  //   let verse = targetBible[2][12]
+  //   console.log(verse)
+  //   console.log(checkingData)
+  //   let flattenedGroupData = groupDataHelpers.flattenGroupData(checkingData)
+  //   console.log(flattenedGroupData)
+  //   let check = checkingData['other']['age']
+  //   let text = getVerseText(targetBible,check[0].contextId)
+  //   console.log(text)
+  //   let rm = removeMarker(text)
+  //   console.log(JSON.stringify(rm))
+  //   console.log(check)
+  //   let test = selectionsHelpers.validateVerseSelections(rm,check[0].selections)
+  //   console.log(test)
+  //   let test2 = selectionsHelpers.validateSelectionsForAllChecks(targetBible, flattenedGroupData, (check, invalidated) => {
+  //       if (check) {
+  //         console.log(`tes2n changed`, check, invalidated)
+  //       }
+  //     })
+  // }
+  return (
+    <div className="page">
+      {!ready && <div>Loading translation checker…</div>}
+
+      {ready && (
         <Checker
           styles={{
             width: "100%",
@@ -328,12 +387,10 @@ const TwChecker = () => {
           bibles={bibles}
           checkingData={checkingData}
           checkType={checkingTranslationWords}
-          // checkType={translationNotes}
           contextId={contextId}
           getLexiconData={getLexiconData_}
           changeTargetVerse={changeCurrentVerse}
           glWordsData={glTwData}
-          //   glWordsData={glTaData}
           changedCurrentCheck={changedCurrentCheck}
           saveCheckingData={saveCheckingData}
           saveSettings={saveSettings}
@@ -342,19 +399,9 @@ const TwChecker = () => {
           targetLanguageDetails={targetLanguageDetails}
           translate={translate}
         />
-      );
-    }
-  }, [targetBible, bibles, glTwData, checkingData, contextId]);
-  // State management for current context
-  // Lexicon lookup
-  const getLexiconData_ = (lexiconId, entryId) => {
-    const entryData =
-      LexiconData && LexiconData[lexiconId]
-        ? LexiconData[lexiconId][entryId]
-        : null;
-    return { [lexiconId]: { [entryId]: entryData } };
-  };
-  return <div className="page">{comp}</div>;
+      )}
+    </div>
+  );
 };
 
 export default TwChecker;

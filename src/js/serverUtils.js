@@ -32,8 +32,8 @@ export async function fsGetRust(repoPath, ipath) {
         const firstPart = entry.split("/")[0];
         if (firstPart) inDirectory.add(firstPart);
       }
-
-      return Array.from(inDirectory);
+      let toBeReturn = Array.from(inDirectory).filter(p => !p.endsWith(".bak"))
+      return toBeReturn;
     } else {
       let url = getUrlForGetDocumentInProject(repoPath) + ipath;
       if (typeSearch[1].includes(".json")) {
