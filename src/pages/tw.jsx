@@ -222,42 +222,42 @@ const TwChecker = () => {
   const book = useMemo(() => tCoreName?.split("_")[2], [tCoreName]);
 
   const saveCheckingData = async (newState) => {
-    // console.log(`saveCheckingData - new selections`, newState);
-    // let data = newState.currentCheck;
-    // let index = data.contextId.groupId;
-    // let json2 = await fsGetRust(
-    //   projectName,
-    //   `book_projects/${tCoreName}/apps/translationCore/index/translationWords/${book}/${index}.json`
-    // );
+    console.log(`saveCheckingData - new selections`, newState);
+    let data = newState.currentCheck;
+    let index = data.contextId.groupId;
+    let json2 = await fsGetRust(
+      projectName,
+      `book_projects/${tCoreName}/apps/translationCore/index/translationWords/${book}/${index}.json`
+    );
 
-    // // Ensure it's an array with at least 1 item
-    // if (!Array.isArray(json2) || json2.length === 0) {
-    //   json2 = [{}];
-    // }
+    // Ensure it's an array with at least 1 item
+    if (!Array.isArray(json2) || json2.length === 0) {
+      json2 = [{}];
+    }
 
-    // const current = json2[0]; // the actual object stored in the file
+    const current = json2[0]; // the actual object stored in the file
 
-    // const updates = {
-    //   verseEdits: data.verseEdits,
-    //   contextId: data.contextId,
-    //   selections: data.selections,
-    //   comment: data.comment,
-    //   nothingToSelect: data.nothingToSelect,
-    //   reminders: data.reminders,
-    //   invalidated:false
-    // };
+    const updates = {
+      verseEdits: data.verseEdits,
+      contextId: data.contextId,
+      selections: data.selections,
+      comment: data.comment,
+      nothingToSelect: data.nothingToSelect,
+      reminders: data.reminders,
+      invalidated:data.invalidated
+    };
 
-    // // Merge into the inner object
-    // json2[0] = {
-    //   ...current,
-    //   ...updates,
-    // };
+    // Merge into the inner object
+    json2[0] = {
+      ...current,
+      ...updates,
+    };
 
-    // await fsWriteRust(
-    //   projectName,
-    //   `book_projects/${tCoreName}/apps/translationCore/index/translationWords/${book}/${index}.json`,
-    //   json2
-    // );
+    await fsWriteRust(
+      projectName,
+      `book_projects/${tCoreName}/apps/translationCore/index/translationWords/${book}/${index}.json`,
+      json2
+    );
   };
   // Load all required data concurrently
   useEffect(() => {
