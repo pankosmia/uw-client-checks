@@ -2,10 +2,27 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { doI18n, i18nContext } from "pithekos-lib";
 import { DataGrid } from "@mui/x-data-grid";
-import { Box, Button } from "@mui/material";
+import { Box, Button, Typography, Modal } from "@mui/material";
 import { convertToProjectFormat } from "../js/creatProject"; // <-- import your function
 import { useNavigate } from "react-router-dom";
+import { getJson } from "pithekos-lib";
+import { BASE_URL } from "../common/constants";
 
+async function getPathFromOriginalResources(name) {
+  let manifests = await getJson(BASE_URL + "/burrito/metadata/summaries").json;
+  console.log(manifests);
+  const manifest = manifests.find((m) => m.abbreviation === name);
+  if (!manifest) return null;
+
+  const cleanedName = manifest.description
+    .split("(")[0]
+    .trim()
+    .replace(/\)$/, "");
+  console.log(cleanedName);
+  const parentManifest = manifests.find((m) => m.name === cleanedName);
+  console.log(parentManifest);
+  return parentManifest.path;
+}
 
 export default function SelectBook() {
   const { name } = useParams();
@@ -15,24 +32,24 @@ export default function SelectBook() {
   const [tree, setTree] = useState([]);
   const [rows, setRows] = useState([]);
   const navigate = useNavigate();
-  
+  const [openModal, setOpenModal] = useState(false);
+  const [manifestPath, setManifestPath] = useState("");
   async function fetchData() {
-      try {
-        const url = `/burrito/paths/_local_/_local_/${name}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        console.log(url);
-        const ipath = "book_projects";
-        const children = data
-          .filter((item) => item.startsWith(ipath + "/"))
-          .map((item) => item.replace(ipath + "/", ""));
-        setTree(children);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+    try {
+      const url = `/burrito/paths/_local_/_local_/${name}`;
+      const res = await getJson(url);
+      const data = await res.json;
+      const ipath = "book_projects";
+      const children = data
+        .filter((item) => item.startsWith(ipath + "/"))
+        .map((item) => item.replace(ipath + "/", ""));
+      setTree(children);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
+  }
   useEffect(() => {
     fetchData();
   }, [name]);
@@ -40,16 +57,21 @@ export default function SelectBook() {
   function find_manifest(path) {
     return tree.includes(`${path}/manifest.json`);
   }
-  const handleTryConvert = async (sourceProjectPath,selectedProjectFilename) => {
-      
-      try {
-        await convertToProjectFormat(sourceProjectPath, "book_projects/"+selectedProjectFilename+'/');
-        fetchData()        
-      } catch (error) {
-        console.error("❌ Conversion failed:", error);
-        alert("Conversion failed — see console for details.");
-      }
-    };
+  const handleTryConvert = async (
+    sourceProjectPath,
+    selectedProjectFilename
+  ) => {
+    try {
+      await convertToProjectFormat(
+        sourceProjectPath,
+        "book_projects/" + selectedProjectFilename + "/"
+      );
+      fetchData();
+    } catch (error) {
+      console.error("❌ Conversion failed:", error);
+      alert("Conversion failed — see console for details.");
+    }
+  };
   useEffect(() => {
     const firstLevel = new Set();
     for (const entry of tree) {
@@ -80,26 +102,51 @@ export default function SelectBook() {
       renderCell: (params) => {
         // params.row.actions is just a string or boolean
         const hasManifest = params.row.actions; // true/false
-        return hasManifest ? <Button variant="contained" onClick={() => navigate("/TwChecker",{ state: { tCoreName:  params.row.tCoreName, projectName: params.row.projectName} })}>TranslationWords</Button> : <Button
-        variant="contained"
-        onClick={() => handleTryConvert(params.row.projectName,params.row.tCoreName)}
-        >isnot</Button>;
+        return hasManifest ? (
+          <Button
+            variant="contained"
+            onClick={() =>
+              navigate("/TwChecker", {
+                state: {
+                  tCoreName: params.row.tCoreName,
+                  projectName: params.row.projectName,
+                },
+              })
+            }
+          >
+            TranslationWords
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            onClick={() =>
+              handleTryConvert(params.row.projectName, params.row.tCoreName)
+            }
+          >
+            isnot
+          </Button>
+        );
       },
     },
   ];
-
+  const handleOpenModal = async () => {
+    const path = await getPathFromOriginalResources(name);
+    setManifestPath(path || "Not found");
+    setOpenModal(true);
+  };
+  const handleCloseModal = () => setOpenModal(false);
   useEffect(() => {
     setRows(
       inDirectory.map((rep, n) => {
         const splitname = rep.split("_");
         return {
           id: n,
-          tCoreName:rep,
-          projectName:name,
+          tCoreName: rep,
+          projectName: name,
           name: splitname[2],
           language: splitname[0],
           actions: find_manifest(rep),
-          path: rep,                    // <-- ADD THIS
+          path: rep, // <-- ADD THIS
         }; // just a boolean
       })
     );
@@ -117,6 +164,7 @@ export default function SelectBook() {
         width: "100%",
       }}
     >
+      <Button onClick={handleOpenModal}>add book</Button>
       <DataGrid
         autoHeight
         initialState={{
@@ -128,6 +176,35 @@ export default function SelectBook() {
         columns={columns}
         sx={{ fontSize: "1rem" }}
       />
+      <Modal open={openModal} onClose={handleCloseModal}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+            width: 500,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            Manifest Path
+          </Typography>
+
+          <Typography sx={{ wordWrap: "break-word" }}>
+            {manifestPath || "Aucun manifest trouvé"}
+          </Typography>
+
+          <Box sx={{ textAlign: "right", mt: 2 }}>
+            <Button variant="contained" onClick={() => setOpenModal(false)}>
+              OK
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </Box>
   );
 }

@@ -164,3 +164,22 @@ function getTailsOfWantedDocumentArray(ipath) {
     .split(/(\.json|\.usfm|\.md|\.tsv)$/)
     .filter(Boolean);
 }
+
+
+export function fixOccurrences(obj) {
+  if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      fixOccurrences(obj[i]);
+    }
+  } else if (obj && typeof obj === "object") {
+    for (const key of Object.keys(obj)) {
+
+      if (key === "occurrence" || key === "occurrences") {
+        obj[key] = parseInt(obj[key]);
+      } else {
+        fixOccurrences(obj[key]);
+      }
+
+    }
+  }
+}

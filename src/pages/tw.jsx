@@ -11,6 +11,7 @@ import { useLocation } from "react-router-dom";
 import { getBookFromProjectFileName } from "../js/creatProject";
 import { toJSON } from "usfm-js";
 import { join } from "../js/creatProject";
+import { fixOccurrences } from "../js/serverUtils";
 // Load sample data from fixtures
 const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 const translations = require("../uwSrc/locales/English-en_US.json");
@@ -82,7 +83,9 @@ export const getBookFromName = async (
       `${book.toUpperCase()}.usfm`,
       insidePath
     );
-    json = toJSON(usfmBook).chapters;
+    json = toJSON(usfmBook).chapters
+    fixOccurrences(json)
+    console.log(json)
   } else {
     const all_part = await fsGetRust(
       repoPath,
@@ -243,13 +246,14 @@ const TwChecker = () => {
   // const [glTw, setGlTw] = useState();
   const [glTwData, setGlTwData] = useState();
   const [checkingData, setCheckingData] = useState();
-  const [ugntBible, setUgntBible] = useState();
+  const [ultBible, setUltBible] = useState();
 
   const { state } = useLocation();
   const tCoreName = state?.tCoreName;
   const projectName = state?.projectName;
-
+  
   const book = useMemo(() => tCoreName?.split("_")[2], [tCoreName]);
+  console.log(book)
   const changeCurrentVerse = async (
     chapter,
     verse,
@@ -266,8 +270,9 @@ const TwChecker = () => {
       `book_projects/${tCoreName}/${book}/${chapter}.json`,
       changeFile
     );
-  };
+  };  
   const saveCheckingData = async (newState) => {
+    console.log(newState)
     let data = newState.currentCheck;
     let index = data.contextId.groupId;
     let json2 = await fsGetRust(
@@ -314,7 +319,7 @@ const TwChecker = () => {
         checkingRes,
         targetBibleRes,
         elBibleRes,
-        ugntBibleRes,
+        ultBibleRes,
       ] = await Promise.all([
         getglTwData("en_tw", projectName, `book_projects/${tCoreName}`),
         getCheckingData(projectName, `book_projects/${tCoreName}`, book),
@@ -328,7 +333,7 @@ const TwChecker = () => {
       setCheckingData(groupDataHelpers.extractGroupData(checkingRes));
       setTargetBible(targetBibleRes);
       setElBibles(elBibleRes);
-      setUgntBible(ugntBibleRes);
+      setUltBible(ultBibleRes);
     };
 
     loadAll();
@@ -336,7 +341,7 @@ const TwChecker = () => {
 
   // Build unified bibles list when dependencies update
   useEffect(() => {
-    if (targetBible && elBibles && ugntBible) {
+    if (targetBible && elBibles && ultBible) {
       setBibles([
         {
           book: targetBible,
@@ -345,7 +350,7 @@ const TwChecker = () => {
           owner: "unfoldingWord",
         },
         {
-          book: ugntBible,
+          book: ultBible,
           languageId: "en",
           bibleId: "ult",
           owner: "unfoldingWord",
@@ -358,7 +363,7 @@ const TwChecker = () => {
         },
       ]);
     }
-  }, [targetBible, elBibles, ugntBible]);
+  }, [targetBible, elBibles, ultBible]);
 
   // Derived object — useMemo prevents rebuilding on every render
   const targetLanguageDetails = useMemo(
@@ -385,39 +390,16 @@ const TwChecker = () => {
     bibles.length === 3 &&
     targetBible != null &&
     elBibles != null &&
-    ugntBible != null &&
+    ultBible != null &&
     glTwData != null &&
     checkingData != null &&
     contextId != null;
 
-  // if(ready){
-  //   let verse = targetBible[2][12]
-  //   console.log(verse)
-  //   console.log(checkingData)
-  //   let flattenedGroupData = groupDataHelpers.flattenGroupData(checkingData)
-  //   console.log(flattenedGroupData)
-  //   let check = checkingData['other']['age']
-  //   let text = getVerseText(targetBible,check[0].contextId)
-  //   console.log(text)
-  //   let rm = removeMarker(text)
-  //   console.log(JSON.stringify(rm))
-  //   console.log(check)
-  //   let test = selectionsHelpers.validateVerseSelections(rm,check[0].selections)
-  //   console.log(test)
-  //   let test2 = selectionsHelpers.validateSelectionsForAllChecks(targetBible, flattenedGroupData, (check, invalidated) => {
-  //       if (check) {
-  //         console.log(`tes2n changed`, check, invalidated)
-  //       }
-  //     })
-  // }
 
-  console.log(targetBible);
-  console.log(contextId);
-  // console.log(glTw);
-  console.log(glTwData);
-  console.log(checkingData);
-  console.log(elBibles);
-  console.log(ugntBible);
+
+  console.log('checkingData',checkingData)
+  console.log('el',elBibles);
+  console.log('ugnt',ultBible);
   return (
     <div className="page">
       {!ready && <div>Loading translation checker…</div>}

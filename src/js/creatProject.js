@@ -908,11 +908,11 @@ const generateHelperForTool = async (
     let newJson = { ...emptyJson };
     newJson.contextId.reference = {
       bookId: book,
-      chapter: tsv[i][0].split(":")[0],
-      verse: tsv[i][0].split(":")[1],
+      chapter: parseInt(tsv[i][0].split(":")[0]),
+      verse: parseInt(tsv[i][0].split(":")[1]),
     };
     newJson.contextId.checkId = tsv[i][1];
-    newJson.contextId.occurrence = tsv[i][4];
+    newJson.contextId.occurrence = parseInt(tsv[i][4])
     newJson.contextId.quoteString = tsv[i][3];
     newJson.contextId.groupId = tsv[i][5].split("/")[3];
     newJson.contextId.quote = tsv[i][3];
