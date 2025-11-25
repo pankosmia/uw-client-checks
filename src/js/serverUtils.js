@@ -1,21 +1,25 @@
 import { getJson, getText, postJson, postText } from "pithekos-lib";
 import { EXIST_PATH, BASE_URL, IMPORTS_PATH } from "../common/constants";
-
+import { join } from "./creatProject";
 let treeCache = []; // cache tree data across calls
 
 /**
- * GET /ingredient/raw/<repo_path>?ipath=<ipath>
+ * GET /ingredient/raw/<intermediatePath>/<repo_path>?ipath=<ipath>
  * Simulates fs.readFile or fs.readJson
  * @param {string} repoPath - e.g. "ingredient/raw/git.door43.org/BurritoTruck/en_bsb"
  * @param {string} ipath - internal file path, e.g. "MAT.usfm" or "manifest.json"
  * @returns {Promise<string>} raw file content
  */
-export async function fsGetRust(repoPath, ipath) {
+export async function fsGetRust(
+  repoPath,
+  ipath,
+  intermediatePath = "_local_/_local_"
+) {
   try {
     let typeSearch = getTailsOfWantedDocumentArray(ipath);
     if (typeSearch.length === 1) {
-      if (treeCache.length <= 0) {
-        const url = getUrlForExistDocumentInProject(repoPath);
+      if (true) {
+        const url = getUrlForExistDocumentInProject(repoPath, intermediatePath);
         const res = await getJson(url);
         const data = res.json;
         treeCache = data;
@@ -32,10 +36,13 @@ export async function fsGetRust(repoPath, ipath) {
         const firstPart = entry.split("/")[0];
         if (firstPart) inDirectory.add(firstPart);
       }
-      let toBeReturn = Array.from(inDirectory).filter(p => !p.endsWith(".bak"))
+      let toBeReturn = Array.from(inDirectory).filter(
+        (p) => !p.endsWith(".bak")
+      );
       return toBeReturn;
     } else {
-      let url = getUrlForGetDocumentInProject(repoPath) + ipath;
+      let url =
+        getUrlForGetDocumentInProject(repoPath, intermediatePath) + ipath;
       if (typeSearch[1].includes(".json")) {
         return getJson(url).then((res) => {
           if (!res.ok) {
@@ -71,23 +78,18 @@ export async function fsWriteRust(repoPath, ipath, data) {
     let url = getUrlForGetDocumentInProject(repoPath) + ipath;
     let typeSearch = getTailsOfWantedDocumentArray(ipath);
     let res;
-    console.log(url)
-    console.log(typeSearch);
-    console.log(data)
-    console.log(typeof data)
-    let text = {"payload": JSON.stringify(data)}
-    console.log(typeof text)
+    let text = { payload: JSON.stringify(data) };
     const body = {
       payload: typeof data === "object" ? JSON.stringify(data, null, 2) : data,
     };
     if (typeSearch[1].includes(".json")) {
       res = await postJson(url, JSON.stringify(body));
     } else {
-      res = await postText(url,body);
+      res = await postText(url, body);
     }
 
     if (!res.ok) {
-        console.log(res)
+      console.log(res);
       throw new Error(`POST failed: ${res.status} ${res.statusText} ${res}`);
     }
   } catch (err) {
@@ -96,11 +98,16 @@ export async function fsWriteRust(repoPath, ipath, data) {
   }
 }
 
-export async function fsExistsRust(repoPath, ipath) {
+export async function fsExistsRust(
+  repoPath,
+  ipath,
+  intermediatePath = "_local_/_local_",
+  reloadTreeCache = true
+) {
   let typeSearch = getTailsOfWantedDocumentArray(ipath);
   try {
-    if (treeCache.length <= 0) {
-      let url = getUrlForExistDocumentInProject(repoPath)
+    if (treeCache.length <= 0 || reloadTreeCache) {
+      let url = getUrlForExistDocumentInProject(repoPath, intermediatePath);
       const res = await getJson(url);
       const data = await res.json;
       treeCache = data;
@@ -113,17 +120,47 @@ export async function fsExistsRust(repoPath, ipath) {
     return false;
   }
 }
+export async function fsGetManifest(first,second,third){
+  let url = BASE_URL +'/'+join("burrito","metadata","summary",first,second,third)
+  const res = await getJson(url);
+  return res
 
-function getUrlForGetDocumentInProject(repoPath) {
-  return BASE_URL+'/'+IMPORTS_PATH.replace("%Project%", `${repoPath}`);
 }
-function getUrlForExistDocumentInProject(repoPath) {
-  return BASE_URL +'/'+ EXIST_PATH + repoPath;
+function getUrlForGetDocumentInProject(
+  repoPath,
+  intermediatePath = "_local_/_local_"
+) {
+  if (!intermediatePath.includes("_local_/_local_")) {
+    return (
+      BASE_URL +
+      "/" +
+      IMPORTS_PATH.replace("_local_/_local_", intermediatePath).replace(
+        "%Project%",
+        `${repoPath}`
+      ) 
+      
+    );
+  }
+  return BASE_URL + "/" + IMPORTS_PATH.replace("%Project%", `${repoPath}`);
+}
+function getUrlForExistDocumentInProject(
+  repoPath,
+  intermediatePath = "_local_/_local_"
+) {
+  if (!intermediatePath.includes("_local_/_local_")) {
+    return (
+      BASE_URL +
+      "/" +
+      EXIST_PATH.replace("_local_/_local_", intermediatePath) +
+      repoPath
+    );
+  }
+  return BASE_URL + "/" + EXIST_PATH + repoPath;
 }
 function getTailsOfWantedDocumentArray(ipath) {
   return ipath
     .split("/")
     .pop()
-    .split(/(\.json|\.usfm|\.md)$/)
+    .split(/(\.json|\.usfm|\.md|\.tsv)$/)
     .filter(Boolean);
 }

@@ -1,16 +1,22 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { groupDataHelpers } from "word-aligner-lib";
-import { fsGetRust, fsWriteRust, fsExistsRust } from "../js/serverUtils";
+import {
+  fsGetRust,
+  fsWriteRust,
+  fsExistsRust,
+  fsGetManifest,
+} from "../js/serverUtils";
 import { useLocation } from "react-router-dom";
-
+import { getBookFromProjectFileName } from "../js/creatProject";
+import { toJSON } from "usfm-js";
+import { join } from "../js/creatProject";
 // Load sample data from fixtures
 const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 const translations = require("../uwSrc/locales/English-en_US.json");
 
 // const glTn = require("../uwSrc/__tests__/fixtures/translationNotes/enTn_1JN.json");
 // const glTw = require("../uwSrc/__tests__/fixtures/translationWords/twl_1jn_parsed.json");
-
 // const glTaData = require("../uwSrc/__tests__/fixtures/translationAcademy/en_ta.json");
 // const glTwData = require("../uwSrc/__tests__/fixtures/translationWords/en_tw.json");
 // const targetBible = require("../uwSrc/__tests__/fixtures/bibles/1jn/targetBible.json");
@@ -58,29 +64,57 @@ const saveSettings = (settings) => {
 const changedCurrentCheck = (newContext) => {
   console.log(newContext);
 };
-export const getBookFromName = async (repoPath, nameArr, book) => {
-  const all_part = await fsGetRust(repoPath, `${nameArr}/${book}`);
-  const json = {};
+export const getBookFromName = async (
+  repoPath,
+  nameArr,
+  book,
+  insidePath = "_local_/_local_"
+) => {
+  let json = {};
+  let isBookUsfmOnly = await fsExistsRust(
+    repoPath,
+    `${book}/1.json`,
+    insidePath
+  );
+  if (!isBookUsfmOnly) {
+    let usfmBook = await fsGetRust(
+      repoPath,
+      `${book.toUpperCase()}.usfm`,
+      insidePath
+    );
+    json = toJSON(usfmBook).chapters;
+  } else {
+    const all_part = await fsGetRust(
+      repoPath,
+      `${nameArr}/${book}`,
+      insidePath
+    );
 
-  for (const e of all_part) {
-    if (!e.includes("headers")) {
-      json[e.split(".")[0]] = await fsGetRust(
-        repoPath,
-        `${nameArr}/${book}/${e}`
-      );
+    for (const e of all_part) {
+      if (!e.includes("headers")) {
+        json[e.split(".")[0]] = await fsGetRust(
+          repoPath,
+          `${nameArr}/${book}/${e}`,
+          insidePath
+        );
+      }
     }
   }
 
-  json["manifest"] = await fsGetRust(repoPath, `${nameArr}/manifest.json`);
-
-  // if(json["manifest"]["source_translation"]){
-  json["manifest"] = {
-    language_id: "en",
-    language_name: "English",
-    direction: "ltr",
-    resource_id: "targetLanguage",
-    description: "Target Language",
-  };
+  json["manifest"] = (
+    await fsGetManifest(
+      insidePath.split("/")[0],
+      insidePath.split("/")[1],
+      repoPath
+    )
+  ).json;
+  json["manifest"] =  {
+    "language_id": "en",
+    "language_name": "English",
+    "direction": "ltr",
+    "resource_id": "targetLanguage",
+    "description": "Target Language"
+  }
   return json;
 };
 
@@ -117,42 +151,45 @@ export const getResourcesFrom = async (repoName, nameArr, book) => {
   );
   return json;
 };
-export const getglTwData = async (repoName, nameArr, book) => {
-  const all_part = await fsGetRust(
-    repoName,
-    `${nameArr}/translationHelps/translationWords`
-  );
-  const version = all_part[0];
+export const getglTwData = async (
+  repoNameResources,
+  repoNameProject,
+  tCoreNameProject
+) => {
   const json = {
-    kt: { articles: {} },
-    names: { articles: {} },
-    other: { articles: {} },
+    kt: { articles: {}, index: [] },
+    names: { articles: {}, index: [] },
+    other: { articles: {}, index: [] },
   };
   const things = ["kt", "names", "other"];
   for (const t of things) {
     const folder = await fsGetRust(
-      repoName,
-      `${nameArr}/translationHelps/translationWords/${version}/${t}/articles`
+      repoNameResources,
+      join(`payload`, t),
+      "git.door43.org/uW"
     );
+    console.log(t)
+    console.log(folder)
     for (const e of folder) {
       if (!e.includes("headers")) {
         let p = await fsGetRust(
-          repoName,
-          `${nameArr}/translationHelps/translationWords/${version}/${t}/articles/${e}`
+          repoNameResources,
+          join(`payload`, t, `${e}`),
+          "git.door43.org/uW"
         );
         json[t]["articles"][e.split(".")[0]] = p;
+        json[t]["index"].push({
+          id: e.split(".")[0],
+          name: p.split("\n")[0].replace(/^#\s*/, "").trim(),
+        });
       }
     }
-    json[t]["index"] = await fsGetRust(
-      repoName,
-      `${nameArr}/translationHelps/translationWords/${version}/${t}/index.json`
-    );
   }
-
-  json["manifest"] = await fsGetRust(
-    repoName,
-    `${nameArr}/translationHelps/translationWords/${version}/manifest.json`
-  );
+  json["manifest"] = await fsGetManifest(
+    "git.door43.org",
+    "uW",
+    repoNameResources
+  ).json;
   return json;
 };
 
@@ -182,14 +219,7 @@ export const getCheckingData = async (repoName, nameArr, book) => {
   }
   return json;
 };
-const changeCurrentVerse = (
-  chapter,
-  verse,
-  newVerseText,
-  targetVerseObjects
-) => {
-  console.log(chapter, verse, newVerseText, targetVerseObjects);
-};
+
 const contextId_ = {
   checkId: "sy96",
   occurrenceNote: "",
@@ -210,7 +240,7 @@ const TwChecker = () => {
   const [contextId, setContextId] = useState(contextId_);
   const [bibles, setBibles] = useState([]);
   const [elBibles, setElBibles] = useState();
-  const [glTw, setGlTw] = useState();
+  // const [glTw, setGlTw] = useState();
   const [glTwData, setGlTwData] = useState();
   const [checkingData, setCheckingData] = useState();
   const [ugntBible, setUgntBible] = useState();
@@ -220,9 +250,24 @@ const TwChecker = () => {
   const projectName = state?.projectName;
 
   const book = useMemo(() => tCoreName?.split("_")[2], [tCoreName]);
-
+  const changeCurrentVerse = async (
+    chapter,
+    verse,
+    newVerseText,
+    targetVerseObjects
+  ) => {
+    let changeFile = await fsGetRust(
+      projectName,
+      `book_projects/${tCoreName}/${book}/${chapter}.json`
+    );
+    changeFile[verse] = newVerseText;
+    await fsWriteRust(
+      projectName,
+      `book_projects/${tCoreName}/${book}/${chapter}.json`,
+      changeFile
+    );
+  };
   const saveCheckingData = async (newState) => {
-    console.log(`saveCheckingData - new selections`, newState);
     let data = newState.currentCheck;
     let index = data.contextId.groupId;
     let json2 = await fsGetRust(
@@ -244,7 +289,7 @@ const TwChecker = () => {
       comment: data.comment,
       nothingToSelect: data.nothingToSelect,
       reminders: data.reminders,
-      invalidated:data.invalidated
+      invalidated: data.invalidated,
     };
 
     // Merge into the inner object
@@ -266,26 +311,20 @@ const TwChecker = () => {
     const loadAll = async () => {
       const [
         glTwDataRes,
-        glTwRes,
         checkingRes,
         targetBibleRes,
         elBibleRes,
         ugntBibleRes,
       ] = await Promise.all([
-        getglTwData("Resources", "en", book),
-        getResourcesFrom("Resources", "el-x-koine", book),
+        getglTwData("en_tw", projectName, `book_projects/${tCoreName}`),
         getCheckingData(projectName, `book_projects/${tCoreName}`, book),
         getBookFromName(projectName, `book_projects/${tCoreName}`, book),
-        getBookFromName(
-          "Resources",
-          "el-x-koine/bibles/ugnt/v0.34_unfoldingWord",
-          book
-        ),
-        getBookFromName("Resources", "en/bibles/ult/v85.1_unfoldingWord", book),
+        getBookFromName("grc_ugnt", "", book, "git.door43.org/uW"),
+        getBookFromName("en_ult", "", book, "git.door43.org/uW"),
       ]);
 
       setGlTwData(glTwDataRes);
-      setGlTw(glTwRes);
+      // setGlTw(checkingRes);
       setCheckingData(groupDataHelpers.extractGroupData(checkingRes));
       setTargetBible(targetBibleRes);
       setElBibles(elBibleRes);
@@ -341,7 +380,6 @@ const TwChecker = () => {
     const entryData = LexiconData?.[lexiconId]?.[entryId] || null;
     return { [lexiconId]: { [entryId]: entryData } };
   };
-  console.log(targetBible)
   const ready =
     Array.isArray(bibles) &&
     bibles.length === 3 &&
@@ -372,6 +410,14 @@ const TwChecker = () => {
   //       }
   //     })
   // }
+
+  console.log(targetBible);
+  console.log(contextId);
+  // console.log(glTw);
+  console.log(glTwData);
+  console.log(checkingData);
+  console.log(elBibles);
+  console.log(ugntBible);
   return (
     <div className="page">
       {!ready && <div>Loading translation checker…</div>}

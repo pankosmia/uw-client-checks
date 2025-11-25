@@ -4,12 +4,12 @@ import _ from "lodash";
 // actions
 // constants
 import * as Bible from "../common/BooksOfTheBible";
-import usfm from "usfm-js";
+import usfm, { toJSON } from "usfm-js";
 import wordaligner from "word-aligner";
 import { fsExistsRust, fsWriteRust, fsGetRust } from "./serverUtils";
 import { IMPORTS_PATH, USER_RESOURCES_PATH } from "../common/constants";
 
-function getBookFromProjectFileName(selectedProjectFilename) {
+export function getBookFromProjectFileName(selectedProjectFilename) {
   return selectedProjectFilename.split("/")[1].split("_")[2];
 }
 
@@ -164,13 +164,13 @@ export function convertAlignmentFromVerseToVerseSpanSub(
   return bibleVerse;
 }
 export function getVerseSpanRange(verseSpan) {
-  let [low, high] = verseSpan.split('-');
+  let [low, high] = verseSpan.split("-");
 
   if (low && high) {
     low = parseInt(low, 10);
     high = parseInt(high, 10);
 
-    if ((low > 0) && (high >= low)) {
+    if (low > 0 && high >= low) {
       return { low, high };
     }
   }
@@ -256,80 +256,58 @@ export const loadChapterResource = async function (
   bibleID,
   bookId,
   languageId,
-  chapter,
+  chapter
 ) {
   try {
-    let bibleData;
-    let bibleFolderPath = join(languageId, "bibles", bibleID); // ex. user/NAME/translationCore/resources/en/bibles/ult
-    let exist = await fsExistsRust(USER_RESOURCES_PATH, bibleFolderPath);
+    let bibleData = {};
+    let exist = await fsExistsRust(
+      bibleID,
+      `${bookId.toUpperCase()}.usfm`,
+      "git.door43.org/uW"
+    );
     if (exist) {
-      let versionNumbers;
-      let result = await fsGetRust(USER_RESOURCES_PATH, bibleFolderPath);
-      versionNumbers = result.filter(
-        (
-          folder // filter out .DS_Store
-        ) => folder !== ".DS_Store"
+      let result = await fsGetRust(
+        bibleID,
+        `${bookId.toUpperCase()}.usfm`,
+        "git.door43.org/uW"
       );
+      let bibleChapterData = toJSON(result)["chapters"][chapter];
+      console.log(chapter, bibleChapterData);
+      for (
+        let i = 0, len = Object.keys(bibleChapterData).length;
+        i < len;
+        i++
+      ) {
+        const verse = Object.keys(bibleChapterData)[i];
+        if (typeof verse !== "string") {
+          if (!verse.verseObjects) {
+            // using old format so convert
+            let newVerse = [];
 
-      // ex. v9}
-      const versionNumber = versionNumbers[versionNumbers.length - 1];
-      let bibleVersionPath = join(languageId, "bibles", bibleID, versionNumber);
-      let fileName = chapter + ".json";
-      let exist = await fsExistsRust(
-        USER_RESOURCES_PATH,
-        join(bibleVersionPath, bookId, fileName)
-      );
-      if (exist) {
-        bibleData = {};
-        let bibleChapterData = 
-          await fsGetRust(
-            USER_RESOURCES_PATH,
-            join(bibleVersionPath, bookId, fileName)
-          
-        );
-        for (
-          let i = 0, len = Object.keys(bibleChapterData).length;
-          i < len;
-          i++
-        ) {
-          const verse = Object.keys(bibleChapterData)[i];
-          if (typeof verse !== "string") {
-            if (!verse.verseObjects) {
-              // using old format so convert
-              let newVerse = [];
-
-              for (let word of verse) {
-                if (word) {
-                  if (typeof word !== "string") {
-                    newVerse.push(word);
-                  } else {
-                    newVerse.push({
-                      type: "text",
-                      text: word,
-                    });
-                  }
+            for (let word of verse) {
+              if (word) {
+                if (typeof word !== "string") {
+                  newVerse.push(word);
+                } else {
+                  newVerse.push({
+                    type: "text",
+                    text: word,
+                  });
                 }
               }
-              bibleChapterData[i] = newVerse;
             }
+            bibleChapterData[i] = newVerse;
           }
         }
-
-        bibleData[chapter] = bibleChapterData;
-        // get bibles manifest file
-        bibleData["manifest"] = await getBibleManifest(
-          bibleVersionPath,
-          bibleID
-        );
-      } else {
-        console.log(
-          "No such file or directory was found, " +
-            join(bibleVersionPath, bookId, fileName)
-        );
       }
+
+      bibleData[chapter] = bibleChapterData;
+      // get bibles manifest file
+      bibleData["manifest"] = await bibleChapterData["manifest"];
     } else {
-      console.log("Directory not found, " + bibleFolderPath);
+      console.log("No such file or directory was found, " + join(bookId));
     }
+
     return bibleData;
   } catch (error) {
     console.error(error);
@@ -371,14 +349,21 @@ const trimNewLine = function (text) {
  */
 export const getOriginalLanguageChapterResources = async function (
   projectBibleID,
-  chapter,
+  chapter
 ) {
   const { languageId, bibleId } = getOrigLangforBook(projectBibleID);
-  return await loadChapterResource(
+  console.log(
     bibleId,
+    bibleId === "ugnt" ? "grc_ugnt" : "hbo_uhb",
     projectBibleID,
     languageId,
-    chapter,
+    chapter
+  );
+  return await loadChapterResource(
+    bibleId === "ugnt" ? "grc_ugnt" : "hbo_uhb",
+    projectBibleID,
+    languageId,
+    chapter
   );
 };
 
@@ -426,10 +411,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
       const alignmentData = alignmentIndex >= 0;
       let bibleData;
       if (alignmentData) {
-        bibleData = await getOriginalLanguageChapterResources(
-          bookID,
-          chapter,
-        );
+        bibleData = await getOriginalLanguageChapterResources(bookID, chapter);
       }
 
       verses.forEach((verse) => {
@@ -468,7 +450,11 @@ export const generateTargetLanguageBibleFromUsfm = async (
 
       const filename = parseInt(chapter, 10) + ".json";
       fsQueue.push(
-        fsWriteRust(sourceProjectPath, selectedProjectFilename+join(bookID, filename), bibleChapter)
+        fsWriteRust(
+          sourceProjectPath,
+          selectedProjectFilename + join(bookID, filename),
+          bibleChapter
+        )
       );
 
       if (alignmentData) {
@@ -480,7 +466,11 @@ export const generateTargetLanguageBibleFromUsfm = async (
           filename
         );
         alignQueue.push(
-          fsWriteRust(sourceProjectPath, selectedProjectFilename+alignmentDataPath, chapterAlignments)
+          fsWriteRust(
+            sourceProjectPath,
+            selectedProjectFilename + alignmentDataPath,
+            chapterAlignments
+          )
         );
       }
     }
@@ -488,7 +478,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
     fsQueue.push(
       fsWriteRust(
         sourceProjectPath,
-        selectedProjectFilename+join(bookID, "headers.json"),
+        selectedProjectFilename + join(bookID, "headers.json"),
         parsedUsfm.headers
       )
     );
@@ -884,49 +874,125 @@ const generateHelperForTool = async (
   selectedProjectFilename,
   typeOfTools
 ) => {
-  let book = getBookFromProjectFileName(selectedProjectFilename)
+  let book = getBookFromProjectFileName(selectedProjectFilename);
   let path = join(helperFolderName, "translationHelps", typeOfTools);
-  let version = (await fsGetRust(sourceProjectPath, path))[0];
-  path = join(path, version);
-  let categories = (await fsGetRust(sourceProjectPath, path)).filter(
-    (e) => !e.includes(".json")
+  let tsv = parseTsv(
+    await fsGetRust(
+      helperFolderName,
+      `${book.toUpperCase()}.tsv`,
+      "git.door43.org/uW"
+    )
   );
-  for (let i = 0; i < categories.length; i++) {
-    let newPath = join(
-      path,
-      categories[i],
-      "groups",
-      book
+
+  const emptyJson = {
+    comments: false,
+    reminders: false,
+    selections: false,
+    verseEdits: false,
+    nothingToSelect: false,
+    contextId: {
+      checkId: "",
+      occurrenceNote: "",
+      reference: { bookId: "", chapter: null, verse: null },
+      tool: typeOfTools,
+      groupId: "",
+      quote: "",
+      quoteString: "",
+      glQuote: "",
+      occurrence: 1,
+    },
+  };
+  let categories = {};
+  for (let i = 1; i < tsv.length; i++) {
+    let category = tsv[i][5].split("/")[2];
+    let newJson = { ...emptyJson };
+    newJson.contextId.reference = {
+      bookId: book,
+      chapter: tsv[i][0].split(":")[0],
+      verse: tsv[i][0].split(":")[1],
+    };
+    newJson.contextId.checkId = tsv[i][1];
+    newJson.contextId.occurrence = tsv[i][4];
+    newJson.contextId.quoteString = tsv[i][3];
+    newJson.contextId.groupId = tsv[i][5].split("/")[3];
+    newJson.contextId.quote = tsv[i][3];
+
+    let exist = await fsExistsRust(
+      sourceProjectPath,
+      join(
+        selectedProjectFilename,
+        "apps",
+        "translationCore",
+        "index",
+        typeOfTools,
+        book,
+        `${tsv[i][5].split("/")[3]}.json`
+      ),"_local_/_local_",true
     );
-    let index = await fsGetRust(USER_RESOURCES_PATH, newPath);
+   
+    if (exist) {
+      let alreadyHereJsonFile = await fsGetRust(
+        sourceProjectPath,
+        join(
+          selectedProjectFilename,
+          "apps",
+          "translationCore",
+          "index",
+          typeOfTools,
+          book,
+          `${tsv[i][5].split("/")[3]}.json`
+        )
+      );
+      alreadyHereJsonFile.push(newJson);
+      await fsWriteRust(
+        sourceProjectPath,
+        join(
+          selectedProjectFilename,
+          "apps",
+          "translationCore",
+          "index",
+          typeOfTools,
+          book,
+          `${tsv[i][5].split("/")[3]}.json`
+        ),
+        alreadyHereJsonFile
+      );
+    } else {
+      await fsWriteRust(
+        sourceProjectPath,
+        join(
+          selectedProjectFilename,
+          "apps",
+          "translationCore",
+          "index",
+          typeOfTools,
+          book,
+          `${tsv[i][5].split("/")[3]}.json`
+        ),
+        [newJson]
+      );
+    }
+    if (categories[category]) {
+      categories[category].push(`${tsv[i][5].split("/")[3]}.json`);
+    } else {
+      categories[category] = [`${tsv[i][5].split("/")[3]}.json`];
+    }
+  }
+  for (let c of Object.keys(categories)) {
     await fsWriteRust(
       sourceProjectPath,
-      selectedProjectFilename+join(
+      join(
+        selectedProjectFilename,
         "apps",
         "translationCore",
         "index",
         typeOfTools,
         book,
         "categoryIndex",
-        categories[i] + ".json"
+        `${c}.json`
       ),
-      index
+      categories[c]
     );
-    for (let p = 0; p < index.length; p++) {
-      let ressource = await fsGetRust(USER_RESOURCES_PATH, join(newPath, index[p]));
-      await fsWriteRust(
-        sourceProjectPath,
-        selectedProjectFilename+join(
-          "apps",
-          "translationCore",
-          "index",
-          typeOfTools,
-          book,
-          index[p]
-        ),
-        ressource
-      );
-    }
   }
 };
 
@@ -967,7 +1033,8 @@ export const verifyIsValidUsfmFile = async (
   sourceProjectPath,
   selectedProjectFilename
 ) => {
-  const usfmName = getBookFromProjectFileName(selectedProjectFilename)+".usfm"
+  const usfmName =
+    getBookFromProjectFileName(selectedProjectFilename) + ".usfm";
   const usfmData = await loadUSFMFileAsync(
     sourceProjectPath,
     selectedProjectFilename + usfmName
@@ -1043,8 +1110,13 @@ export const moveUsfmFileFromSourceToImports = async (
   }
 };
 
-const join = (...args) => args.join("/").replace(/\/+/g, "/");
-
+export const join = (...args) => args.join("/").replace(/\/+/g, "/");
+const parseTsv = (tsv) => {
+  return tsv
+    .split("\n")
+    .filter((e) => e.trim() !== "")
+    .map((e) => e.split("\t"));
+};
 function pathJoin(table) {
   return table.join("/").replace(/\/+/g, "/");
 }
@@ -1077,15 +1149,15 @@ export const convertToProjectFormat = async (
   );
 
   await generateHelperForTool(
-    "el-x-koine",
+    "en_tw",
     sourceProjectPath,
     selectedProjectFilename,
     "translationWords"
   );
-   await generateHelperForTool(
-    "en",
-    sourceProjectPath,
-    selectedProjectFilename,
-    "translationNotes"
-  );
+  // await generateHelperForTool(
+  //   "en",
+  //   sourceProjectPath,
+  //   selectedProjectFilename,
+  //   "translationNotes"
+  // );
 };
