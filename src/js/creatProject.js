@@ -7,7 +7,7 @@ import * as Bible from "../common/BooksOfTheBible";
 import usfm, { toJSON } from "usfm-js";
 import wordaligner from "word-aligner";
 import { fsExistsRust, fsWriteRust, fsGetRust } from "./serverUtils";
-import { IMPORTS_PATH, USER_RESOURCES_PATH } from "../common/constants";
+import { USER_RESOURCES_PATH } from "../common/constants";
 
 export function getBookFromProjectFileName(selectedProjectFilename) {
   return selectedProjectFilename.split("/")[1].split("_")[2];
@@ -875,7 +875,6 @@ const generateHelperForTool = async (
   typeOfTools
 ) => {
   let book = getBookFromProjectFileName(selectedProjectFilename);
-  let path = join(helperFolderName, "translationHelps", typeOfTools);
   let tsv = parseTsv(
     await fsGetRust(
       helperFolderName,

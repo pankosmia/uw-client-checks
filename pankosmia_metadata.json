@@ -13,6 +13,42 @@
     },
     "stub_content": {
       "en": "Content goes here"
+    },
+    "translationWords": {
+      "en": "translationWords",
+      "fr": "translationWords"
+    },
+    "to_initialised": {
+      "en": "initialising",
+      "fr": "initialiser"
+    },
+    "add_book_tCore": {
+      "en": "Add new book to tCore Project",
+      "fr": "Ajouter nouveau livre au project tCore"
+    },
+    "required_ressources_check": {
+      "en": "Ressources required for tCore",
+      "fr": "Ressources requisent pour tCore"
+    },
+    "book_errors":{
+      "en":"Book errors",
+      "fr":"Erreurs livre"
+    },
+    "present":{
+      "en" : "✔ Present",
+      "fr" : "✔ Present"
+    },
+    "missing":{
+      "en" : "✖ Missing",
+      "fr" :  "✖ absent"
+    },
+    "cancel":{
+      "en" : "Cancel",
+      "fr" : "Annuler"
+    },
+    "ok" : {
+      "en" : "Ok",
+      "fr" : "Ok"
     }
   }
 }

@@ -1,6 +1,4 @@
-import { useContext, useState, useCallback, useEffect } from 'react';
-import { i18nContext, doI18n } from "pithekos-lib";
-import { getBookFromName } from '../pages/tw';
+import { useState, useCallback, useEffect } from 'react';
 import SuggestingWordAligner from "./components/SuggestingWordAligner";
 
 import {
@@ -10,7 +8,6 @@ import {
 } from "./utils/alignmentHelpers";
 
 
-import {convertVerseDataToUSFM} from "./utils/UsfmFileConversionHelpers";
 import {NT_ORIG_LANG} from "./common/constants";
 
 // var alignedVerseJson = require('../__tests__/fixtures/alignments/en_ult_tit_1_1.json');
@@ -49,31 +46,9 @@ const alignmentComplete = areAlgnmentsComplete(targetWords, verseAlignments);
 console.log(`Alignments are ${alignmentComplete ? 'COMPLETE!' : 'incomplete'}`);
 
 function WordAligner() {
-  const project = 'en_bsb_tit_book'
-  const [targetBible, setTargetBible] = useState()
-
-    useEffect(() => {
-        async function loadBible() {
-        const bible = await getBookFromName("book_projects/" + project, project.split('_')[2]);
-        setTargetBible(bible);
-        
-        }
-        loadBible();
-    }, []);
 
 
-  const [maxWindowHeight, setMaxWindowHeight] = useState(window.innerHeight - 64);
-  const handleWindowResize = useCallback(event => {
-    setMaxWindowHeight(window.innerHeight - 64);
-  }, []);
-  const {i18nRef} = useContext(i18nContext);
 
-  useEffect(() => {
-    window.addEventListener('resize', handleWindowResize);
-    return () => {
-        window.removeEventListener('resize', handleWindowResize);
-    };
-  }, [handleWindowResize]);
 
     const targetLanguageFont = '';
     const sourceLanguage = NT_ORIG_LANG;

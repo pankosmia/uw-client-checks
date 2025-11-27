@@ -1,4 +1,4 @@
-import { getJson, getText, postJson, postText } from "pithekos-lib";
+import { getJson, getText, postJson } from "pithekos-lib";
 import { EXIST_PATH, BASE_URL, IMPORTS_PATH } from "../common/constants";
 import { join } from "./creatProject";
 let treeCache = []; // cache tree data across calls
@@ -76,17 +76,12 @@ export async function fsGetRust(
 export async function fsWriteRust(repoPath, ipath, data) {
   try {
     let url = getUrlForGetDocumentInProject(repoPath) + ipath;
-    let typeSearch = getTailsOfWantedDocumentArray(ipath);
     let res;
-    let text = { payload: JSON.stringify(data) };
     const body = {
       payload: typeof data === "object" ? JSON.stringify(data, null, 2) : data,
     };
-    if (typeSearch[1].includes(".json")) {
-      res = await postJson(url, JSON.stringify(body));
-    } else {
-      res = await postText(url, body);
-    }
+    res = await postJson(url, JSON.stringify(body));
+    
 
     if (!res.ok) {
       console.log(res);
@@ -104,7 +99,6 @@ export async function fsExistsRust(
   intermediatePath = "_local_/_local_",
   reloadTreeCache = true
 ) {
-  let typeSearch = getTailsOfWantedDocumentArray(ipath);
   try {
     if (treeCache.length <= 0 || reloadTreeCache) {
       let url = getUrlForExistDocumentInProject(repoPath, intermediatePath);
