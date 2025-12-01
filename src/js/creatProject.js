@@ -7,7 +7,7 @@ import * as Bible from "../common/BooksOfTheBible";
 import usfm, { toJSON } from "usfm-js";
 import wordaligner from "word-aligner";
 import { fsExistsRust, fsWriteRust, fsGetRust } from "./serverUtils";
-import { USER_RESOURCES_PATH } from "../common/constants";
+import { USER_RESOURCES_PATH,T_NOTES_CATEGORIES } from "../common/constants";
 
 export function getBookFromProjectFileName(selectedProjectFilename) {
   return selectedProjectFilename.split("/")[1].split("_")[2];
@@ -272,7 +272,6 @@ export const loadChapterResource = async function (
         "git.door43.org/uW"
       );
       let bibleChapterData = toJSON(result)["chapters"][chapter];
-      console.log(chapter, bibleChapterData);
       for (
         let i = 0, len = Object.keys(bibleChapterData).length;
         i < len;
@@ -352,13 +351,7 @@ export const getOriginalLanguageChapterResources = async function (
   chapter
 ) {
   const { languageId, bibleId } = getOrigLangforBook(projectBibleID);
-  console.log(
-    bibleId,
-    bibleId === "ugnt" ? "grc_ugnt" : "hbo_uhb",
-    projectBibleID,
-    languageId,
-    chapter
-  );
+
   return await loadChapterResource(
     bibleId === "ugnt" ? "grc_ugnt" : "hbo_uhb",
     projectBibleID,
@@ -868,6 +861,19 @@ export function getParsedUSFM(usfmData) {
   }
 }
 
+const findCategoriesForTn = (groupId) => {
+  let result = 'other';
+
+  Object.keys(T_NOTES_CATEGORIES).forEach(category => {
+    if (T_NOTES_CATEGORIES[category][groupId]) {
+      result = category;
+    }
+  });
+
+  return result;
+};
+
+
 const generateHelperForTool = async (
   helperFolderName,
   sourceProjectPath,
@@ -882,7 +888,7 @@ const generateHelperForTool = async (
       "git.door43.org/uW"
     )
   );
-
+  console.log(tsv);
   const emptyJson = {
     comments: false,
     reminders: false,
@@ -903,7 +909,16 @@ const generateHelperForTool = async (
   };
   let categories = {};
   for (let i = 1; i < tsv.length; i++) {
-    let category = tsv[i][5].split("/")[2];
+    let category = "";
+    if (typeOfTools === "translationNotes") {
+      if (tsv[i][3] === "") {
+        continue;
+      }
+      category = findCategoriesForTn(tsv[i][3].split("/").slice(-1)[0])
+      console.log(category);
+    } else {
+      category = tsv[i][5].split("/")[2];
+    }
     let newJson = { ...emptyJson };
     newJson.contextId.reference = {
       bookId: book,
@@ -911,14 +926,27 @@ const generateHelperForTool = async (
       verse: parseInt(tsv[i][0].split(":")[1]),
     };
     newJson.contextId.checkId = tsv[i][1];
-    newJson.contextId.occurrence = parseInt(tsv[i][4])
-    newJson.contextId.quoteString = tsv[i][3];
-    newJson.contextId.groupId = tsv[i][5].split("/")[3];
+    newJson.contextId.occurrence = parseInt(tsv[i][4]);
     newJson.contextId.quote = tsv[i][3];
 
-    let exist = await fsExistsRust(
-      sourceProjectPath,
-      join(
+    let url = "";
+    if (typeOfTools === "translationNotes") {
+      newJson.contextId.groupId = tsv[i][3].split("/").slice(-1)[0];
+      newJson.contextId.quoteString = tsv[i][4];
+      newJson.contextId.occurrenceNote = tsv[i][6];
+      url = join(
+        selectedProjectFilename,
+        "apps",
+        "translationCore",
+        "index",
+        typeOfTools,
+        book,
+        `${tsv[i][3].split("/").slice(-1)[0]}.json`
+      );
+    } else {
+      newJson.contextId.quoteString = tsv[i][3];
+      newJson.contextId.groupId = tsv[i][3].split("/").slice(-1)[0];
+      url = join(
         selectedProjectFilename,
         "apps",
         "translationCore",
@@ -926,55 +954,35 @@ const generateHelperForTool = async (
         typeOfTools,
         book,
         `${tsv[i][5].split("/")[3]}.json`
-      ),"_local_/_local_",true
-    );
-   
-    if (exist) {
-      let alreadyHereJsonFile = await fsGetRust(
-        sourceProjectPath,
-        join(
-          selectedProjectFilename,
-          "apps",
-          "translationCore",
-          "index",
-          typeOfTools,
-          book,
-          `${tsv[i][5].split("/")[3]}.json`
-        )
-      );
-      alreadyHereJsonFile.push(newJson);
-      await fsWriteRust(
-        sourceProjectPath,
-        join(
-          selectedProjectFilename,
-          "apps",
-          "translationCore",
-          "index",
-          typeOfTools,
-          book,
-          `${tsv[i][5].split("/")[3]}.json`
-        ),
-        alreadyHereJsonFile
-      );
-    } else {
-      await fsWriteRust(
-        sourceProjectPath,
-        join(
-          selectedProjectFilename,
-          "apps",
-          "translationCore",
-          "index",
-          typeOfTools,
-          book,
-          `${tsv[i][5].split("/")[3]}.json`
-        ),
-        [newJson]
       );
     }
-    if (categories[category]) {
-      categories[category].push(`${tsv[i][5].split("/")[3]}.json`);
+
+    let exist = await fsExistsRust(
+      sourceProjectPath,
+      url,
+      "_local_/_local_",
+      true
+    );
+
+    if (exist) {
+      let alreadyHereJsonFile = await fsGetRust(sourceProjectPath, url);
+      alreadyHereJsonFile.push(newJson);
+      await fsWriteRust(sourceProjectPath, url, alreadyHereJsonFile);
     } else {
-      categories[category] = [`${tsv[i][5].split("/")[3]}.json`];
+      await fsWriteRust(sourceProjectPath, url, [newJson]);
+    }
+    if (categories[category]) {
+      if (typeOfTools === "translationNotes") {
+        categories[category].push(`${tsv[i][3].split("/").slice(-1)[0]}.json`);
+      } else {
+        categories[category].push(`${tsv[i][5].split("/")[3]}.json`);
+      }
+    } else {
+      if (typeOfTools === "translationNotes") {
+        categories[category] = [`${tsv[i][3].split("/").slice(-1)[0]}.json`];
+      } else {
+        categories[category] = [`${tsv[i][5].split("/")[3]}.json`];
+      }
     }
   }
   for (let c of Object.keys(categories)) {
@@ -1153,10 +1161,10 @@ export const convertToProjectFormat = async (
     selectedProjectFilename,
     "translationWords"
   );
-  // await generateHelperForTool(
-  //   "en",
-  //   sourceProjectPath,
-  //   selectedProjectFilename,
-  //   "translationNotes"
-  // );
+  await generateHelperForTool(
+    "en_tn",
+    sourceProjectPath,
+    selectedProjectFilename,
+    "translationNotes"
+  );
 };

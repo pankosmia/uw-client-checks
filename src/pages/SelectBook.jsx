@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { doI18n, i18nContext } from "pithekos-lib";
 import { DataGrid } from "@mui/x-data-grid";
-import { Box, Button, Typography, Modal, Chip } from "@mui/material";
+import { Box, Button, Typography, Modal } from "@mui/material";
 import { convertToProjectFormat } from "../js/creatProject"; // <-- import your function
 import { useNavigate } from "react-router-dom";
 import { getJson } from "pithekos-lib";

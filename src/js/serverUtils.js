@@ -17,7 +17,7 @@ export async function fsGetRust(
 ) {
   try {
     let typeSearch = getTailsOfWantedDocumentArray(ipath);
-    if (typeSearch.length === 1) {
+    if (typeSearch.length <= 1) {
       if (true) {
         const url = getUrlForExistDocumentInProject(repoPath, intermediatePath);
         const res = await getJson(url);
@@ -75,7 +75,7 @@ export async function fsGetRust(
  */
 export async function fsWriteRust(repoPath, ipath, data) {
   try {
-    let url = getUrlForGetDocumentInProject(repoPath) + ipath;
+    let url = getUrlForGetDocumentInProject(repoPath) + ipath+"&update_ingredients";
     let res;
     const body = {
       payload: typeof data === "object" ? JSON.stringify(data, null, 2) : data,
@@ -84,7 +84,6 @@ export async function fsWriteRust(repoPath, ipath, data) {
     
 
     if (!res.ok) {
-      console.log(res);
       throw new Error(`POST failed: ${res.status} ${res.statusText} ${res}`);
     }
   } catch (err) {
@@ -152,6 +151,7 @@ function getUrlForExistDocumentInProject(
   return BASE_URL + "/" + EXIST_PATH + repoPath;
 }
 function getTailsOfWantedDocumentArray(ipath) {
+
   return ipath
     .split("/")
     .pop()

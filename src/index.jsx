@@ -1,13 +1,9 @@
 import { createRoot } from "react-dom/client";
-import {
-  createHashRouter,
-  RouterProvider,
-  Outlet,
- 
-} from "react-router-dom";
-import {TwChecker} from "./pages/tw";
-import TnChecker from "./pages/tn";
-import WordAligner from "./wordAligner/WordAligner"
+import { createHashRouter, RouterProvider, Outlet } from "react-router-dom";
+import { TwChecker } from "./pages/tw";
+import { TnChecker } from "./pages/tn";
+import WordAligner from "./wordAligner/WordAligner";
+import { RedirectToContent } from "./pages/RedirectToContent";
 // import ToolsManagementContainer from "./pages/ToolsManagementContainer";
 // import ReduxStateViewer from "./pages/ReduxStateViewer";
 
@@ -16,9 +12,7 @@ import "./index.css";
 import { Header } from "pithekos-lib";
 import SelectBook from "./pages/SelectBook";
 
-
 function AppLayout() {
-
   return (
     <div>
       <Header
@@ -36,18 +30,17 @@ const router = createHashRouter([
     path: "/",
     element: <AppLayout />,
     children: [
-
       { path: "TnChecker/*", element: <TnChecker /> },
-      { path: "SelectBook/:name", element: <SelectBook /> }, 
+      { path: "/WordAligner", element: <WordAligner /> },
+      { path: "SelectBook/:name", element: <SelectBook /> },
       { path: ":projectName/TwChecker/:tCoreName/*", element: <TwChecker /> },
-      { path: "/", element: <WordAligner /> },
-
+      { index: true, element: <RedirectToContent /> },
     ],
   },
 ]);
 
 createRoot(document.getElementById("root")).render(
-    <SpaContainer>
-      <RouterProvider router={router} />
-    </SpaContainer>
+  <SpaContainer>
+    <RouterProvider router={router} />
+  </SpaContainer>
 );
