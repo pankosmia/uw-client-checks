@@ -2,11 +2,14 @@ import { useEffect, useState, useMemo } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { groupDataHelpers } from "word-aligner-lib";
 import { useParams } from "react-router-dom";
+import { fsGetRust, fsWriteRust } from "../js/serverUtils";
 import {
-  fsGetRust,
-  fsWriteRust,
-} from "../js/serverUtils";
-import { getBookFromName,getglTwData,getCheckingData,getLexiconData } from "../js/checkerUtils";
+  getBookFromName,
+  getglTwData,
+  getCheckingData,
+  getLexiconData,
+  getTnData,
+} from "../js/checkerUtils";
 import { isOldTestament } from "../js/creatProject";
 // Load sample data from fixtures
 // const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
@@ -67,8 +70,8 @@ export const TnChecker = () => {
   const [glTnData, setGlTnData] = useState();
   const [checkingData, setCheckingData] = useState();
   const [ultBible, setUltBible] = useState();
-  const { projectName,tCoreName } = useParams();
-  const [lexicon,setLexicon] = useState()
+  const { projectName, tCoreName } = useParams();
+  const [lexicon, setLexicon] = useState();
   const book = useMemo(() => tCoreName?.split("_")[2], [tCoreName]);
 
   const changeCurrentVerse = async (
@@ -145,15 +148,15 @@ export const TnChecker = () => {
 
     const loadAll = async () => {
       const [
-        glTwDataRes,
+        glTnDataRes,
         checkingRes,
         targetBibleRes,
         originBibleRes,
         ultBibleRes,
-        lexiconRes
+        lexiconRes,
       ] = await Promise.all([
-        getglTwData("en_tw", projectName, `book_projects/${tCoreName}`),
-        getCheckingData(projectName, `book_projects/${tCoreName}`, book),
+        getTnData("en_ta", "repoProject", "tCoreName"),        
+        getCheckingData(projectName, `book_projects/${tCoreName}`, book,'tanslationNotes'),
         getBookFromName(
           projectName,
           `book_projects/${tCoreName}`,
@@ -182,20 +185,20 @@ export const TnChecker = () => {
           "gateway_language",
           "git.door43.org/uW"
         ),
-        getLexiconData('en_ugl')
+        getLexiconData(isOldTestament(book)?"en_uht":"en_ugl"),
       ]);
 
-      setGlTnData(glTwDataRes);
+      setGlTnData(glTnDataRes);
       setCheckingData(groupDataHelpers.extractGroupData(checkingRes));
       setTargetBible(targetBibleRes);
       setOriginBible(originBibleRes);
       setUltBible(ultBibleRes);
-      setLexicon(lexiconRes)
+      setLexicon(lexiconRes);
     };
 
     loadAll();
   }, [book, projectName, tCoreName]);
-
+  console.log(checkingData)
   // Build unified bibles list when dependencies update
   useEffect(() => {
     if (targetBible && originBible && ultBible) {
@@ -255,7 +258,6 @@ export const TnChecker = () => {
     checkingData != null &&
     contextId_ != null;
 
-  
   return (
     <div className="page">
       {!ready && <div>Loading translation checker…</div>}
@@ -287,4 +289,3 @@ export const TnChecker = () => {
     </div>
   );
 };
-

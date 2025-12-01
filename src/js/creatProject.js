@@ -915,7 +915,6 @@ const generateHelperForTool = async (
         continue;
       }
       category = findCategoriesForTn(tsv[i][3].split("/").slice(-1)[0])
-      console.log(category);
     } else {
       category = tsv[i][5].split("/")[2];
     }

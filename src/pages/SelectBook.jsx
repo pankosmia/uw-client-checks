@@ -9,6 +9,8 @@ import { getJson } from "pithekos-lib";
 import { BASE_URL } from "../common/constants";
 import { fsGetRust, fsWriteRust } from "../js/serverUtils";
 import { isOldTestament } from "../js/creatProject";
+import ButtonDashBoard from "../js/components/ButtonDashBoard";
+
 export default function SelectBook() {
   const { name } = useParams();
   const { i18nRef } = useContext(i18nContext);
@@ -193,22 +195,16 @@ export default function SelectBook() {
     {
       field: "actions",
       headerName: doI18n("pages:content:row_actions", i18nRef.current),
-      minWidth: 100,
-      flex: 0.5,
+      minWidth: 250, // increase minimum width
+      flex: 3, // give it more space relative to other columns
       renderCell: (params) => {
         // params.row.actions is just a string or boolean
         const hasManifest = params.row.actions; // true/false
         return hasManifest ? (
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate(
-                `/${params.row.projectName}/TwChecker/${params.row.tCoreName}`
-              )
-            }
-          >
-            {doI18n("pages:uw-client-checks:translationWords", i18nRef.current)}
-          </Button>
+          <ButtonDashBoard
+            projectName={params.row.projectName}
+            tCoreName={params.row.tCoreName}
+          />
         ) : (
           <Button
             variant="contained"
@@ -275,7 +271,8 @@ export default function SelectBook() {
         {doI18n("pages:uw-client-checks:add_book_tCore", i18nRef.current)}
       </Button>
       <DataGrid
-        autoHeight
+        getRowHeight={() => 'auto'}
+        getEstimatedRowHeight={() => 200}
         initialState={{
           sorting: {
             sortModel: [{ field: "name", sort: "asc" }],

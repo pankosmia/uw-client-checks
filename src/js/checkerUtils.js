@@ -76,11 +76,22 @@ export const getTnData = async (
   repoNameProject,
   tCoreNameProject
 ) => {
-    let categories = await fsGetRust(repoNameProject,join(tCoreNameProject,"categoryIndex"))
-    const json = {
+  let json = {};
+  const categories = await fsGetRust(repoNameResources, "","git.door43.org/uW");
+  for (let c of categories) {
+    if (!(c.split(".").length > 1)) {
+      json[c] = {}
+      const datas = await fsGetRust(repoNameResources, c ,"git.door43.org/uW");
+      for (let d of datas) {
+        if (!(d.split(".").length > 1)) {
+          let markD = await fsGetRust(repoNameResources, join(c, d, "01.md"),"git.door43.org/uW");
+          json[c][d] = markD
+        }
+      }
     }
-    return {categories,json}
-}
+  }
+  return json;
+};
 
 export const getglTwData = async (
   repoNameResources,
@@ -122,18 +133,16 @@ export const getglTwData = async (
   return json;
 };
 
-export const getCheckingData = async (repoName, nameArr, book) => {
-  let path = `${nameArr}/apps/translationCore/index/translationWords/${book}/`;
-
-  const json = {
-    kt: { groups: {} },
-    names: { groups: {} },
-    other: { groups: {} },
-  };
-  const things = ["kt.json", "names.json", "other.json"];
-
-  for (const t of things) {
+export const getCheckingData = async (repoName, nameArr, book,tool) => {
+  let path = `${nameArr}/apps/translationCore/index/${tool}/${book}/`;
+  const json = {};
+  const categories = await fsGetRust(repoName, path+"categoryIndex")
+  console.log(categories)
+  for (let t of categories) {
+    console.log(t)
+    json[t.split(".")[0]] = {"groups" : {}}
     const folder = await fsGetRust(repoName, path + "categoryIndex/" + t);
+    console.log(folder)
     for (const e of folder) {
       if (!e.includes("headers")) {
         let arr = e.split(".");
@@ -150,15 +159,41 @@ export const getCheckingData = async (repoName, nameArr, book) => {
 };
 
 export const getLexiconData = async (repoName) => {
-    const arb = repoName.split('_')[1]
-    let json = {arb :{}}
-    const list = await fsGetRust(repoName,"",'git.door43.org/uW')
-    for (let e of list){
-        let res = await fsGetRust(repoName,e,'git.door43.org/uW')
-        json[arb][e.split(".")[0]] = res
+  const arb = repoName.split("_")[1];
+  let json = { [arb]: {} };
+  const list = await fsGetRust(repoName, "", "git.door43.org/uW");
+  for (let e of list) {
+    let res = await fsGetRust(repoName, e, "git.door43.org/uW");
+    json[arb][e.split(".")[0]] = res;
+  }
+  return json;
+};
+
+export const getProgressChecker = async (
+  toolName,
+  selectedCategories,
+  repoName,
+  nameArr,
+  book
+) => {
+  const checks = await getCheckingData(repoName, nameArr, book,toolName);
+  const filteredChecks = Object.fromEntries(
+    Object.entries(checks).filter(([key]) => selectedCategories.includes(key))
+  );
+  let isDone = 1;
+  let maxCount = 1;
+  for (let cat of Object.keys(filteredChecks)) {
+    for (let context of Object.values(filteredChecks[cat]["groups"])) {
+      for (let e of context) {
+        if (e.nothingToSelect || Boolean(e.selections)) {
+          isDone += 1;
+        }
+        maxCount += 1;
+      }
     }
-    return json 
-}
+  }
+  return (isDone / maxCount) * 100;
+};
 
 // export const getResourcesFrom = async (repoName, nameArr, book) => {
 //   const all_part = await fsGetRust(

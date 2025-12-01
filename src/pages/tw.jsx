@@ -142,7 +142,7 @@ export const TwChecker = () => {
   // Load all required data concurrently
   useEffect(() => {
     if (!book) return;
-
+    
     const loadAll = async () => {
       const [
         glTwDataRes,
@@ -153,7 +153,7 @@ export const TwChecker = () => {
         lexiconRes
       ] = await Promise.all([
         getglTwData("en_tw", projectName, `book_projects/${tCoreName}`),
-        getCheckingData(projectName, `book_projects/${tCoreName}`, book),
+        getCheckingData(projectName, `book_projects/${tCoreName}`, book,'tanslationWords'),
         getBookFromName(
           projectName,
           `book_projects/${tCoreName}`,
@@ -240,7 +240,8 @@ export const TwChecker = () => {
     }),
     []
   );
-
+  console.log(lexicon)
+  console.log(checkingData)
   const getLexiconData_ = (lexiconId, entryId) => {
     const entryData = lexicon?.[lexiconId]?.[entryId] || null;
     return { [lexiconId]: { [entryId]: entryData } };
