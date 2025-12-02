@@ -1,5 +1,5 @@
 import { LANG_CODE } from "../common/constants";
-import { fixOccurrences } from "./serverUtils";
+import { fixOccurrences, fsWriteRust } from "./serverUtils";
 import { join } from "./creatProject";
 import { toJSON } from "usfm-js";
 import { fsGetManifest } from "./serverUtils";
@@ -135,8 +135,9 @@ export const getglTwData = async (
 
 export const getCheckingData = async (repoName, nameArr, book,tool) => {
   let path = `${nameArr}/apps/translationCore/index/${tool}/${book}/`;
+  console.log(repoName,path+"categoryIndex")
   const json = {};
-  const categories = await fsGetRust(repoName, path+"categoryIndex")
+  const categories = await fsGetRust(repoName, path+"categoryIndex","_local_/_local_",true)
   console.log(categories)
   for (let t of categories) {
     console.log(t)
@@ -159,13 +160,30 @@ export const getCheckingData = async (repoName, nameArr, book,tool) => {
 };
 
 export const getLexiconData = async (repoName) => {
+  let suffixe = ""
+  if(repoName.includes("uhl")){
+    suffixe = "content/"
+  }
+  let exist = await fsExistsRust(repoName,suffixe+"all.json","git.door43.org/uW")
+  if(exist){
+    let lexicon = await fsGetRust(repoName,suffixe+"all.json","git.door43.org/uW")
+    return lexicon
+  }
+  if (suffixe === "content/"){
+    suffixe = "content"
+  }
   const arb = repoName.split("_")[1];
   let json = { [arb]: {} };
-  const list = await fsGetRust(repoName, "", "git.door43.org/uW");
+  
+  const list = await fsGetRust(repoName, suffixe, "git.door43.org/uW");
   for (let e of list) {
-    let res = await fsGetRust(repoName, e, "git.door43.org/uW");
+    if(suffixe === "content"){
+      suffixe = "content/"
+    }
+    let res = await fsGetRust(repoName, suffixe+e, "git.door43.org/uW");
     json[arb][e.split(".")[0]] = res;
   }
+  fsWriteRust(repoName,suffixe+"all.json",json,"git.door43.org/uW")
   return json;
 };
 

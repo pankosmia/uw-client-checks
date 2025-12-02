@@ -1,10 +1,19 @@
 import { useParams } from "react-router-dom";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, use } from "react";
 import { doI18n, i18nContext } from "pithekos-lib";
 import { DataGrid } from "@mui/x-data-grid";
-import { Box, Button, Typography, Modal } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  FormControl,
+  TextField,
+  MenuItem,
+  Modal,
+  Divider,
+  Paper,
+} from "@mui/material";
 import { convertToProjectFormat } from "../js/creatProject"; // <-- import your function
-import { useNavigate } from "react-router-dom";
 import { getJson } from "pithekos-lib";
 import { BASE_URL } from "../common/constants";
 import { fsGetRust, fsWriteRust } from "../js/serverUtils";
@@ -12,12 +21,10 @@ import { isOldTestament } from "../js/creatProject";
 import ButtonDashBoard from "../js/components/ButtonDashBoard";
 
 export default function SelectBook() {
-  const { name } = useParams();
   const { i18nRef } = useContext(i18nContext);
   const [inDirectory, setInDirectory] = useState([]);
   const [tree, setTree] = useState([]);
   const [rows, setRows] = useState([]);
-  const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
   const [manifestPath, setManifestPath] = useState("");
   const [openCheckModal, setOpenCheckModal] = useState(false);
@@ -26,6 +33,50 @@ export default function SelectBook() {
   const [errorsData, setErrorsData] = useState([]);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [currentErrors, setCurrentErrors] = useState([]);
+  const [burritos, setBurritos] = useState(null);
+  const [globalResourcesStatus, setGlobalResourcesStatus] = useState(null);
+  const [allResourcesPresent, setAllResourcesPresent] = useState(false);
+  const [selectedBurrito, setSelectedBurrito] = useState();
+
+  const { optional_project } = useParams();
+
+  useEffect(() => {
+    async function fetchSummaries() {
+      if (optional_project) {
+        try {
+          const response = await fetch("/burrito/metadata/summaries");
+          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+          const data = await response.json();
+          // Filter only those with flavor_type = scripture
+          const burritoArray = Object.entries(data).map(([key, value]) => ({
+            path: key,
+            ...value,
+          }));
+
+          // Filter only scripture burritos
+          const scriptures = burritoArray.find(
+            (item) =>
+              item?.flavor === "x-tcore" &&
+              item?.abbreviation === optional_project
+          );
+          setSelectedBurrito(scriptures);
+        } catch (err) {
+          console.error("Error fetching summaries:", err);
+        } finally {
+        }
+      }
+    }
+    fetchSummaries()
+  }, []);
+  useEffect(() => {
+    async function runGlobalCheck() {
+      const status = await checkRequiredResources();
+      setGlobalResourcesStatus(status);
+      setAllResourcesPresent(status.every((r) => r.exists));
+    }
+
+    runGlobalCheck();
+  }, []);
   const REQUIRED_RESOURCES = [
     "git.door43.org/uW/en_tn",
     "git.door43.org/uW/en_tw",
@@ -34,7 +85,45 @@ export default function SelectBook() {
     "git.door43.org/uW/hbo_uhb",
     "git.door43.org/uW/en_ust",
     "git.door43.org/uW/en_ult",
+    "git.door43.org/uW/en_ta",
+    "git.door43.org/uW/en_uhl",
   ];
+
+  const handleSelectBurrito = (event) => {
+    const name = event.target.value;
+    const burrito = burritos.find((b) => b.name === name);
+    setSelectedBurrito(burrito);
+  };
+
+  useEffect(() => {
+    async function fetchSummaries() {
+      try {
+        const response = await fetch("/burrito/metadata/summaries");
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        const data = await response.json();
+        // Filter only those with flavor_type = scripture
+        const burritoArray = Object.entries(data).map(([key, value]) => ({
+          path: key,
+          ...value,
+        }));
+
+        // Filter only scripture burritos
+        const scriptures = burritoArray.filter(
+          (item) => item?.flavor === "x-tcore"
+        );
+        if (scriptures.length < 1) {
+          setBurritos(null);
+        } else {
+          setBurritos(scriptures);
+        }
+      } catch (err) {
+        console.error("Error fetching summaries:", err);
+      } finally {
+      }
+    }
+    fetchSummaries();
+  }, [selectedBurrito]);
+
   async function checkRequiredResources() {
     const manifests = (await getJson(BASE_URL + "/burrito/metadata/summaries"))
       .json;
@@ -63,7 +152,7 @@ export default function SelectBook() {
 
   async function fetchData() {
     try {
-      const url = `/burrito/paths/_local_/_local_/${name}`;
+      const url = `/burrito/paths/_local_/_local_/${selectedBurrito.abbreviation}`;
       const res = await getJson(url);
       const data = await res.json;
       const ipath = "book_projects";
@@ -76,8 +165,10 @@ export default function SelectBook() {
     }
   }
   useEffect(() => {
-    fetchData();
-  }, [name]);
+    if (selectedBurrito) {
+      fetchData();
+    }
+  }, [selectedBurrito]);
 
   const handleAddBook = async (
     bookCode,
@@ -146,13 +237,17 @@ export default function SelectBook() {
 
         errors[book] = [];
         for (let e of REQUIRED_RESOURCES) {
-          if (e === "git.door43.org/uW/en_ugl") {
-            continue;
-          }
           if (isOldTestamentBook && e === "git.door43.org/uW/grc_ugnt") {
             continue;
           }
           if (!isOldTestamentBook && e === "git.door43.org/uW/hbo_uhb") {
+            continue;
+          }
+          if (
+            e === "git.door43.org/uW/en_ta" ||
+            e === "git.door43.org/uW/en_uhl" ||
+            e === "git.door43.org/uW/en_ugl"
+          ) {
             continue;
           }
           if (!manifestsObj[e]) {
@@ -172,12 +267,14 @@ export default function SelectBook() {
 
       return errors;
     }
-    if (name) {
-      checkResourcesForBookCode(name).then((responceError) => {
-        setErrorsData(responceError);
-      });
+    if (selectedBurrito) {
+      checkResourcesForBookCode(selectedBurrito.abbreviation).then(
+        (responceError) => {
+          setErrorsData(responceError);
+        }
+      );
     }
-  }, [name]);
+  }, [selectedBurrito]);
 
   const columns = [
     {
@@ -232,7 +329,9 @@ export default function SelectBook() {
   ];
 
   const handleOpenModal = async () => {
-    const path = await getPathFromOriginalResources(name);
+    const path = await getPathFromOriginalResources(
+      selectedBurrito.abbreviation
+    );
     setManifestPath(path);
     setOpenModal(true);
   };
@@ -245,7 +344,7 @@ export default function SelectBook() {
         return {
           id: n,
           tCoreName: rep,
-          projectName: name,
+          projectName: selectedBurrito.abbreviation,
           name: splitname[2],
           language: splitname[0],
           actions: find_manifest(rep),
@@ -267,21 +366,171 @@ export default function SelectBook() {
         width: "100%",
       }}
     >
-      <Button onClick={handleOpenModal}>
-        {doI18n("pages:uw-client-checks:add_book_tCore", i18nRef.current)}
-      </Button>
-      <DataGrid
-        getRowHeight={() => 'auto'}
-        getEstimatedRowHeight={() => 200}
-        initialState={{
-          sorting: {
-            sortModel: [{ field: "name", sort: "asc" }],
-          },
+      {globalResourcesStatus && !allResourcesPresent && (
+        <Paper
+          elevation={2}
+          sx={{
+            mx: "auto",
+            mt: 2,
+            mb: 3,
+            maxWidth: 800,
+            p: 3,
+            borderLeft: "6px solid",
+            borderColor: "error.main",
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+            {doI18n(
+              "pages:uw-client-checks:required_ressources_check",
+              i18nRef.current
+            )}
+          </Typography>
+
+          <Typography sx={{ mb: 2 }}>
+            Some required resources are missing. You must install them before
+            selecting a tCore project.
+          </Typography>
+
+          <Box>
+            {globalResourcesStatus
+              .filter((r) => !r.exists)
+              .map((r) => (
+                <Box
+                  key={r.path}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 1,
+                    px: 1,
+                  }}
+                >
+                  <Typography>{r.path}</Typography>
+                  <Typography color="error" fontWeight={600}>
+                    {doI18n("pages:uw-client-checks:missing", i18nRef.current)}
+                  </Typography>
+                </Box>
+              ))}
+          </Box>
+        </Paper>
+      )}
+      {burritos ? (
+        <Paper
+          elevation={1}
+          sx={{
+            p: 3,
+            mx: "auto",
+            maxWidth: 600,
+            textAlign: "center",
+            mb: 2,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            Select tCore Project
+          </Typography>
+          <FormControl
+            fullWidth
+            disabled={!allResourcesPresent}
+            sx={{ paddingLeft: "1rem", paddingRight: "1rem" }}
+          >
+            <TextField
+              required
+              disabled={!allResourcesPresent}
+              id="burrito-select-label"
+              select
+              value={selectedBurrito?.name || ""}
+              onChange={handleSelectBurrito}
+              label={doI18n(
+                `pages:core-local-workspace:choose_document`,
+                i18nRef.current
+              )}
+            >
+              {burritos &&
+                burritos.map((burrito) => (
+                  <MenuItem key={burrito.name} value={burrito.name}>
+                    {burrito.name}
+                  </MenuItem>
+                ))}
+            </TextField>
+          </FormControl>
+        </Paper>
+      ) : (
+        <Paper
+          elevation={1}
+          sx={{
+            p: 3,
+            mx: "auto",
+            maxWidth: 600,
+            textAlign: "center",
+            mb: 2,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            No tCoreProject Fround{" "}
+          </Typography>
+          <Button
+            onClick={() =>
+              (window.location.href =
+                "/clients/core-contenthandler_t_core#/tCoreContent")
+            }
+          >
+            Create tCore project
+          </Button>
+        </Paper>
+      )}
+      <Divider
+        sx={{
+          my: 3,
+          borderColor: "divider",
         }}
-        rows={rows}
-        columns={columns}
-        sx={{ fontSize: "1rem" }}
       />
+      {selectedBurrito ? (
+        <Box sx={{ px: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Books
+            </Typography>
+
+            <Button variant="contained" onClick={handleOpenModal}>
+              {doI18n("pages:uw-client-checks:add_book_tCore", i18nRef.current)}
+            </Button>
+          </Box>
+          <DataGrid
+            getRowHeight={() => "auto"}
+            getEstimatedRowHeight={() => 200}
+            initialState={{
+              sorting: {
+                sortModel: [{ field: "name", sort: "asc" }],
+              },
+            }}
+            rows={rows}
+            columns={columns}
+            sx={{ fontSize: "1rem" }}
+          />
+        </Box>
+      ) : (
+        <Box sx={{ px: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Books
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
       <Modal open={openModal} onClose={handleCloseModal}>
         <Box
           sx={{
@@ -327,7 +576,7 @@ export default function SelectBook() {
                               handleAddBook(
                                 code,
                                 manifestPath[0],
-                                name,
+                                selectedBurrito.abbreviation,
                                 inDirectory[0]
                               );
                             }

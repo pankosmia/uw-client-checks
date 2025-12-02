@@ -43,8 +43,10 @@ const translate = (key) => {
     translations,
     key
   );
-  if (translation.includes("translate")) {
-    return key;
+  if (typeof translation === String) {
+    if (translation.includes("translate")) {
+      return key;
+    }
   }
   return translation;
 };
@@ -153,7 +155,7 @@ export const TwChecker = () => {
         lexiconRes
       ] = await Promise.all([
         getglTwData("en_tw", projectName, `book_projects/${tCoreName}`),
-        getCheckingData(projectName, `book_projects/${tCoreName}`, book,'tanslationWords'),
+        getCheckingData(projectName, `book_projects/${tCoreName}`, book,'translationWords'),
         getBookFromName(
           projectName,
           `book_projects/${tCoreName}`,
@@ -182,7 +184,7 @@ export const TwChecker = () => {
           "gateway_language",
           "git.door43.org/uW"
         ),
-        getLexiconData('en_ugl')
+        getLexiconData(isOldTestament(book) ? "en_uhl" : "en_ugl"),
       ]);
 
       setGlTwData(glTwDataRes);

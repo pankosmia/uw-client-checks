@@ -30,11 +30,11 @@ const router = createHashRouter([
     path: "/",
     element: <AppLayout />,
     children: [
+      { index: true, element: <SelectBook /> },
       { path: ":projectName/TnChecker/:tCoreName/*", element: <TnChecker /> },
       { path: "/WordAligner", element: <WordAligner /> },
-      { path: "SelectBook/:name", element: <SelectBook /> },
+      { path: ":optional_project", element: <SelectBook /> },
       { path: ":projectName/TwChecker/:tCoreName/*", element: <TwChecker /> },
-      { index: true, element: <RedirectToContent /> },
     ],
   },
 ]);

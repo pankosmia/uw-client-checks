@@ -46,8 +46,10 @@ const translate = (key) => {
     translations,
     key
   );
-  if (translation.includes("translate")) {
-    return key;
+  if (typeof translation === String) {
+    if (translation.includes("translate")) {
+      return key;
+    }
   }
   return translation;
 };
@@ -99,7 +101,7 @@ export const TnChecker = () => {
 
     let json2 = await fsGetRust(
       projectName,
-      `book_projects/${tCoreName}/apps/translationCore/index/translationWords/${book}/${index}.json`
+      `book_projects/${tCoreName}/apps/translationCore/index/translationNotes/${book}/${index}.json`
     );
 
     // Ensure it's an array with at least 1 item
@@ -138,7 +140,7 @@ export const TnChecker = () => {
 
     await fsWriteRust(
       projectName,
-      `book_projects/${tCoreName}/apps/translationCore/index/translationWords/${book}/${index}.json`,
+      `book_projects/${tCoreName}/apps/translationCore/index/translationNotes/${book}/${index}.json`,
       json2
     );
   };
@@ -155,8 +157,13 @@ export const TnChecker = () => {
         ultBibleRes,
         lexiconRes,
       ] = await Promise.all([
-        getTnData("en_ta", "repoProject", "tCoreName"),        
-        getCheckingData(projectName, `book_projects/${tCoreName}`, book,'tanslationNotes'),
+        getTnData("en_ta", "repoProject", "tCoreName"),
+        getCheckingData(
+          projectName,
+          `book_projects/${tCoreName}`,
+          book,
+          "translationNotes"
+        ),
         getBookFromName(
           projectName,
           `book_projects/${tCoreName}`,
@@ -185,7 +192,7 @@ export const TnChecker = () => {
           "gateway_language",
           "git.door43.org/uW"
         ),
-        getLexiconData(isOldTestament(book)?"en_uht":"en_ugl"),
+        getLexiconData(isOldTestament(book) ? "en_uhl" : "en_ugl"),
       ]);
 
       setGlTnData(glTnDataRes);
@@ -198,7 +205,7 @@ export const TnChecker = () => {
 
     loadAll();
   }, [book, projectName, tCoreName]);
-  console.log(checkingData)
+  console.log(checkingData);
   // Build unified bibles list when dependencies update
   useEffect(() => {
     if (targetBible && originBible && ultBible) {
