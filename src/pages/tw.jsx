@@ -195,7 +195,8 @@ export const TwChecker = () => {
 
     loadAll();
   }, [book, projectName, tCoreName]);
-
+  console.log(glTwData)
+  console.log(lexicon)
   // Build unified bibles list when dependencies update
   useEffect(() => {
     if (targetBible && originBible && ultBible) {
@@ -253,7 +254,9 @@ export const TwChecker = () => {
     ultBible != null &&
     glTwData != null &&
     checkingData != null &&
-    contextId_ != null;
+    contextId_ != null &&
+    lexicon != null &&
+    saveCheckingData != null
 
   
   return (

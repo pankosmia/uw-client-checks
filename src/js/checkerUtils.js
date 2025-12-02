@@ -151,12 +151,13 @@ export const getCheckingData = async (repoName, nameArr, book) => {
 
 export const getLexiconData = async (repoName) => {
     const arb = repoName.split('_')[1]
-    let json = {arb :{}}
+    let json = {[arb] :{}}
     const list = await fsGetRust(repoName,"",'git.door43.org/uW')
     for (let e of list){
         let res = await fsGetRust(repoName,e,'git.door43.org/uW')
         json[arb][e.split(".")[0]] = res
     }
+    json["uhl"] = {}
     return json 
 }
 

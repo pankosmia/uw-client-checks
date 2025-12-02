@@ -945,7 +945,7 @@ const generateHelperForTool = async (
       );
     } else {
       newJson.contextId.quoteString = tsv[i][3];
-      newJson.contextId.groupId = tsv[i][3].split("/").slice(-1)[0];
+      newJson.contextId.groupId = tsv[i][5].split("/").slice(-1)[0];
       url = join(
         selectedProjectFilename,
         "apps",

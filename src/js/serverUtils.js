@@ -24,6 +24,17 @@ export async function fsGetRust(
         const data = res.json;
         treeCache = data;
       }
+      if (!ipath || ipath === "") {
+        const rootEntries = new Set();
+
+        for (const item of treeCache) {
+          const firstPart = item.split("/")[0];
+          if (firstPart) rootEntries.add(firstPart);
+        }
+
+        return Array.from(rootEntries).filter((p) => !p.endsWith(".bak"));
+      }
+
       // Filter to keep only items in or under this path
       const children = treeCache
         .filter((item) => item.startsWith(ipath + "/"))
@@ -75,13 +86,13 @@ export async function fsGetRust(
  */
 export async function fsWriteRust(repoPath, ipath, data) {
   try {
-    let url = getUrlForGetDocumentInProject(repoPath) + ipath+"&update_ingredients";
+    let url =
+      getUrlForGetDocumentInProject(repoPath) + ipath + "&update_ingredients";
     let res;
     const body = {
       payload: typeof data === "object" ? JSON.stringify(data, null, 2) : data,
     };
     res = await postJson(url, JSON.stringify(body));
-    
 
     if (!res.ok) {
       throw new Error(`POST failed: ${res.status} ${res.statusText} ${res}`);
@@ -113,11 +124,13 @@ export async function fsExistsRust(
     return false;
   }
 }
-export async function fsGetManifest(first,second,third){
-  let url = BASE_URL +'/'+join("burrito","metadata","summary",first,second,third)
+export async function fsGetManifest(first, second, third) {
+  let url =
+    BASE_URL +
+    "/" +
+    join("burrito", "metadata", "summary", first, second, third);
   const res = await getJson(url);
-  return res
-
+  return res;
 }
 function getUrlForGetDocumentInProject(
   repoPath,
@@ -130,8 +143,7 @@ function getUrlForGetDocumentInProject(
       IMPORTS_PATH.replace("_local_/_local_", intermediatePath).replace(
         "%Project%",
         `${repoPath}`
-      ) 
-      
+      )
     );
   }
   return BASE_URL + "/" + IMPORTS_PATH.replace("%Project%", `${repoPath}`);
@@ -151,14 +163,12 @@ function getUrlForExistDocumentInProject(
   return BASE_URL + "/" + EXIST_PATH + repoPath;
 }
 function getTailsOfWantedDocumentArray(ipath) {
-
   return ipath
     .split("/")
     .pop()
     .split(/(\.json|\.usfm|\.md|\.tsv)$/)
     .filter(Boolean);
 }
-
 
 export function fixOccurrences(obj) {
   if (Array.isArray(obj)) {
@@ -167,13 +177,11 @@ export function fixOccurrences(obj) {
     }
   } else if (obj && typeof obj === "object") {
     for (const key of Object.keys(obj)) {
-
       if (key === "occurrence" || key === "occurrences") {
         obj[key] = parseInt(obj[key]);
       } else {
         fixOccurrences(obj[key]);
       }
-
     }
   }
 }
