@@ -124,7 +124,7 @@ export const TnChecker = () => {
       verseEdits: data.verseEdits,
       contextId: data.contextId,
       selections: data.selections,
-      comment: data.comment,
+      comments: data.comments,
       nothingToSelect: data.nothingToSelect,
       reminders: data.reminders,
       invalidated: data.invalidated,

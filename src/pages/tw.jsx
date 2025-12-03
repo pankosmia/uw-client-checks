@@ -92,6 +92,7 @@ export const TwChecker = () => {
   };
 
   const saveCheckingData = async (newState) => {
+    console.log(newState)
     let data = newState.currentCheck;
     let id = data.contextId.checkId;
     let index = data.contextId.groupId;
@@ -121,7 +122,7 @@ export const TwChecker = () => {
       verseEdits: data.verseEdits,
       contextId: data.contextId,
       selections: data.selections,
-      comment: data.comment,
+      comments: data.comments,
       nothingToSelect: data.nothingToSelect,
       reminders: data.reminders,
       invalidated: data.invalidated,

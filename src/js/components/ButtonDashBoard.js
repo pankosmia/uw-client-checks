@@ -1,108 +1,111 @@
 import { getProgressChecker } from "../checkerUtils";
 import { doI18n, i18nContext } from "pithekos-lib";
 import { useContext, useEffect, useState } from "react";
-import {
-  LinearProgress,
-  Button,
-  Box,
-  Collapse,
-  IconButton,
-  Typography,
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { LinearProgress, Button, Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-export const ButtonDashBoard = ({ projectName, tCoreName }) => {
+export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
   const navigate = useNavigate();
   const { i18nRef } = useContext(i18nContext);
-  const [progress, setProgress] = useState(0);
-  const [open, setOpen] = useState(false);
-
-  const tools = ["tanslationWords", "translationNotes", "wordAligner"];
-
+  const [progressTranslationWords, setProgressTranslationWords] = useState(0);
+  const [progressTranslationNotes, setProgressTranslationNotes] = useState(0);
+  console.log(openedBooks)
+  const tools = ["translationWords", "translationNotes", "wordAligner"];
+  const bookCode = tCoreName.split("_")[2];
+  console.log(progressTranslationNotes);
   useEffect(() => {
-    let mounted = true;
+    if (openedBooks.has(bookCode.toUpperCase())) {
+      getProgressChecker(
+        "translationNotes",
+        ["discourse", "figures", "culture", "grammar", "other", "numbers"],
+        projectName,
+        `book_projects/${tCoreName}`,
+        bookCode
+      ).then((e) => {
+        setProgressTranslationNotes(Number(e) || 0);
+      });
 
-    getProgressChecker(
-      "translationWords",
-      ["name", "kt", "other"],
-      projectName,
-      `book_projects/${tCoreName}`,
-      tCoreName.split("_")[2]
-    ).then((e) => {
-      if (mounted) setProgress(Number(e) || 0);
-    });
-
-    return () => {
-      mounted = false;
-    };
-  }, [projectName, tCoreName]);
+      getProgressChecker(
+        "translationWords",
+        ["name", "kt", "other"],
+        projectName,
+        `book_projects/${tCoreName}`,
+        bookCode
+      ).then((e) => {
+        setProgressTranslationWords(Number(e) || 0);
+      });
+    }
+  }, [projectName, tCoreName, bookCode, openedBooks]);
 
   return (
-    <Box sx={{ width: "100%" }}>
-      {/* Toggle button */}
-      <Button
-        variant="outlined"
-        fullWidth
-        onClick={() => setOpen((prev) => !prev)}
-        endIcon={
-          <ExpandMoreIcon
-            sx={{
-              transform: open ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "0.2s",
-            }}
-          />
-        }
-      >
-        {open ? "Hide tools" : "Open tools"}
-      </Button>
-
-      {/* Collapsible content */}
-      <Collapse in={open} timeout="auto" unmountOnExit>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+        gap: 3,
+        width: "100%",
+      }}
+    >
+      {tools.map((tool) => (
         <Box
+          key={tool}
           sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 3,
-            padding: 2,
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 2,
+            p: 2,
           }}
         >
-          {tools.map((data, idx) => (
-            <Box key={idx}>
-              <Typography fontWeight={600} sx={{ mb: 1 }}>
-                {data}
+          <Typography fontWeight={600} sx={{ mb: 1 }}>
+            {tool}
+          </Typography>
+
+          <Button
+            variant="contained"
+            fullWidth
+            disabled={tool === "wordAligner"}
+            onClick={() => {
+              if (tool === "translationWords") {
+                navigate(`/${projectName}/TwChecker/${tCoreName}`);
+              }
+              if (tool === "translationNotes") {
+                navigate(`/${projectName}/TnChecker/${tCoreName}`);
+              }
+            }}
+          >
+            {doI18n("pages:common:open", i18nRef.current)}
+          </Button>
+          {tool === "translationWords" && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                {progressTranslationWords < 1 && progressTranslationWords > 0
+                  ? "<1%"
+                  : Math.round(progressTranslationWords) + "%"}
               </Typography>
 
-              <Button
-                variant="contained"
-                fullWidth
-                disabled={data === "wordAligner"}
-                onClick={() => {
-                  if (data === "tanslationWords") {
-                    navigate(`/${projectName}/TwChecker/${tCoreName}`);
-                  } else if (data === "translationNotes") {
-                    navigate(`/${projectName}/TnChecker/${tCoreName}`);
-                  }
-                }}
-              >
-                Open
-              </Button>
-
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="body2">
-                  {progress < 1 && progress > 0
-                    ? "<1%"
-                    : Math.round(progress) + "%"}
-                </Typography>
-                <LinearProgress
-                  variant="determinate"
-                  value={Math.min(100, Math.max(0, progress))}
-                />
-              </Box>
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(100, Math.max(0, progressTranslationWords))}
+              />
             </Box>
-          ))}
+          )}
+
+          {tool === "translationNotes" && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" sx={{ mb: 0.5 }}>
+                {progressTranslationNotes < 1 && progressTranslationNotes > 0
+                  ? "<1%"
+                  : Math.round(progressTranslationNotes) + "%"}
+              </Typography>
+
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(100, Math.max(0, progressTranslationNotes))}
+              />
+            </Box>
+          )}
         </Box>
-      </Collapse>
+      ))}
     </Box>
   );
 };
