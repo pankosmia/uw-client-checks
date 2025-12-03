@@ -7,8 +7,43 @@ import * as Bible from "../common/BooksOfTheBible";
 import usfm, { toJSON } from "usfm-js";
 import wordaligner from "word-aligner";
 import { fsExistsRust, fsWriteRust, fsGetRust } from "./serverUtils";
-import { USER_RESOURCES_PATH,T_NOTES_CATEGORIES } from "../common/constants";
+import { USER_RESOURCES_PATH, T_NOTES_CATEGORIES } from "../common/constants";
+/**
+ * @description Function that count occurrences of a substring in a string
+ * @param {String} string - The string to search in
+ * @param {String} subString - The sub string to search for
+ * @return {Integer} - the count of the occurrences
+ * @see http://stackoverflow.com/questions/4009756/how-to-count-string-occurrence-in-string/7924240#7924240
+ * modified to fit our use cases, return zero for '' substring, and no use case for overlapping.
+ */
+export const occurrences = (string, subString) => {
+  if (subString.length <= 0) return 0;
+  let n = 0;
+  let pos = 0;
+  let step = subString.length;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    pos = string.indexOf(subString, pos);
+    if (pos === -1) break;
+    ++n;
+    pos += step;
+  }
+  return n;
+};
 
+function creatWordList(text) {
+  let setText = new Set(
+    text
+      .replace(/[^\p{L}\p{N}\s]/gu, "") // remove punctuation (keep letters, numbers, underscore, spaces)
+      .split(/\s+/) // split by any whitespace (space, tab, newline)
+      .filter(Boolean)
+  );
+  let arr = [];
+  for (let e of setText) {
+    arr.push({ occurrence: occurrences(text, e), word: e });
+  }
+  return arr;
+}
 export function getBookFromProjectFileName(selectedProjectFilename) {
   return selectedProjectFilename.split("/")[1].split("_")[2];
 }
@@ -163,6 +198,7 @@ export function convertAlignmentFromVerseToVerseSpanSub(
   }
   return bibleVerse;
 }
+
 export function getVerseSpanRange(verseSpan) {
   let [low, high] = verseSpan.split("-");
 
@@ -862,9 +898,9 @@ export function getParsedUSFM(usfmData) {
 }
 
 const findCategoriesForTn = (groupId) => {
-  let result = 'other';
+  let result = "other";
 
-  Object.keys(T_NOTES_CATEGORIES).forEach(category => {
+  Object.keys(T_NOTES_CATEGORIES).forEach((category) => {
     if (T_NOTES_CATEGORIES[category][groupId]) {
       result = category;
     }
@@ -872,7 +908,6 @@ const findCategoriesForTn = (groupId) => {
 
   return result;
 };
-
 
 const generateHelperForTool = async (
   helperFolderName,
@@ -888,7 +923,6 @@ const generateHelperForTool = async (
       "git.door43.org/uW"
     )
   );
-  console.log(tsv);
   const emptyJson = {
     comments: false,
     reminders: false,
@@ -914,8 +948,7 @@ const generateHelperForTool = async (
       if (tsv[i][3] === "") {
         continue;
       }
-      category = findCategoriesForTn(tsv[i][3].split("/").slice(-1)[0])
-      console.log(category);
+      category = findCategoriesForTn(tsv[i][3].split("/").slice(-1)[0]);
     } else {
       category = tsv[i][5].split("/")[2];
     }
@@ -925,13 +958,15 @@ const generateHelperForTool = async (
       chapter: parseInt(tsv[i][0].split(":")[0]),
       verse: parseInt(tsv[i][0].split(":")[1]),
     };
+
     newJson.contextId.checkId = tsv[i][1];
     newJson.contextId.occurrence = parseInt(tsv[i][4]);
-    newJson.contextId.quote = tsv[i][3];
 
     let url = "";
     if (typeOfTools === "translationNotes") {
       newJson.contextId.groupId = tsv[i][3].split("/").slice(-1)[0];
+      newJson.contextId.quote = creatWordList(tsv[i][4]);
+
       newJson.contextId.quoteString = tsv[i][4];
       newJson.contextId.occurrenceNote = tsv[i][6];
       url = join(
@@ -946,6 +981,8 @@ const generateHelperForTool = async (
     } else {
       newJson.contextId.quoteString = tsv[i][3];
       newJson.contextId.groupId = tsv[i][5].split("/").slice(-1)[0];
+      newJson.contextId.quote = tsv[i][3];
+
       url = join(
         selectedProjectFilename,
         "apps",

@@ -1,21 +1,38 @@
 import { useParams } from "react-router-dom";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, use } from "react";
 import { doI18n, i18nContext } from "pithekos-lib";
-import { DataGrid } from "@mui/x-data-grid";
-import { Box, Button, Typography, Modal } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+
+import {
+  Box,
+  Button,
+  Typography,
+  FormControl,
+  TextField,
+  MenuItem,
+  Modal,
+  Divider,
+  Paper,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Fab,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { convertToProjectFormat } from "../js/creatProject"; // <-- import your function
-import { useNavigate } from "react-router-dom";
 import { getJson } from "pithekos-lib";
 import { BASE_URL } from "../common/constants";
 import { fsGetRust, fsWriteRust } from "../js/serverUtils";
 import { isOldTestament } from "../js/creatProject";
+import ButtonDashBoard from "../js/components/ButtonDashBoard";
+import AppDialog from "../js/components/AppDialog";
+
 export default function SelectBook() {
-  const { name } = useParams();
+  const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const { i18nRef } = useContext(i18nContext);
   const [inDirectory, setInDirectory] = useState([]);
   const [tree, setTree] = useState([]);
-  const [rows, setRows] = useState([]);
-  const navigate = useNavigate();
+  const [books, setBooks] = useState([]);
   const [openModal, setOpenModal] = useState(false);
   const [manifestPath, setManifestPath] = useState("");
   const [openCheckModal, setOpenCheckModal] = useState(false);
@@ -24,6 +41,56 @@ export default function SelectBook() {
   const [errorsData, setErrorsData] = useState([]);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [currentErrors, setCurrentErrors] = useState([]);
+  const [burritos, setBurritos] = useState(null);
+  const [globalResourcesStatus, setGlobalResourcesStatus] = useState(null);
+  const [allResourcesPresent, setAllResourcesPresent] = useState(false);
+  const [selectedBurrito, setSelectedBurrito] = useState();
+  const [openedBooks, setOpenedBooks] = useState(new Set());
+  const { optional_project } = useParams();
+
+  useEffect(() => {
+    if (globalResourcesStatus && !allResourcesPresent) {
+      setOpenResourcesDialog(true);
+    }
+  }, [globalResourcesStatus, allResourcesPresent]);
+
+  useEffect(() => {
+    async function fetchSummaries() {
+      if (optional_project) {
+        try {
+          const response = await fetch("/burrito/metadata/summaries");
+          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+          const data = await response.json();
+          // Filter only those with flavor_type = scripture
+          const burritoArray = Object.entries(data).map(([key, value]) => ({
+            path: key,
+            ...value,
+          }));
+
+          // Filter only scripture burritos
+          const scriptures = burritoArray.find(
+            (item) =>
+              item?.flavor === "x-tcore" &&
+              item?.abbreviation === optional_project
+          );
+          setSelectedBurrito(scriptures);
+        } catch (err) {
+          console.error("Error fetching summaries:", err);
+        } finally {
+        }
+      }
+    }
+    fetchSummaries();
+  }, []);
+  useEffect(() => {
+    async function runGlobalCheck() {
+      const status = await checkRequiredResources();
+      setGlobalResourcesStatus(status);
+      setAllResourcesPresent(status.every((r) => r.exists));
+    }
+
+    runGlobalCheck();
+  }, []);
   const REQUIRED_RESOURCES = [
     "git.door43.org/uW/en_tn",
     "git.door43.org/uW/en_tw",
@@ -32,7 +99,45 @@ export default function SelectBook() {
     "git.door43.org/uW/hbo_uhb",
     "git.door43.org/uW/en_ust",
     "git.door43.org/uW/en_ult",
+    "git.door43.org/uW/en_ta",
+    "git.door43.org/uW/en_uhl",
   ];
+
+  const handleSelectBurrito = (event) => {
+    const name = event.target.value;
+    const burrito = burritos.find((b) => b.name === name);
+    setSelectedBurrito(burrito);
+  };
+
+  useEffect(() => {
+    async function fetchSummaries() {
+      try {
+        const response = await fetch("/burrito/metadata/summaries");
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        const data = await response.json();
+        // Filter only those with flavor_type = scripture
+        const burritoArray = Object.entries(data).map(([key, value]) => ({
+          path: key,
+          ...value,
+        }));
+
+        // Filter only scripture burritos
+        const scriptures = burritoArray.filter(
+          (item) => item?.flavor === "x-tcore"
+        );
+        if (scriptures.length < 1) {
+          setBurritos(null);
+        } else {
+          setBurritos(scriptures);
+        }
+      } catch (err) {
+        console.error("Error fetching summaries:", err);
+      } finally {
+      }
+    }
+    fetchSummaries();
+  }, [selectedBurrito]);
+
   async function checkRequiredResources() {
     const manifests = (await getJson(BASE_URL + "/burrito/metadata/summaries"))
       .json;
@@ -61,7 +166,7 @@ export default function SelectBook() {
 
   async function fetchData() {
     try {
-      const url = `/burrito/paths/_local_/_local_/${name}`;
+      const url = `/burrito/paths/_local_/_local_/${selectedBurrito.abbreviation}`;
       const res = await getJson(url);
       const data = await res.json;
       const ipath = "book_projects";
@@ -74,8 +179,10 @@ export default function SelectBook() {
     }
   }
   useEffect(() => {
-    fetchData();
-  }, [name]);
+    if (selectedBurrito) {
+      fetchData();
+    }
+  }, [selectedBurrito]);
 
   const handleAddBook = async (
     bookCode,
@@ -144,13 +251,17 @@ export default function SelectBook() {
 
         errors[book] = [];
         for (let e of REQUIRED_RESOURCES) {
-          if (e === "git.door43.org/uW/en_ugl") {
-            continue;
-          }
           if (isOldTestamentBook && e === "git.door43.org/uW/grc_ugnt") {
             continue;
           }
           if (!isOldTestamentBook && e === "git.door43.org/uW/hbo_uhb") {
+            continue;
+          }
+          if (
+            e === "git.door43.org/uW/en_ta" ||
+            e === "git.door43.org/uW/en_uhl" ||
+            e === "git.door43.org/uW/en_ugl"
+          ) {
             continue;
           }
           if (!manifestsObj[e]) {
@@ -170,94 +281,91 @@ export default function SelectBook() {
 
       return errors;
     }
-    if (name) {
-      checkResourcesForBookCode(name).then((responceError) => {
-        setErrorsData(responceError);
-      });
+    if (selectedBurrito) {
+      checkResourcesForBookCode(selectedBurrito.abbreviation).then(
+        (responceError) => {
+          setErrorsData(responceError);
+        }
+      );
     }
-  }, [name]);
+  }, [selectedBurrito]);
 
-  const columns = [
-    {
-      field: "name",
-      headerName: doI18n("pages:content:row_name", i18nRef.current),
-      minWidth: 110,
-      flex: 3,
-    },
-    {
-      field: "language",
-      headerName: doI18n("pages:content:row_language", i18nRef.current),
-      minWidth: 120,
-      flex: 0.75,
-    },
-    {
-      field: "actions",
-      headerName: doI18n("pages:content:row_actions", i18nRef.current),
-      minWidth: 100,
-      flex: 0.5,
-      renderCell: (params) => {
-        // params.row.actions is just a string or boolean
-        const hasManifest = params.row.actions; // true/false
-        return hasManifest ? (
-          <Button
-            variant="contained"
-            onClick={() =>
-              navigate(
-                `/${params.row.projectName}/TwChecker/${params.row.tCoreName}`
-              )
-            }
-          >
-            {doI18n("pages:uw-client-checks:translationWords", i18nRef.current)}
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            color="warning"
-            onClick={async () => {
-              if (errorsData[params.row.name.toUpperCase()]?.length > 0) {
-                setCurrentErrors(errorsData[params.row.name.toUpperCase()]);
-                setErrorModalOpen(true);
-              } else {
-                const status = await checkRequiredResources();
-                setResourcesStatus(status);
-                setPendingConvert({
-                  sourceProjectPath: params.row.projectName,
-                  selectedProjectFilename: params.row.tCoreName,
-                });
-                setOpenCheckModal(true);
-              }
-            }}
-          >
-            {doI18n("pages:uw-client-checks:to_initialised", i18nRef.current)}
-          </Button>
-        );
-      },
-    },
-  ];
+  // const columns = [
+  //   {
+  //     field: "name",
+  //     headerName: doI18n("pages:content:row_name", i18nRef.current),
+  //     minWidth: 110,
+  //     flex: 3,
+  //   },
+  //   {
+  //     field: "language",
+  //     headerName: doI18n("pages:content:row_language", i18nRef.current),
+  //     minWidth: 120,
+  //     flex: 0.75,
+  //   },
+  //   {
+  //     field: "actions",
+  //     headerName: doI18n("pages:content:row_actions", i18nRef.current),
+  //     minWidth: 250, // increase minimum width
+  //     flex: 3, // give it more space relative to other columns
+  //     renderCell: (params) => {
+  //       // params.row.actions is just a string or boolean
+  //       const hasManifest = params.row.actions; // true/false
+  //       return hasManifest ? (
+  //         <ButtonDashBoard
+  //           projectName={params.row.projectName}
+  //           tCoreName={params.row.tCoreName}
+  //         />
+  //       ) : (
+  //         <Button
+  //           variant="contained"
+  //           color="warning"
+  //           onClick={async () => {
+  //             if (errorsData[params.row.name.toUpperCase()]?.length > 0) {
+  //               setCurrentErrors(errorsData[params.row.name.toUpperCase()]);
+  //               setErrorModalOpen(true);
+  //             } else {
+  //               const status = await checkRequiredResources();
+  //               setResourcesStatus(status);
+  //               setPendingConvert({
+  //                 sourceProjectPath: params.row.projectName,
+  //                 selectedProjectFilename: params.row.tCoreName,
+  //               });
+  //               setOpenCheckModal(true);
+  //             }
+  //           }}
+  //         >
+  //           {doI18n("pages:uw-client-checks:to_initialised", i18nRef.current)}
+  //         </Button>
+  //       );
+  //     },
+  //   },
+  // ];
 
   const handleOpenModal = async () => {
-    const path = await getPathFromOriginalResources(name);
+    const path = await getPathFromOriginalResources(
+      selectedBurrito.abbreviation
+    );
     setManifestPath(path);
     setOpenModal(true);
   };
   const handleCloseModal = () => setOpenModal(false);
 
   useEffect(() => {
-    setRows(
+    setBooks(
       inDirectory.map((rep, n) => {
         const splitname = rep.split("_");
         return {
           id: n,
           tCoreName: rep,
-          projectName: name,
-          name: splitname[2],
+          projectName: selectedBurrito.abbreviation,
+          bookCode: splitname[2].toUpperCase(),
           language: splitname[0],
-          actions: find_manifest(rep),
-          path: rep,
-        }; // just a boolean
+          hasManifest: find_manifest(rep),
+        };
       })
     );
-  }, [inDirectory]);
+  }, [inDirectory, selectedBurrito]);
 
   return (
     <Box
@@ -271,147 +379,282 @@ export default function SelectBook() {
         width: "100%",
       }}
     >
-      <Button onClick={handleOpenModal}>
-        {doI18n("pages:uw-client-checks:add_book_tCore", i18nRef.current)}
-      </Button>
-      <DataGrid
-        autoHeight
-        initialState={{
-          sorting: {
-            sortModel: [{ field: "name", sort: "asc" }],
-          },
-        }}
-        rows={rows}
-        columns={columns}
-        sx={{ fontSize: "1rem" }}
-      />
-      <Modal open={openModal} onClose={handleCloseModal}>
-        <Box
+      {burritos ? (
+        <Paper
+          elevation={1}
           sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
-            width: 500,
+            p: 3,
+            mx: "auto",
+            maxWidth: 600,
+            textAlign: "center",
+            mb: 2,
           }}
         >
-          <Typography variant="h6" gutterBottom>
-            {doI18n("pages:uw-client-checks:add_book_tCore", i18nRef.current)}
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            Select tCore Project
           </Typography>
+          <FormControl
+            fullWidth
+            disabled={!allResourcesPresent}
+            sx={{ paddingLeft: "1rem", paddingRight: "1rem" }}
+          >
+            <TextField
+              required
+              disabled={!allResourcesPresent}
+              id="burrito-select-label"
+              select
+              value={selectedBurrito?.name || ""}
+              onChange={handleSelectBurrito}
+              label={doI18n(
+                `pages:core-local-workspace:choose_document`,
+                i18nRef.current
+              )}
+            >
+              {burritos &&
+                burritos.map((burrito) => (
+                  <MenuItem key={burrito.name} value={burrito.name}>
+                    {burrito.name}
+                  </MenuItem>
+                ))}
+            </TextField>
+          </FormControl>
+        </Paper>
+      ) : (
+        <Paper
+          elevation={1}
+          sx={{
+            p: 3,
+            mx: "auto",
+            maxWidth: 600,
+            textAlign: "center",
+            mb: 2,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            No tCoreProject Fround{" "}
+          </Typography>
+          <Button
+            onClick={() =>
+              (window.location.href =
+                "/clients/core-contenthandler_t_core#/tCoreContent")
+            }
+          >
+            Create tCore project
+          </Button>
+        </Paper>
+      )}
+      <Divider
+        sx={{
+          my: 3,
+          borderColor: "divider",
+        }}
+      />
+      {selectedBurrito ? (
+        <Box sx={{ px: 2 }}>
+          <Box
+            sx={{
+              mb: 2,
+            }}
+          >
+            <Fab
+              variant="extended"
+              color="primary"
+              size="small"
+              aria-label={doI18n("pages:content:fab_import", i18nRef.current)}
+              onClick={(event) => setOpenModal(event.currentTarget)}
+               sx={{ mb: 1 }}
+            >
+              <AddIcon sx={{ mr: 1 }} />
+              <Typography variant="body2">
+                {doI18n("pages:content:add_book", i18nRef.current)}
+              </Typography>
+            </Fab>
+            <Typography variant="h6" fontWeight={600}>
+              Books
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {books.map((book) => (
+              <Accordion
+                onChange={() => {
+                  setOpenedBooks((prev) => {
+                    const next = new Set(prev);
+                    next.add(book.bookCode);
+                    return next;
+                  });
+                }}
+                key={book.id}
+                sx={{
+                  borderRadius: 2,
+                  boxShadow: 2,
+                  "&:before": { display: "none" },
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      width: "100%",
+                    }}
+                  >
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {book.bookCode}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Language: {book.language}
+                      </Typography>
+                    </Box>
 
-          <Typography sx={{ wordWrap: "break-word" }}>
-            {(manifestPath && (
-              <Box>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
-                  {manifestPath[1].book_codes.map((code) => {
-                    return (
-                      <>
+                    <Box>
+                      {book.hasManifest ? (
+                        <Typography color="success.main" fontWeight={600}>
+                          Initialized
+                        </Typography>
+                      ) : (
+                        <Typography color="warning.main" fontWeight={600}>
+                          Not initialized
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </AccordionSummary>
+
+                <AccordionDetails>
+                  <Divider sx={{ mb: 2 }} />
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 2,
+                    }}
+                  >
+                    <Box>
+                      <Typography variant="body2">
+                        <strong>Book code:</strong> {book.bookCode}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>Language:</strong> {book.language}
+                      </Typography>
+                    </Box>
+
+                    <Box>
+                      {book.hasManifest ? (
+                        <ButtonDashBoard
+                          openedBooks={openedBooks}
+                          projectName={book.projectName}
+                          tCoreName={book.tCoreName}
+                        />
+                      ) : (
                         <Button
-                          disabled={inDirectory
-                            .map((e) => {
-                              return e.split("_")[2].toUpperCase();
-                            })
-                            .includes(code)}
-                          key={code}
-                          color={
-                            errorsData[code]?.length > 0 ? "warning" : "primary"
-                          }
                           variant="contained"
-                          size="small"
-                          onClick={() => {
-                            if (errorsData[code]?.length > 0) {
-                              setCurrentErrors(errorsData[code]);
+                          color="warning"
+                          onClick={async () => {
+                            if (errorsData[book.bookCode]?.length > 0) {
+                              setCurrentErrors(errorsData[book.bookCode]);
                               setErrorModalOpen(true);
                             } else {
-                              handleAddBook(
-                                code,
-                                manifestPath[0],
-                                name,
-                                inDirectory[0]
-                              );
+                              const status = await checkRequiredResources();
+                              setResourcesStatus(status);
+                              setPendingConvert({
+                                sourceProjectPath: book.projectName,
+                                selectedProjectFilename: book.tCoreName,
+                              });
+                              setOpenCheckModal(true);
                             }
                           }}
                         >
-                          {code}
+                          {doI18n(
+                            "pages:uw-client-checks:to_initialised",
+                            i18nRef.current
+                          )}
                         </Button>
-                      </>
-                    );
-                  })}
-                </Box>
-              </Box>
-            )) ||
-              "Aucun manifest trouvé"}
-          </Typography>
-
-          <Box sx={{ textAlign: "right", mt: 2 }}>
-            <Button variant="contained" onClick={() => setOpenModal(false)}>
-              {doI18n("pages:uw-client-checks:ok", i18nRef.current)}
-            </Button>
+                      )}
+                    </Box>
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+            ))}
           </Box>
         </Box>
-      </Modal>
-      <Modal open={openCheckModal} onClose={() => setOpenCheckModal(false)}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
-            width: 600,
-          }}
-        >
-          <Typography variant="h6" gutterBottom>
-            {doI18n(
-              "pages:uw-client-checks:required_ressources_check",
-              i18nRef.current
-            )}
-          </Typography>
+      ) : (
+        <Box sx={{ px: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Books
+            </Typography>
+          </Box>
+        </Box>
+      )}
 
-          {resourcesStatus ? (
-            <Box sx={{ mt: 2 }}>
-              {resourcesStatus.map((r) => (
-                <Box
-                  key={r.path}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 1,
+      <AppDialog
+        open={openModal}
+        onClose={handleCloseModal}
+        title={doI18n("pages:uw-client-checks:add_book_tCore", i18nRef.current)}
+        actions={
+          <Button variant="contained" onClick={handleCloseModal}>
+            {doI18n("pages:uw-client-checks:ok", i18nRef.current)}
+          </Button>
+        }
+      >
+        {manifestPath ? (
+          <Box>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
+              {manifestPath[1].book_codes.map((code) => (
+                <Button
+                  key={code}
+                  disabled={inDirectory
+                    .map((e) => e.split("_")[2].toUpperCase())
+                    .includes(code)}
+                  variant="contained"
+                  size="small"
+                  color={errorsData[code]?.length > 0 ? "warning" : "primary"}
+                  onClick={() => {
+                    if (errorsData[code]?.length > 0) {
+                      setCurrentErrors(errorsData[code]);
+                      setErrorModalOpen(true);
+                    } else {
+                      handleAddBook(
+                        code,
+                        manifestPath[0],
+                        selectedBurrito.abbreviation,
+                        inDirectory[0]
+                      );
+                    }
                   }}
                 >
-                  <Typography>{r.path}</Typography>
-                  <Typography color={r.exists ? "green" : "error"}>
-                    {r.exists
-                      ? doI18n(
-                          "pages:uw-client-checks:present",
-                          i18nRef.current
-                        )
-                      : doI18n(
-                          "pages:uw-client-checks:missing",
-                          i18nRef.current
-                        )}
-                  </Typography>
-                </Box>
+                  {code}
+                </Button>
               ))}
             </Box>
-          ) : (
-            <Typography>
-              {doI18n(
-                "pages:uw-client-checks:checking_ressources",
-                i18nRef.current
-              )}
-            </Typography>
-          )}
-
-          <Box sx={{ textAlign: "right", mt: 3 }}>
-            <Button sx={{ mr: 2 }} onClick={() => setOpenCheckModal(false)}>
+          </Box>
+        ) : (
+          "Aucun manifest trouvé"
+        )}
+      </AppDialog>
+      <AppDialog
+        open={openCheckModal}
+        onClose={() => setOpenCheckModal(false)}
+        maxWidth="md"
+        title={doI18n(
+          "pages:uw-client-checks:required_ressources_check",
+          i18nRef.current
+        )}
+        actions={
+          <>
+            <Button onClick={() => setOpenCheckModal(false)}>
               {doI18n("pages:uw-client-checks:cancel", i18nRef.current)}
             </Button>
 
@@ -428,45 +671,100 @@ export default function SelectBook() {
             >
               {doI18n("pages:uw-client-checks:to_initialised", i18nRef.current)}
             </Button>
-          </Box>
-        </Box>
-      </Modal>
-      <Modal open={errorModalOpen} onClose={() => setErrorModalOpen(false)}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
-            width: 400,
-          }}
-        >
-          <Typography variant="h6" gutterBottom>
-            {doI18n("pages:uw-client-checks:book_errors", i18nRef.current)}
-          </Typography>
-
+          </>
+        }
+      >
+        {resourcesStatus ? (
           <Box sx={{ mt: 2 }}>
-            {currentErrors.map((err, idx) => (
-              <Typography key={idx} sx={{ mb: 1 }}>
-                - {err}
-              </Typography>
+            {resourcesStatus.map((r) => (
+              <Box
+                key={r.path}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  mb: 1,
+                }}
+              >
+                <Typography>{r.path}</Typography>
+                <Typography color={r.exists ? "success.main" : "error"}>
+                  {r.exists
+                    ? doI18n("pages:uw-client-checks:present", i18nRef.current)
+                    : doI18n("pages:uw-client-checks:missing", i18nRef.current)}
+                </Typography>
+              </Box>
             ))}
           </Box>
-
-          <Box sx={{ textAlign: "right", mt: 2 }}>
-            <Button
-              variant="contained"
-              onClick={() => setErrorModalOpen(false)}
-            >
-              {doI18n("pages:uw-client-checks:ok", i18nRef.current)}
-            </Button>
-          </Box>
+        ) : (
+          <Typography>
+            {doI18n(
+              "pages:uw-client-checks:checking_ressources",
+              i18nRef.current
+            )}
+          </Typography>
+        )}
+      </AppDialog>
+      <AppDialog
+        open={errorModalOpen}
+        onClose={() => setErrorModalOpen(false)}
+        maxWidth="xs"
+        title={doI18n("pages:uw-client-checks:book_errors", i18nRef.current)}
+        actions={
+          <Button variant="contained" onClick={() => setErrorModalOpen(false)}>
+            {doI18n("pages:uw-client-checks:ok", i18nRef.current)}
+          </Button>
+        }
+      >
+        <Box sx={{ mt: 2 }}>
+          {currentErrors.map((err, idx) => (
+            <Typography key={idx} sx={{ mb: 1 }}>
+              - {err}
+            </Typography>
+          ))}
         </Box>
-      </Modal>
+      </AppDialog>
+      <AppDialog
+        open={openResourcesDialog}
+        onClose={() => setOpenResourcesDialog(false)}
+        maxWidth="md"
+        title={doI18n(
+          "pages:uw-client-checks:required_ressources_check",
+          i18nRef.current
+        )}
+        actions={
+          <Button
+            variant="contained"
+            onClick={() => (window.location.href = "/clients/content")}
+          >
+            OK
+          </Button>
+        }
+      >
+        <Typography sx={{ mb: 2 }}>
+          Some required resources are missing. You must install them before
+          selecting a tCore project.
+        </Typography>
+
+        <Box>
+          {globalResourcesStatus
+            ?.filter((r) => !r.exists)
+            .map((r) => (
+              <Box
+                key={r.path}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  mb: 1,
+                  px: 1,
+                }}
+              >
+                <Typography>{r.path}</Typography>
+                <Typography color="error" fontWeight={600}>
+                  {doI18n("pages:uw-client-checks:missing", i18nRef.current)}
+                </Typography>
+              </Box>
+            ))}
+        </Box>
+      </AppDialog>
     </Box>
   );
 }

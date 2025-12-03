@@ -43,8 +43,10 @@ const translate = (key) => {
     translations,
     key
   );
-  if (translation.includes("translate")) {
-    return key;
+  if (typeof translation === String) {
+    if (translation.includes("translate")) {
+      return key;
+    }
   }
   return translation;
 };
@@ -90,6 +92,7 @@ export const TwChecker = () => {
   };
 
   const saveCheckingData = async (newState) => {
+    console.log(newState)
     let data = newState.currentCheck;
     let id = data.contextId.checkId;
     let index = data.contextId.groupId;
@@ -119,7 +122,7 @@ export const TwChecker = () => {
       verseEdits: data.verseEdits,
       contextId: data.contextId,
       selections: data.selections,
-      comment: data.comment,
+      comments: data.comments,
       nothingToSelect: data.nothingToSelect,
       reminders: data.reminders,
       invalidated: data.invalidated,
@@ -142,7 +145,7 @@ export const TwChecker = () => {
   // Load all required data concurrently
   useEffect(() => {
     if (!book) return;
-
+    
     const loadAll = async () => {
       const [
         glTwDataRes,
@@ -153,7 +156,7 @@ export const TwChecker = () => {
         lexiconRes
       ] = await Promise.all([
         getglTwData("en_tw", projectName, `book_projects/${tCoreName}`),
-        getCheckingData(projectName, `book_projects/${tCoreName}`, book),
+        getCheckingData(projectName, `book_projects/${tCoreName}`, book,'translationWords'),
         getBookFromName(
           projectName,
           `book_projects/${tCoreName}`,
@@ -182,7 +185,7 @@ export const TwChecker = () => {
           "gateway_language",
           "git.door43.org/uW"
         ),
-        getLexiconData('en_ugl')
+        getLexiconData(isOldTestament(book) ? "en_uhl" : "en_ugl"),
       ]);
 
       setGlTwData(glTwDataRes);
@@ -241,7 +244,8 @@ export const TwChecker = () => {
     }),
     []
   );
-
+  console.log(lexicon)
+  console.log(checkingData)
   const getLexiconData_ = (lexiconId, entryId) => {
     const entryData = lexicon?.[lexiconId]?.[entryId] || null;
     return { [lexiconId]: { [entryId]: entryData } };

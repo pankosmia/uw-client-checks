@@ -2,7 +2,8 @@
   "id": "uw-client-checks",
   "require": {
     "net": false,
-    "debug": true
+    "debug": false,
+    "excludeFromMenu" : true
   },
   "i18n": {
     "title": {

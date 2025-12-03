@@ -13,7 +13,8 @@ let treeCache = []; // cache tree data across calls
 export async function fsGetRust(
   repoPath,
   ipath,
-  intermediatePath = "_local_/_local_"
+  intermediatePath = "_local_/_local_",
+  debug=false
 ) {
   try {
     let typeSearch = getTailsOfWantedDocumentArray(ipath);
@@ -22,7 +23,21 @@ export async function fsGetRust(
         const url = getUrlForExistDocumentInProject(repoPath, intermediatePath);
         const res = await getJson(url);
         const data = res.json;
+
         treeCache = data;
+        if(debug){
+          console.log(data)
+        }
+      }
+      if (!ipath || ipath === "") {
+        const rootEntries = new Set();
+
+        for (const item of treeCache) {
+          const firstPart = item.split("/")[0];
+          if (firstPart) rootEntries.add(firstPart);
+        }
+
+        return Array.from(rootEntries).filter((p) => !p.endsWith(".bak"));
       }
       if (!ipath || ipath === "") {
         const rootEntries = new Set();
@@ -42,7 +57,7 @@ export async function fsGetRust(
         .map((item) => item.replace(ipath + "/", ""));
       // Collect unique first-level entries only
       const inDirectory = new Set();
-
+      console.log(inDirectory)
       for (const entry of children) {
         const firstPart = entry.split("/")[0];
         if (firstPart) inDirectory.add(firstPart);
@@ -84,10 +99,10 @@ export async function fsGetRust(
  * @param {string|object} data - content to write
  * @returns {Promise<void>}
  */
-export async function fsWriteRust(repoPath, ipath, data) {
+export async function fsWriteRust(repoPath, ipath, data,intermediatePath='_local_/_local_') {
   try {
     let url =
-      getUrlForGetDocumentInProject(repoPath) + ipath + "&update_ingredients";
+      getUrlForGetDocumentInProject(repoPath,intermediatePath) + ipath;
     let res;
     const body = {
       payload: typeof data === "object" ? JSON.stringify(data, null, 2) : data,
