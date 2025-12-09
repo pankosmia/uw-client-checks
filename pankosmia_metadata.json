@@ -3,8 +3,9 @@
   "require": {
     "net": false,
     "debug": false,
-    "excludeFromMenu" : true
+    "excludeFromMenu": true
   },
+  
   "i18n": {
     "title": {
       "en": "unfoldingWord Checks"
@@ -20,36 +21,56 @@
       "fr": "translationWords"
     },
     "to_initialised": {
-      "en": "initialising",
+      "en": "initialize",
       "fr": "initialiser"
     },
+    "need_initalisation": {
+      "en": "need initialization",
+      "fr": "requiert une initialisation"
+    },
+    "initialize": {
+      "en": "initialize",
+      "fr": "initlialisé"
+    },
     "add_book_tCore": {
-      "en": "Add new book to tCore Project",
-      "fr": "Ajouter nouveau livre au project tCore"
+      "en": "Add book to tCore project",
+      "fr": "Ajouter un livre au projet tCore"
+    },
+    "add_book": {
+      "en": "Add book",
+      "fr": "Ajouter un livre"
     },
     "required_ressources_check": {
       "en": "Ressources required for tCore",
-      "fr": "Ressources requisent pour tCore"
+      "fr": "Ressources requises pour tCore"
     },
-    "book_errors":{
-      "en":"Book errors",
-      "fr":"Erreurs livre"
+    "book_errors": {
+      "en": "Book errors",
+      "fr": "Erreurs du livre"
     },
-    "present":{
-      "en" : "✔ Present",
-      "fr" : "✔ Present"
+    "present": {
+      "en": "✔ Present",
+      "fr": "✔ Present"
     },
-    "missing":{
-      "en" : "✖ Missing",
-      "fr" :  "✖ absent"
+    "missing": {
+      "en": "✖ Missing",
+      "fr": "✖ Absent"
     },
-    "cancel":{
-      "en" : "Cancel",
-      "fr" : "Annuler"
+    "cancel": {
+      "en": "Cancel",
+      "fr": "Annuler"
     },
-    "ok" : {
-      "en" : "Ok",
-      "fr" : "Ok"
+    "ok": {
+      "en": "Ok",
+      "fr": "Ok"
+    },
+    "choose_document": {
+      "en": "tCore project",
+      "fr": "project tCore"
+    },
+    "open": {
+      "en": "open",
+      "fr": "ouvrir"
     }
   }
 }

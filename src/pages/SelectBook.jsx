@@ -203,9 +203,7 @@ export default function SelectBook() {
       );
       fetchData();
       setOpenModal(false);
-      alert(`${bookCode} added successfully`);
     } catch (err) {
-      console.error(err);
       alert(`Failed to add ${bookCode}`);
     }
   };
@@ -223,7 +221,6 @@ export default function SelectBook() {
       );
       fetchData();
     } catch (error) {
-      console.error("❌ Conversion failed:", error);
       alert("Conversion failed — see console for details.");
     }
   };
@@ -238,6 +235,10 @@ export default function SelectBook() {
 
   useEffect(() => {
     async function checkResourcesForBookCode(name) {
+      const path = await getPathFromOriginalResources(
+      name
+    );
+    setManifestPath(path);
       let errors = {};
       const manifestsObj = (
         await getJson(BASE_URL + "/burrito/metadata/summaries")
@@ -282,6 +283,7 @@ export default function SelectBook() {
       return errors;
     }
     if (selectedBurrito) {
+      
       checkResourcesForBookCode(selectedBurrito.abbreviation).then(
         (responceError) => {
           setErrorsData(responceError);
@@ -342,13 +344,8 @@ export default function SelectBook() {
   //   },
   // ];
 
-  const handleOpenModal = async () => {
-    const path = await getPathFromOriginalResources(
-      selectedBurrito.abbreviation
-    );
-    setManifestPath(path);
-    setOpenModal(true);
-  };
+  
+
   const handleCloseModal = () => setOpenModal(false);
 
   useEffect(() => {
@@ -406,7 +403,7 @@ export default function SelectBook() {
               value={selectedBurrito?.name || ""}
               onChange={handleSelectBurrito}
               label={doI18n(
-                `pages:core-local-workspace:choose_document`,
+                `pages:uw-client-checks:choose_document`,
                 i18nRef.current
               )}
             >
@@ -466,7 +463,7 @@ export default function SelectBook() {
             >
               <AddIcon sx={{ mr: 1 }} />
               <Typography variant="body2">
-                {doI18n("pages:content:add_book", i18nRef.current)}
+                {doI18n("pages:uw-client-checks:add_book", i18nRef.current)}
               </Typography>
             </Fab>
             <Typography variant="h6" fontWeight={600}>
@@ -511,11 +508,11 @@ export default function SelectBook() {
                     <Box>
                       {book.hasManifest ? (
                         <Typography color="success.main" fontWeight={600}>
-                          Initialized
+                          {doI18n(`pages:uw-client-checks:initialize`,i18nRef.current)}
                         </Typography>
                       ) : (
                         <Typography color="warning.main" fontWeight={600}>
-                          Not initialized
+                          {doI18n(`pages:uw-client-checks:need_initalisation`,i18nRef.current)}
                         </Typography>
                       )}
                     </Box>
@@ -724,7 +721,7 @@ export default function SelectBook() {
       </AppDialog>
       <AppDialog
         open={openResourcesDialog}
-        onClose={() => setOpenResourcesDialog(false)}
+        onClose={() => (window.location.href = "/clients/content")}
         maxWidth="md"
         title={doI18n(
           "pages:uw-client-checks:required_ressources_check",

@@ -57,7 +57,6 @@ export async function fsGetRust(
         .map((item) => item.replace(ipath + "/", ""));
       // Collect unique first-level entries only
       const inDirectory = new Set();
-      console.log(inDirectory)
       for (const entry of children) {
         const firstPart = entry.split("/")[0];
         if (firstPart) inDirectory.add(firstPart);
@@ -181,7 +180,7 @@ function getTailsOfWantedDocumentArray(ipath) {
   return ipath
     .split("/")
     .pop()
-    .split(/(\.json|\.usfm|\.md|\.tsv)$/)
+    .split(/(\.json|\.usfm|\.md|\.tsv|\.yaml)$/)
     .filter(Boolean);
 }
 

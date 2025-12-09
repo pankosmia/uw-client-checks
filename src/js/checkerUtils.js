@@ -5,6 +5,7 @@ import { toJSON } from "usfm-js";
 import { fsGetManifest } from "./serverUtils";
 import { fsExistsRust } from "./serverUtils";
 import { fsGetRust } from "./serverUtils";
+import yaml from "js-yaml";
 
 export const getBookFromName = async (
   repoPath,
@@ -77,15 +78,23 @@ export const getTnData = async (
   tCoreNameProject
 ) => {
   let json = {};
-  const categories = await fsGetRust(repoNameResources, "","git.door43.org/uW");
+  const categories = await fsGetRust(
+    repoNameResources,
+    "",
+    "git.door43.org/uW"
+  );
   for (let c of categories) {
     if (!(c.split(".").length > 1)) {
-      json[c] = {}
-      const datas = await fsGetRust(repoNameResources, c ,"git.door43.org/uW");
+      json[c] = {};
+      const datas = await fsGetRust(repoNameResources, c, "git.door43.org/uW");
       for (let d of datas) {
         if (!(d.split(".").length > 1)) {
-          let markD = await fsGetRust(repoNameResources, join(c, d, "01.md"),"git.door43.org/uW");
-          json[c][d] = markD
+          let markD = await fsGetRust(
+            repoNameResources,
+            join(c, d, "01.md"),
+            "git.door43.org/uW"
+          );
+          json[c][d] = markD;
         }
       }
     }
@@ -133,17 +142,78 @@ export const getglTwData = async (
   return json;
 };
 
-export const getCheckingData = async (repoName, nameArr, book,tool) => {
+const renameCategories = (tnData, linkTitleMap, group = true) => {
+  const result = {};
+
+  for (const [key, value] of Object.entries(tnData)) {
+    if (group) {
+      result[key] = { groups: {} };
+      for (const [key2, value2] of Object.entries(tnData[key]["groups"])) {
+        const newKey = linkTitleMap[key2] || key2;
+        result[key]["groups"][newKey] = [];
+        for (const item of value2) {
+          let item2 = { ...item };
+          item2["contextId"]["groupId"] = newKey;
+          result[key]["groups"][newKey].push(item2);
+        }
+      }
+    } else {
+      result[key] = {};
+      for (const [key2, value2] of Object.entries(tnData[key])) {
+        {
+          const newKey = linkTitleMap[key2] || key2;
+          result[key][newKey] = value2;
+        }
+      }
+    }
+  }
+  return result;
+};
+export const buildLinkTitleMap = (node, map = {}) => {
+  if (Array.isArray(node)) {
+    node.forEach((n) => buildLinkTitleMap(n, map));
+    return map;
+  }
+
+  if (node?.link && node?.title) {
+    map[node.link] = node.title;
+  }
+
+  if (node?.sections) {
+    buildLinkTitleMap(node.sections, map);
+  }
+
+  return map;
+};
+export const changeTnCategories = async (
+  repoName,
+  originFolder,
+  data,
+  group = true
+) => {
+  let categories = await fsGetRust(
+    repoName,
+    "translate/toc.yaml",
+    originFolder
+  );
+  let dataYaml = yaml.load(categories);
+  // build { "figs-abstractnouns": "Abstract Nouns", ... }
+  const linkTitleMap = buildLinkTitleMap(dataYaml.sections);
+  const renamed = renameCategories(data, linkTitleMap, group);
+  return renamed;
+};
+
+export const getCheckingData = async (repoName, nameArr, book, tool) => {
   let path = `${nameArr}/apps/translationCore/index/${tool}/${book}/`;
-  console.log(repoName,path+"categoryIndex")
   const json = {};
-  const categories = await fsGetRust(repoName, path+"categoryIndex","_local_/_local_",true)
-  console.log(categories)
+  const categories = await fsGetRust(
+    repoName,
+    path + "categoryIndex",
+    "_local_/_local_"
+  );
   for (let t of categories) {
-    console.log(t)
-    json[t.split(".")[0]] = {"groups" : {}}
+    json[t.split(".")[0]] = { groups: {} };
     const folder = await fsGetRust(repoName, path + "categoryIndex/" + t);
-    console.log(folder)
     for (const e of folder) {
       if (!e.includes("headers")) {
         let arr = e.split(".");
@@ -160,30 +230,38 @@ export const getCheckingData = async (repoName, nameArr, book,tool) => {
 };
 
 export const getLexiconData = async (repoName) => {
-  let suffixe = ""
-  if(repoName.includes("uhl")){
-    suffixe = "content/"
+  let suffixe = "";
+  if (repoName.includes("uhl")) {
+    suffixe = "content/";
   }
-  let exist = await fsExistsRust(repoName,suffixe+"all.json","git.door43.org/uW")
-  if(exist){
-    let lexicon = await fsGetRust(repoName,suffixe+"all.json","git.door43.org/uW")
-    return lexicon
+  let exist = await fsExistsRust(
+    repoName,
+    suffixe + "all.json",
+    "git.door43.org/uW"
+  );
+  if (exist) {
+    let lexicon = await fsGetRust(
+      repoName,
+      suffixe + "all.json",
+      "git.door43.org/uW"
+    );
+    return lexicon;
   }
-  if (suffixe === "content/"){
-    suffixe = "content"
+  if (suffixe === "content/") {
+    suffixe = "content";
   }
   const arb = repoName.split("_")[1];
   let json = { [arb]: {} };
-  
+
   const list = await fsGetRust(repoName, suffixe, "git.door43.org/uW");
   for (let e of list) {
-    if(suffixe === "content"){
-      suffixe = "content/"
+    if (suffixe === "content") {
+      suffixe = "content/";
     }
-    let res = await fsGetRust(repoName, suffixe+e, "git.door43.org/uW");
+    let res = await fsGetRust(repoName, suffixe + e, "git.door43.org/uW");
     json[arb][e.split(".")[0]] = res;
   }
-  fsWriteRust(repoName,suffixe+"all.json",json,"git.door43.org/uW")
+  fsWriteRust(repoName, suffixe + "all.json", json, "git.door43.org/uW");
   return json;
 };
 
@@ -194,7 +272,7 @@ export const getProgressChecker = async (
   nameArr,
   book
 ) => {
-  const checks = await getCheckingData(repoName, nameArr, book,toolName);
+  const checks = await getCheckingData(repoName, nameArr, book, toolName);
   const filteredChecks = Object.fromEntries(
     Object.entries(checks).filter(([key]) => selectedCategories.includes(key))
   );

@@ -1,7 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { createHashRouter, RouterProvider, Outlet } from "react-router-dom";
-import { TwChecker } from "./pages/tw";
-import { TnChecker } from "./pages/tn";
+import { ToolWrapper } from "./pages/toolWrapper";
 import WordAligner from "./wordAligner/WordAligner";
 import { RedirectToContent } from "./pages/RedirectToContent";
 // import ToolsManagementContainer from "./pages/ToolsManagementContainer";
@@ -31,10 +30,9 @@ const router = createHashRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <SelectBook /> },
-      { path: ":projectName/TnChecker/:tCoreName/*", element: <TnChecker /> },
-      { path: "/WordAligner", element: <WordAligner /> },
       { path: ":optional_project", element: <SelectBook /> },
-      { path: ":projectName/TwChecker/:tCoreName/*", element: <TwChecker /> },
+      { path: ":projectName/ToolWrapper/:tCoreName/*", element: <ToolWrapper /> },
+      { path: "/WordAligner", element: <WordAligner /> },
     ],
   },
 ]);

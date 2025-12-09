@@ -960,12 +960,12 @@ const generateHelperForTool = async (
     };
 
     newJson.contextId.checkId = tsv[i][1];
-    newJson.contextId.occurrence = parseInt(tsv[i][4]);
 
     let url = "";
     if (typeOfTools === "translationNotes") {
       newJson.contextId.groupId = tsv[i][3].split("/").slice(-1)[0];
       newJson.contextId.quote = creatWordList(tsv[i][4]);
+      newJson.contextId.occurrence = parseInt(tsv[i][5]);
 
       newJson.contextId.quoteString = tsv[i][4];
       newJson.contextId.occurrenceNote = tsv[i][6];
@@ -982,6 +982,7 @@ const generateHelperForTool = async (
       newJson.contextId.quoteString = tsv[i][3];
       newJson.contextId.groupId = tsv[i][5].split("/").slice(-1)[0];
       newJson.contextId.quote = tsv[i][3];
+      newJson.contextId.occurrence = parseInt(tsv[i][4]);
 
       url = join(
         selectedProjectFilename,
