@@ -68,7 +68,13 @@ export const getBookFromName = async (
   } else if (typeBible === "original_language") {
     json["manifest"]["description"] = "original_language";
   }
-
+  json['manifest'] = {
+    "language_id": "en",
+    "language_name": "English",
+    "direction": "ltr",
+    "resource_id": "targetLanguage",
+    "description": "Target Language"
+  }
   return json;
 };
 

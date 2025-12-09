@@ -212,25 +212,24 @@ export const TnChecker = () => {
       setBibles([
         {
           book: targetBible,
-          description: "target_language",
-          languageId: "target_language",
+          languageId: "targetLanguage",
           bibleId: "targetBible",
           owner: "unfoldingWord",
         },
-        {
-          book: ultBible,
-          description: "gateway_language",
-          languageId: "gateway_language",
-          bibleId: "ult",
-          owner: "unfoldingWord",
-        },
-        {
-          book: originBible,
-          description: "original_language",
-          languageId: "original_language",
-          bibleId: "ugnt",
-          owner: "unfoldingWord",
-        },
+        // {
+        //   book: ultBible,
+        //   description: "gateway_language",
+        //   languageId: "gateway_language",
+        //   bibleId: "ult",
+        //   owner: "unfoldingWord",
+        // },
+        // {
+        //   book: originBible,
+        //   description: "original_language",
+        //   languageId: "original_language",
+        //   bibleId: "ugnt",
+        //   owner: "unfoldingWord",
+        // },
       ]);
     }
   }, [targetBible, originBible, ultBible]);

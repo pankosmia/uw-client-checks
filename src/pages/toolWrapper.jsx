@@ -280,25 +280,25 @@ export const ToolWrapper = () => {
   useEffect(() => {
     if (targetBible && originBible && ultBible) {
       setBibles([
-        // {
-        //   book: targetBible,
-        //   description: "target_language",
-        //   languageId: "target_language",
-        //   bibleId: "targetBible",
-        //   owner: "unfoldingWord",
-        // },
-        // {
-        //   book: ultBible,
-        //   description: "gateway_language",
-        //   languageId: "gateway_language",
-        //   bibleId: "ult",
-        //   owner: "unfoldingWord",
-        // },
+        {
+          book: targetBible,
+          description: "target_language",
+          languageId: "targetLanguage",
+          bibleId: "targetBible",
+          owner: "unfoldingWord",
+        },
+        {
+          book: ultBible,
+          description: "gateway_language",
+          languageId: "en",
+          bibleId: "ult",
+          owner: "unfoldingWord",
+        },
         {
           book: originBible,
           description: "original_language",
-          languageId: "original_language",
-          bibleId: "ugnt",
+          languageId: isOldTestament(book)?'hbo':"el-x-koine",
+          bibleId: isOldTestament(book)?'uhb':"ugnt",
           owner: "unfoldingWord",
         },
       ]);
@@ -332,7 +332,7 @@ export const ToolWrapper = () => {
 
   const ready =
     (Array.isArray(bibles) &&
-      bibles.length === 1 &&
+      bibles.length === 3 &&
       targetBible != null &&
       originBible != null &&
       ultBible != null &&
@@ -342,7 +342,6 @@ export const ToolWrapper = () => {
       saveCheckingData != null &&
       !loadingTool)
 
-  console.log(checkingData);
   return (
     <div className="page">
       <Box

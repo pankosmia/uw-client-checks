@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect, useContext, use } from "react";
 import { doI18n, i18nContext } from "pithekos-lib";
 import AddIcon from "@mui/icons-material/Add";
+import CircularProgress from "@mui/material/CircularProgress";
 
 import {
   Box,
@@ -46,8 +47,11 @@ export default function SelectBook() {
   const [allResourcesPresent, setAllResourcesPresent] = useState(false);
   const [selectedBurrito, setSelectedBurrito] = useState();
   const [openedBooks, setOpenedBooks] = useState(new Set());
-  const { optional_project } = useParams();
 
+  const [initializing, setInitializing] = useState([]);
+
+  const { optional_project } = useParams();
+  console.log(initializing)
   useEffect(() => {
     if (globalResourcesStatus && !allResourcesPresent) {
       setOpenResourcesDialog(true);
@@ -220,6 +224,8 @@ export default function SelectBook() {
         "book_projects/" + selectedProjectFilename + "/"
       );
       fetchData();
+      setInitializing(prev => prev.filter(([p2, t2]) => !(p2 === sourceProjectPath && t2 === selectedProjectFilename)));
+
     } catch (error) {
       alert("Conversion failed — see console for details.");
     }
@@ -235,10 +241,8 @@ export default function SelectBook() {
 
   useEffect(() => {
     async function checkResourcesForBookCode(name) {
-      const path = await getPathFromOriginalResources(
-      name
-    );
-    setManifestPath(path);
+      const path = await getPathFromOriginalResources(name);
+      setManifestPath(path);
       let errors = {};
       const manifestsObj = (
         await getJson(BASE_URL + "/burrito/metadata/summaries")
@@ -283,7 +287,6 @@ export default function SelectBook() {
       return errors;
     }
     if (selectedBurrito) {
-      
       checkResourcesForBookCode(selectedBurrito.abbreviation).then(
         (responceError) => {
           setErrorsData(responceError);
@@ -291,60 +294,6 @@ export default function SelectBook() {
       );
     }
   }, [selectedBurrito]);
-
-  // const columns = [
-  //   {
-  //     field: "name",
-  //     headerName: doI18n("pages:content:row_name", i18nRef.current),
-  //     minWidth: 110,
-  //     flex: 3,
-  //   },
-  //   {
-  //     field: "language",
-  //     headerName: doI18n("pages:content:row_language", i18nRef.current),
-  //     minWidth: 120,
-  //     flex: 0.75,
-  //   },
-  //   {
-  //     field: "actions",
-  //     headerName: doI18n("pages:content:row_actions", i18nRef.current),
-  //     minWidth: 250, // increase minimum width
-  //     flex: 3, // give it more space relative to other columns
-  //     renderCell: (params) => {
-  //       // params.row.actions is just a string or boolean
-  //       const hasManifest = params.row.actions; // true/false
-  //       return hasManifest ? (
-  //         <ButtonDashBoard
-  //           projectName={params.row.projectName}
-  //           tCoreName={params.row.tCoreName}
-  //         />
-  //       ) : (
-  //         <Button
-  //           variant="contained"
-  //           color="warning"
-  //           onClick={async () => {
-  //             if (errorsData[params.row.name.toUpperCase()]?.length > 0) {
-  //               setCurrentErrors(errorsData[params.row.name.toUpperCase()]);
-  //               setErrorModalOpen(true);
-  //             } else {
-  //               const status = await checkRequiredResources();
-  //               setResourcesStatus(status);
-  //               setPendingConvert({
-  //                 sourceProjectPath: params.row.projectName,
-  //                 selectedProjectFilename: params.row.tCoreName,
-  //               });
-  //               setOpenCheckModal(true);
-  //             }
-  //           }}
-  //         >
-  //           {doI18n("pages:uw-client-checks:to_initialised", i18nRef.current)}
-  //         </Button>
-  //       );
-  //     },
-  //   },
-  // ];
-
-  
 
   const handleCloseModal = () => setOpenModal(false);
 
@@ -428,12 +377,12 @@ export default function SelectBook() {
           }}
         >
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            No tCoreProject Fround{" "}
+            {doI18n("pages:uw-client-checks:no_tCoreProject_found", i18nRef.current)}
           </Typography>
           <Button
             onClick={() =>
               (window.location.href =
-                "/clients/core-contenthandler_t_core#/tCoreContent")
+                "/clients/core-contenthandler_t_core#/createDocument/tCoreContent")
             }
           >
             Create tCore project
@@ -459,7 +408,7 @@ export default function SelectBook() {
               size="small"
               aria-label={doI18n("pages:content:fab_import", i18nRef.current)}
               onClick={(event) => setOpenModal(event.currentTarget)}
-               sx={{ mb: 1 }}
+              sx={{ mb: 1 }}
             >
               <AddIcon sx={{ mr: 1 }} />
               <Typography variant="body2">
@@ -467,7 +416,7 @@ export default function SelectBook() {
               </Typography>
             </Fab>
             <Typography variant="h6" fontWeight={600}>
-              Books
+              {doI18n("pages:uw-client-checks:book",i18nRef.current)}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -508,11 +457,17 @@ export default function SelectBook() {
                     <Box>
                       {book.hasManifest ? (
                         <Typography color="success.main" fontWeight={600}>
-                          {doI18n(`pages:uw-client-checks:initialize`,i18nRef.current)}
+                          {doI18n(
+                            `pages:uw-client-checks:initialize`,
+                            i18nRef.current
+                          )}
                         </Typography>
                       ) : (
                         <Typography color="warning.main" fontWeight={600}>
-                          {doI18n(`pages:uw-client-checks:need_initalisation`,i18nRef.current)}
+                          {doI18n(
+                            `pages:uw-client-checks:need_initalisation`,
+                            i18nRef.current
+                          )}
                         </Typography>
                       )}
                     </Box>
@@ -551,24 +506,47 @@ export default function SelectBook() {
                         <Button
                           variant="contained"
                           color="warning"
+                          disabled={
+                            initializing.some(
+                              ([p2, t2]) =>
+                                p2 === book.projectName &&
+                                t2 === book.tCoreName
+                            )
+                          }
                           onClick={async () => {
                             if (errorsData[book.bookCode]?.length > 0) {
                               setCurrentErrors(errorsData[book.bookCode]);
                               setErrorModalOpen(true);
                             } else {
-                              const status = await checkRequiredResources();
-                              setResourcesStatus(status);
-                              setPendingConvert({
-                                sourceProjectPath: book.projectName,
-                                selectedProjectFilename: book.tCoreName,
-                              });
-                              setOpenCheckModal(true);
+                              // const status = await checkRequiredResources();
+                              // setResourcesStatus(status);
+                              // setPendingConvert({
+                              //   sourceProjectPath: book.projectName,
+                              //   selectedProjectFilename: book.tCoreName,
+                              // });
+                              setInitializing((prev) => [
+                                ...prev,
+                                [book.projectName, book.tCoreName],
+                              ]);
+                              await handleTryConvert(
+                                book.projectName,
+                                book.tCoreName
+                              );
+                              // setOpenCheckModal(true);
                             }
                           }}
                         >
-                          {doI18n(
-                            "pages:uw-client-checks:to_initialised",
-                            i18nRef.current
+                          {initializing.some(
+                              ([p2, t2]) =>
+                                p2 === book.projectName &&
+                                t2 === book.tCoreName
+                          )? (
+                            <CircularProgress size={18} color="inherit" />
+                          ) : (
+                            doI18n(
+                              "pages:uw-client-checks:to_initialised",
+                              i18nRef.current
+                            )
                           )}
                         </Button>
                       )}
@@ -590,7 +568,7 @@ export default function SelectBook() {
             }}
           >
             <Typography variant="h6" fontWeight={600}>
-              Books
+              {doI18n("pages:uw-client-checks:books", i18nRef.current)}
             </Typography>
           </Box>
         </Box>

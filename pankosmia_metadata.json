@@ -5,7 +5,7 @@
     "debug": false,
     "excludeFromMenu": true
   },
-  
+
   "i18n": {
     "title": {
       "en": "unfoldingWord Checks"
@@ -71,6 +71,14 @@
     "open": {
       "en": "open",
       "fr": "ouvrir"
+    },
+    "no_tCoreProject_found": {
+      "en": "No tCoreProject Fround",
+      "fr": "Aucun projet tCore trouvé"
+    },
+    "book": {
+      "en": "Book",
+      "fr": "Livre"
     }
   }
 }

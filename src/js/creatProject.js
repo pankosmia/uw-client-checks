@@ -1175,6 +1175,18 @@ export const convertToProjectFormat = async (
     sourceProjectPath,
     selectedProjectFilename
   );
+  await generateHelperForTool(
+    "en_tw",
+    sourceProjectPath,
+    selectedProjectFilename,
+    "translationWords"
+  );
+  await generateHelperForTool(
+    "en_tn",
+    sourceProjectPath,
+    selectedProjectFilename,
+    "translationNotes"
+  );
   const parsedUsfm = getParsedUSFM(usfmData);
   const manifest = await generateManifestForUsfm(
     sourceProjectPath,
@@ -1191,18 +1203,5 @@ export const convertToProjectFormat = async (
     manifest,
     sourceProjectPath,
     selectedProjectFilename
-  );
-
-  await generateHelperForTool(
-    "en_tw",
-    sourceProjectPath,
-    selectedProjectFilename,
-    "translationWords"
-  );
-  await generateHelperForTool(
-    "en_tn",
-    sourceProjectPath,
-    selectedProjectFilename,
-    "translationNotes"
   );
 };
