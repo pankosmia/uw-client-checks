@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo,useContext } from "react";
+import { useEffect, useState, useMemo, useContext } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { groupDataHelpers } from "word-aligner-lib";
 import { useParams, useLocation } from "react-router-dom";
@@ -16,6 +16,7 @@ import {
   getLexiconData,
 } from "../js/checkerUtils";
 import { isOldTestament } from "../js/creatProject";
+import BIBLE_BOOKS from "../common/BooksOfTheBible";
 // Load sample data from fixtures
 // const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 const translations = require("../uwSrc/locales/English-en_US.json");
@@ -97,7 +98,7 @@ export const ToolWrapper = () => {
   const location = useLocation();
   console.log(contextId);
   const { i18nRef } = useContext(i18nContext);
-  
+
   const [toolName, setToolName] = useState(
     location.state?.toolName ?? "translationWords"
   );
@@ -122,7 +123,7 @@ export const ToolWrapper = () => {
     );
   };
   const saveCheckingData = async (newState) => {
-    const data = structuredClone(newState.currentCheck)
+    const data = structuredClone(newState.currentCheck);
     let id = data.contextId.checkId;
     let index = data.contextId.groupId;
     if (toolName === "translationNotes") {
@@ -300,8 +301,8 @@ export const ToolWrapper = () => {
         {
           book: originBible,
           description: "original_language",
-          languageId: isOldTestament(book)?'hbo':"el-x-koine",
-          bibleId: isOldTestament(book)?'uhb':"ugnt",
+          languageId: isOldTestament(book) ? "hbo" : "el-x-koine",
+          bibleId: isOldTestament(book) ? "uhb" : "ugnt",
           owner: "unfoldingWord",
         },
       ]);
@@ -321,8 +322,10 @@ export const ToolWrapper = () => {
       gatewayLanguageId,
       gatewayLanguageOwner,
       book: {
-        id: bookId,
-        name: bookName,
+        id: book,
+        name: isOldTestament(book)
+          ? BIBLE_BOOKS["oldTestament"][book]
+          : BIBLE_BOOKS["newTestament"][book],
       },
     }),
     []
@@ -334,16 +337,16 @@ export const ToolWrapper = () => {
   };
 
   const ready =
-    (Array.isArray(bibles) &&
-      bibles.length === 3 &&
-      targetBible != null &&
-      originBible != null &&
-      ultBible != null &&
-      checkingData != null &&
-      contextId_ != null &&
-      lexicon != null &&
-      saveCheckingData != null &&
-      !loadingTool)
+    Array.isArray(bibles) &&
+    bibles.length === 3 &&
+    targetBible != null &&
+    originBible != null &&
+    ultBible != null &&
+    checkingData != null &&
+    contextId_ != null &&
+    lexicon != null &&
+    saveCheckingData != null &&
+    !loadingTool;
 
   return (
     <div className="page">
@@ -359,7 +362,10 @@ export const ToolWrapper = () => {
           variant="extended"
           color="primary"
           size="small"
-          aria-label={doI18n("pages:uw-client-checks:book_projects", i18nRef.current)}
+          aria-label={doI18n(
+            "pages:uw-client-checks:book_projects",
+            i18nRef.current
+          )}
           onClick={() =>
             (window.location.href = `/clients/main/#/${projectName}`)
           }
@@ -384,7 +390,11 @@ export const ToolWrapper = () => {
         </Box>
 
         {/* RIGHT spacer to keep tabs centered */}
-        <Box sx={{ width: 140 }} />
+        <Box sx={{ width: 140 }}>
+          <Typography variant="h4" fontWeight="bold">{isOldTestament(book)
+          ? BIBLE_BOOKS["oldTestament"][book]
+          : BIBLE_BOOKS["newTestament"][book]}</Typography>
+        </Box>
       </Box>
 
       {!ready && <div>Loading translation checker…</div>}
