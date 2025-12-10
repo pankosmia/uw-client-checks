@@ -278,7 +278,13 @@ export default function SelectBook() {
             );
           } else {
             if (!manifestsObj[e].book_codes.includes(book)) {
-              errors[book].push(`${e} doesnt have ${book} scope`);
+              errors[book].push(`${e} ${doI18n(
+                "pages:uw-client-checks:doesnt_have",
+                i18nRef.current
+              )} ${book} ${doI18n(
+                "pages:uw-client-checks:scope",
+                i18nRef.current
+              )}`);
             }
           }
         }
@@ -337,7 +343,8 @@ export default function SelectBook() {
           }}
         >
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            Select tCore Project
+            {doI18n('pages:uw-client-checks:select_tCore_project', i18nRef.current)}
+
           </Typography>
           <FormControl
             fullWidth
@@ -385,7 +392,7 @@ export default function SelectBook() {
                 "/clients/core-contenthandler_t_core#/createDocument/tCoreContent")
             }
           >
-            Create tCore project
+            {doI18n('pages:uw-client-checks:creat_tCore_project', i18nRef.current)}
           </Button>
         </Paper>
       )}
@@ -450,7 +457,8 @@ export default function SelectBook() {
                         {book.bookCode}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Language: {book.language}
+                       {doI18n( `pages:uw-client-checks:language`,
+                            i18nRef.current)}{book.language}
                       </Typography>
                     </Box>
 
@@ -488,10 +496,12 @@ export default function SelectBook() {
                   >
                     <Box>
                       <Typography variant="body2">
-                        <strong>Book code:</strong> {book.bookCode}
+                        <strong>{doI18n( `pages:uw-client-checks:book_code`,
+                            i18nRef.current)}</strong> {book.bookCode}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Language:</strong> {book.language}
+                        <strong>{doI18n( `pages:uw-client-checks:language`,
+                            i18nRef.current)}</strong> {book.language}
                       </Typography>
                     </Box>
 
@@ -616,7 +626,7 @@ export default function SelectBook() {
             </Box>
           </Box>
         ) : (
-          "Aucun manifest trouvé"
+          doI18n("pages:uw-client-checks:no_manifest_found", i18nRef.current)
         )}
       </AppDialog>
       <AppDialog
@@ -715,8 +725,10 @@ export default function SelectBook() {
         }
       >
         <Typography sx={{ mb: 2 }}>
-          Some required resources are missing. You must install them before
-          selecting a tCore project.
+          {doI18n(
+          "pages:uw-client-checks:ressource_required",
+          i18nRef.current
+        )}
         </Typography>
 
         <Box>

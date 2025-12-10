@@ -44,6 +44,10 @@
       "en": "Ressources required for tCore",
       "fr": "Ressources requises pour tCore"
     },
+    "creat_tCore_project": {
+      "en": "Create tCore Project",
+      "fr": "Creer un projet tCore"
+    },
     "book_errors": {
       "en": "Book errors",
       "fr": "Erreurs du livre"
@@ -79,6 +83,38 @@
     "book": {
       "en": "Book",
       "fr": "Livre"
+    },
+    "books": {
+      "en": "Books",
+      "fr": "Livres"
+    },
+    "language": {
+      "en": "Language: ",
+      "fr": "Language: "
+    },
+    "book_code": {
+      "en": "Book code:",
+      "fr": "Book code:"
+    },
+    "no_manifest_found": {
+      "fr": "Aucun manifest trouvé",
+      "en": "No manifest found"
+    },
+    "ressource_required": {
+      "fr": "Certaines ressources necessaire sont manquante. Vous devez les telecharger avant de pouvoir choisir un projet tCore",
+      "en": "Some required resources are missing. You must install them before selecting a tCore project."
+    },
+    "select_tCore_project": {
+      "en": "Select tCore Project",
+      "fr": "Choisir un projet tCore"
+    },
+    "doesnt_have": {
+      "en": "doesnt have",
+      "fr": "n'a pas"
+    },
+    "scope": {
+      "en": "scope",
+      "fr": "scope"
     }
   }
 }
