@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo,useContext } from "react";
+import { useEffect, useState, useMemo, useContext } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { groupDataHelpers } from "word-aligner-lib";
 import { useParams, useLocation } from "react-router-dom";
@@ -97,7 +97,7 @@ export const ToolWrapper = () => {
   const location = useLocation();
   console.log(contextId);
   const { i18nRef } = useContext(i18nContext);
-  
+
   const [toolName, setToolName] = useState(
     location.state?.toolName ?? "translationWords"
   );
@@ -122,7 +122,7 @@ export const ToolWrapper = () => {
     );
   };
   const saveCheckingData = async (newState) => {
-    const data = structuredClone(newState.currentCheck)
+    const data = structuredClone(newState.currentCheck);
     let id = data.contextId.checkId;
     let index = data.contextId.groupId;
     if (toolName === "translationNotes") {
@@ -237,6 +237,14 @@ export const ToolWrapper = () => {
 
     const loadData = async () => {
       setLoadingTool(true);
+      setTargetBible(
+        await getBookFromName(
+          projectName,
+          `book_projects/${tCoreName}`,
+          book,
+          "target_language"
+        )
+      );
       let toolData;
       if (toolName === "translationWords") {
         if (!dataTw) {
@@ -300,8 +308,8 @@ export const ToolWrapper = () => {
         {
           book: originBible,
           description: "original_language",
-          languageId: isOldTestament(book)?'hbo':"el-x-koine",
-          bibleId: isOldTestament(book)?'uhb':"ugnt",
+          languageId: isOldTestament(book) ? "hbo" : "el-x-koine",
+          bibleId: isOldTestament(book) ? "uhb" : "ugnt",
           owner: "unfoldingWord",
         },
       ]);
@@ -334,16 +342,16 @@ export const ToolWrapper = () => {
   };
 
   const ready =
-    (Array.isArray(bibles) &&
-      bibles.length === 3 &&
-      targetBible != null &&
-      originBible != null &&
-      ultBible != null &&
-      checkingData != null &&
-      contextId_ != null &&
-      lexicon != null &&
-      saveCheckingData != null &&
-      !loadingTool)
+    Array.isArray(bibles) &&
+    bibles.length === 3 &&
+    targetBible != null &&
+    originBible != null &&
+    ultBible != null &&
+    checkingData != null &&
+    contextId_ != null &&
+    lexicon != null &&
+    saveCheckingData != null &&
+    !loadingTool;
 
   return (
     <div className="page">
@@ -359,7 +367,10 @@ export const ToolWrapper = () => {
           variant="extended"
           color="primary"
           size="small"
-          aria-label={doI18n("pages:uw-client-checks:book_projects", i18nRef.current)}
+          aria-label={doI18n(
+            "pages:uw-client-checks:book_projects",
+            i18nRef.current
+          )}
           onClick={() =>
             (window.location.href = `/clients/main/#/${projectName}`)
           }
