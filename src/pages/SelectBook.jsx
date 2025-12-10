@@ -51,7 +51,7 @@ export default function SelectBook() {
   const [initializing, setInitializing] = useState([]);
 
   const { optional_project } = useParams();
-  console.log(initializing)
+  console.log(initializing);
   useEffect(() => {
     if (globalResourcesStatus && !allResourcesPresent) {
       setOpenResourcesDialog(true);
@@ -224,8 +224,12 @@ export default function SelectBook() {
         "book_projects/" + selectedProjectFilename + "/"
       );
       fetchData();
-      setInitializing(prev => prev.filter(([p2, t2]) => !(p2 === sourceProjectPath && t2 === selectedProjectFilename)));
-
+      setInitializing((prev) =>
+        prev.filter(
+          ([p2, t2]) =>
+            !(p2 === sourceProjectPath && t2 === selectedProjectFilename)
+        )
+      );
     } catch (error) {
       alert("Conversion failed — see console for details.");
     }
@@ -278,13 +282,15 @@ export default function SelectBook() {
             );
           } else {
             if (!manifestsObj[e].book_codes.includes(book)) {
-              errors[book].push(`${e} ${doI18n(
-                "pages:uw-client-checks:doesnt_have",
-                i18nRef.current
-              )} ${book} ${doI18n(
-                "pages:uw-client-checks:scope",
-                i18nRef.current
-              )}`);
+              errors[book].push(
+                `${e} ${doI18n(
+                  "pages:uw-client-checks:doesnt_have",
+                  i18nRef.current
+                )} ${book} ${doI18n(
+                  "pages:uw-client-checks:scope",
+                  i18nRef.current
+                )}`
+              );
             }
           }
         }
@@ -343,8 +349,10 @@ export default function SelectBook() {
           }}
         >
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            {doI18n('pages:uw-client-checks:select_tCore_project', i18nRef.current)}
-
+            {doI18n(
+              "pages:uw-client-checks:select_tCore_project",
+              i18nRef.current
+            )}
           </Typography>
           <FormControl
             fullWidth
@@ -384,7 +392,10 @@ export default function SelectBook() {
           }}
         >
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            {doI18n("pages:uw-client-checks:no_tCoreProject_found", i18nRef.current)}
+            {doI18n(
+              "pages:uw-client-checks:no_tCoreProject_found",
+              i18nRef.current
+            )}
           </Typography>
           <Button
             onClick={() =>
@@ -392,7 +403,10 @@ export default function SelectBook() {
                 "/clients/core-contenthandler_t_core#/createDocument/tCoreContent")
             }
           >
-            {doI18n('pages:uw-client-checks:creat_tCore_project', i18nRef.current)}
+            {doI18n(
+              "pages:uw-client-checks:creat_tCore_project",
+              i18nRef.current
+            )}
           </Button>
         </Paper>
       )}
@@ -423,7 +437,7 @@ export default function SelectBook() {
               </Typography>
             </Fab>
             <Typography variant="h6" fontWeight={600}>
-              {doI18n("pages:uw-client-checks:book",i18nRef.current)}
+              {doI18n("pages:uw-client-checks:book", i18nRef.current)}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -432,7 +446,13 @@ export default function SelectBook() {
                 onChange={() => {
                   setOpenedBooks((prev) => {
                     const next = new Set(prev);
-                    next.add(book.bookCode);
+
+                    if (next.has(book.bookCode)) {
+                      next.delete(book.bookCode); // close → remove
+                    } else {
+                      next.add(book.bookCode); // open → add
+                    }
+
                     return next;
                   });
                 }}
@@ -457,8 +477,11 @@ export default function SelectBook() {
                         {book.bookCode}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                       {doI18n( `pages:uw-client-checks:language`,
-                            i18nRef.current)}{book.language}
+                        {doI18n(
+                          `pages:uw-client-checks:language`,
+                          i18nRef.current
+                        )}
+                        {book.language}
                       </Typography>
                     </Box>
 
@@ -496,12 +519,22 @@ export default function SelectBook() {
                   >
                     <Box>
                       <Typography variant="body2">
-                        <strong>{doI18n( `pages:uw-client-checks:book_code`,
-                            i18nRef.current)}</strong> {book.bookCode}
+                        <strong>
+                          {doI18n(
+                            `pages:uw-client-checks:book_code`,
+                            i18nRef.current
+                          )}
+                        </strong>{" "}
+                        {book.bookCode}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>{doI18n( `pages:uw-client-checks:language`,
-                            i18nRef.current)}</strong> {book.language}
+                        <strong>
+                          {doI18n(
+                            `pages:uw-client-checks:language`,
+                            i18nRef.current
+                          )}
+                        </strong>{" "}
+                        {book.language}
                       </Typography>
                     </Box>
 
@@ -516,13 +549,10 @@ export default function SelectBook() {
                         <Button
                           variant="contained"
                           color="warning"
-                          disabled={
-                            initializing.some(
-                              ([p2, t2]) =>
-                                p2 === book.projectName &&
-                                t2 === book.tCoreName
-                            )
-                          }
+                          disabled={initializing.some(
+                            ([p2, t2]) =>
+                              p2 === book.projectName && t2 === book.tCoreName
+                          )}
                           onClick={async () => {
                             if (errorsData[book.bookCode]?.length > 0) {
                               setCurrentErrors(errorsData[book.bookCode]);
@@ -547,10 +577,9 @@ export default function SelectBook() {
                           }}
                         >
                           {initializing.some(
-                              ([p2, t2]) =>
-                                p2 === book.projectName &&
-                                t2 === book.tCoreName
-                          )? (
+                            ([p2, t2]) =>
+                              p2 === book.projectName && t2 === book.tCoreName
+                          ) ? (
                             <CircularProgress size={18} color="inherit" />
                           ) : (
                             doI18n(
@@ -720,18 +749,12 @@ export default function SelectBook() {
             variant="contained"
             onClick={() => (window.location.href = "/clients/content")}
           >
-            {doI18n(
-          "pages:uw-client-checks:manage_content",
-          i18nRef.current
-        )}
+            {doI18n("pages:uw-client-checks:manage_content", i18nRef.current)}
           </Button>
         }
       >
         <Typography sx={{ mb: 2 }}>
-          {doI18n(
-          "pages:uw-client-checks:ressource_required",
-          i18nRef.current
-        )}
+          {doI18n("pages:uw-client-checks:ressource_required", i18nRef.current)}
         </Typography>
 
         <Box>
