@@ -695,7 +695,7 @@ export default function SelectBook() {
         title={doI18n("pages:uw-client-checks:book_errors", i18nRef.current)}
         actions={
           <Button variant="contained" onClick={() => setErrorModalOpen(false)}>
-            {doI18n("pages:uw-client-checks:manage_content", i18nRef.current)}
+            {doI18n("pages:uw-client-checks:close", i18nRef.current)}
           </Button>
         }
       >
@@ -720,7 +720,10 @@ export default function SelectBook() {
             variant="contained"
             onClick={() => (window.location.href = "/clients/content")}
           >
-            OK
+            {doI18n(
+          "pages:uw-client-checks:manage_content",
+          i18nRef.current
+        )}
           </Button>
         }
       >
