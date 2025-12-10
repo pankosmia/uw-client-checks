@@ -62,9 +62,9 @@ export default function SelectBook() {
     async function fetchSummaries() {
       if (optional_project) {
         try {
-          const response = await fetch("/burrito/metadata/summaries");
+          const response = await getJson("/burrito/metadata/summaries");
           if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-          const data = await response.json();
+          const data = await response.json;
           // Filter only those with flavor_type = scripture
           const burritoArray = Object.entries(data).map(([key, value]) => ({
             path: key,
@@ -116,9 +116,9 @@ export default function SelectBook() {
   useEffect(() => {
     async function fetchSummaries() {
       try {
-        const response = await fetch("/burrito/metadata/summaries");
+        const response = await getJson("/burrito/metadata/summaries");
         if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        const data = await response.json();
+        const data = await response.json;
         // Filter only those with flavor_type = scripture
         const burritoArray = Object.entries(data).map(([key, value]) => ({
           path: key,
