@@ -25,12 +25,12 @@
       "fr": "initialiser"
     },
     "need_initalisation": {
-      "en": "need initialization",
-      "fr": "requiert une initialisation"
+      "en": "Not set up",
+      "fr": "À, installer"
     },
-    "initialize": {
-      "en": "initialize",
-      "fr": "initlialisé"
+    "ready": {
+      "en": "ready",
+      "fr": "prêt"
     },
     "add_book_tCore": {
       "en": "Add book to tCore project",
@@ -115,6 +115,10 @@
     "scope": {
       "en": "scope",
       "fr": "scope"
+    },
+    "book_projects" :{
+      "en": "Book projects",
+      "fr" : "Projet-livres"
     }
   }
 }

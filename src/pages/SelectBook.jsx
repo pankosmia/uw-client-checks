@@ -466,7 +466,7 @@ export default function SelectBook() {
                       {book.hasManifest ? (
                         <Typography color="success.main" fontWeight={600}>
                           {doI18n(
-                            `pages:uw-client-checks:initialize`,
+                            `pages:uw-client-checks:ready`,
                             i18nRef.current
                           )}
                         </Typography>

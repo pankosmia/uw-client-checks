@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo,useContext } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { groupDataHelpers } from "word-aligner-lib";
 import { useParams, useLocation } from "react-router-dom";
@@ -8,6 +8,7 @@ import ArrowBack from "@mui/icons-material/ArrowBack";
 import yaml from "js-yaml";
 import { buildLinkTitleMap } from "../js/checkerUtils";
 import { fsGetRust, fsWriteRust } from "../js/serverUtils";
+import { doI18n, i18nContext } from "pithekos-lib";
 import {
   getBookFromName,
   getglTwData,
@@ -80,7 +81,7 @@ const contextId_ = {
   occurrence: 1,
 };
 export const ToolWrapper = () => {
-  const tools = ["translationWords", "translationNotes", "wordsAligner"];
+  const tools = ["translationWords", "translationNotes", "wordAligner"];
   const [targetBible, setTargetBible] = useState();
   const [bibles, setBibles] = useState([]);
   const [originBible, setOriginBible] = useState();
@@ -95,6 +96,8 @@ export const ToolWrapper = () => {
   const book = useMemo(() => tCoreName?.split("_")[2], [tCoreName]);
   const location = useLocation();
   console.log(contextId);
+  const { i18nRef } = useContext(i18nContext);
+  
   const [toolName, setToolName] = useState(
     location.state?.toolName ?? "translationWords"
   );
@@ -356,7 +359,7 @@ export const ToolWrapper = () => {
           variant="extended"
           color="primary"
           size="small"
-          aria-label="Change book project"
+          aria-label={doI18n("pages:uw-client-checks:book_projects", i18nRef.current)}
           onClick={() =>
             (window.location.href = `/clients/main/#/${projectName}`)
           }
