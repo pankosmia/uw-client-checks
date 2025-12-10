@@ -2,27 +2,35 @@
   "name": "uw-client-checks",
   "version": "0.0.1",
   "private": true,
-  "homepage": "/clients/uw-client-checks",
+  "homepage": "/clients/main",
   "dependencies": {
-    "@emotion/react": "^11.13.3",
-    "@emotion/styled": "^11.13.0",
-    "@mui/material": "^6.1.5",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^5.18.0",
+    "@mui/material": "^5.18.0",
+    "@mui/styles": "^5.18.0",
+    "@mui/system": "^5.18.0",
+    "@mui/x-data-grid": "^6.20.4",
+    "bible-reference-range": "^1.1.1",
     "eslint-config-react-app": "^7.0.1",
-    "pithekos-lib": "^0.11.16",
+    "js-yaml": "^4.1.1",
+    "path-browserify": "^1.0.1",
+    "pithekos-lib": "^0.11.20",
     "react": "^17.0.0 || ^18.0.0",
     "react-dom": "^17.0.0 || ^18.0.0",
-    "word-aligner-lib": "1.0.0",
-    "bible-reference-range": "^1.1.0"
+    "react-router-dom": "^6.27.0",
+    "tc-checking-tool-rcl": "^0.9.112",
+    "usfm-js": "^3.4.3",
+    "word-aligner-lib": "^1.0.0",
+    "wordmap": "^0.6.1-beta.10"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@vitejs/plugin-react": "^4.3.4",
     "react-scripts": "5.0.1",
-    "vite": "^6.0.7"
-  },
-  "peerDependencies": {
-    "react": "^17.0.0 || ^18.0.0",
-    "react-dom": "^17.0.0 || ^18.0.0"
+    "util": "^0.12.5",
+    "vite": "^6.0.7",
+    "vite-plugin-node-polyfills": "^0.24.0"
   },
   "scripts": {
     "start": "react-scripts start",

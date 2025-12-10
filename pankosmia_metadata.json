@@ -2,8 +2,10 @@
   "id": "uw-client-checks",
   "require": {
     "net": false,
-    "debug": true
+    "debug": false,
+    "excludeFromMenu": true
   },
+
   "i18n": {
     "title": {
       "en": "unfoldingWord Checks"
@@ -13,6 +15,118 @@
     },
     "stub_content": {
       "en": "Content goes here"
+    },
+    "translationWords": {
+      "en": "translationWords",
+      "fr": "translationWords"
+    },
+    "to_initialised": {
+      "en": "Set up",
+      "fr": "installer projet"
+    },
+    "need_initalisation": {
+      "en": "Not set up",
+      "fr": "À, installer"
+    },
+    "ready": {
+      "en": "ready",
+      "fr": "prêt"
+    },
+    "add_book_tCore": {
+      "en": "Add book to tCore project",
+      "fr": "Ajouter un livre au projet tCore"
+    },
+    "add_book": {
+      "en": "Add book",
+      "fr": "Ajouter un livre"
+    },
+    "required_ressources_check": {
+      "en": "Resources required for tCore",
+      "fr": "Ressources requises pour tCore"
+    },
+    "creat_tCore_project": {
+      "en": "Create tCore Project",
+      "fr": "Creer un projet tCore"
+    },
+    "book_errors": {
+      "en": "Book errors",
+      "fr": "Erreurs du livre"
+    },
+    "present": {
+      "en": "✔ Present",
+      "fr": "✔ Present"
+    },
+    "missing": {
+      "en": "✖ Missing",
+      "fr": "✖ Absent"
+    },
+    "cancel": {
+      "en": "Cancel",
+      "fr": "Annuler"
+    },
+    "ok": {
+      "en": "Ok",
+      "fr": "Ok"
+    },
+    "close":{
+      "en":"Close",
+      "fr": "Fermer"
+    },
+    "manage_content": {
+      "en": "Manage content",
+      "fr": "Gerer le contenu"
+    },
+    "choose_document": {
+      "en": "tCore project",
+      "fr": "project tCore"
+    },
+    "open": {
+      "en": "open",
+      "fr": "ouvrir"
+    },
+    "no_tCoreProject_found": {
+      "en": "No tCoreProject Fround",
+      "fr": "Aucun projet tCore trouvé"
+    },
+    "book": {
+      "en": "Book",
+      "fr": "Livre"
+    },
+    "books": {
+      "en": "Books",
+      "fr": "Livres"
+    },
+    "language": {
+      "en": "Language: ",
+      "fr": "Language: "
+    },
+    "book_code": {
+      "en": "Book code:",
+      "fr": "Book code:"
+    },
+    "no_manifest_found": {
+      "fr": "Aucun manifest trouvé",
+      "en": "No manifest found"
+    },
+    "ressource_required": {
+      "fr": "Certaines ressources necessaire sont manquante. Vous devez les telecharger avant de pouvoir choisir un projet tCore",
+      "en": "Some required resources are missing. You must install them before selecting a tCore project."
+    },
+    "select_tCore_project": {
+      "en": "Select tCore Project",
+      "fr": "Choisir un projet tCore"
+    },
+    "doesnt_have": {
+      "en": "doesnt have",
+      "fr": "n'a pas"
+    },
+    "scope": {
+      "en": "scope",
+      "fr": "scope"
+    },
+    "book_projects" :{
+      "en": "Book projects",
+      "fr" : "Projet-livres"
     }
   }
 }
