@@ -590,7 +590,7 @@ export default function SelectBook() {
         title={doI18n("pages:uw-client-checks:add_book_tCore", i18nRef.current)}
         actions={
           <Button variant="contained" onClick={handleCloseModal}>
-            {doI18n("pages:uw-client-checks:ok", i18nRef.current)}
+            {doI18n("pages:uw-client-checks:close", i18nRef.current)}
           </Button>
         }
       >
@@ -695,7 +695,7 @@ export default function SelectBook() {
         title={doI18n("pages:uw-client-checks:book_errors", i18nRef.current)}
         actions={
           <Button variant="contained" onClick={() => setErrorModalOpen(false)}>
-            {doI18n("pages:uw-client-checks:ok", i18nRef.current)}
+            {doI18n("pages:uw-client-checks:manage_content", i18nRef.current)}
           </Button>
         }
       >

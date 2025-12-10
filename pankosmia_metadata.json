@@ -21,8 +21,8 @@
       "fr": "translationWords"
     },
     "to_initialised": {
-      "en": "initialize",
-      "fr": "initialiser"
+      "en": "Set up",
+      "fr": "installer projet"
     },
     "need_initalisation": {
       "en": "Not set up",
@@ -41,7 +41,7 @@
       "fr": "Ajouter un livre"
     },
     "required_ressources_check": {
-      "en": "Ressources required for tCore",
+      "en": "Resources required for tCore",
       "fr": "Ressources requises pour tCore"
     },
     "creat_tCore_project": {
@@ -67,6 +67,14 @@
     "ok": {
       "en": "Ok",
       "fr": "Ok"
+    },
+    "close":{
+      "en":"Close",
+      "fr": "Fermer"
+    },
+    "manage_content": {
+      "en": "Manage content",
+      "fr": "Gerer le contenu"
     },
     "choose_document": {
       "en": "tCore project",
