@@ -430,7 +430,7 @@ export const ToolWrapper = () => {
             bookName={bookName}
             contextId={contextId}
             editedTargetVerse={editedTargetVerse}
-            gatewayBook={enGlBook}
+            gatewayBook={targetBible}
             getLexiconData={getLexiconData_}
             groupsData={groupsData}
             groupsIndex={groupsIndex}
