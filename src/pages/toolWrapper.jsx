@@ -237,6 +237,14 @@ export const ToolWrapper = () => {
 
     const loadData = async () => {
       setLoadingTool(true);
+      setTargetBible(
+        await getBookFromName(
+          projectName,
+          `book_projects/${tCoreName}`,
+          book,
+          "target_language"
+        )
+      );
       let toolData;
       if (toolName === "translationWords") {
         if (!dataTw) {
