@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo,useContext } from "react";
+import { useEffect, useState, useMemo, useContext } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { groupDataHelpers } from "word-aligner-lib";
 import { useParams, useLocation } from "react-router-dom";
@@ -16,6 +16,7 @@ import {
   getLexiconData,
 } from "../js/checkerUtils";
 import { isOldTestament } from "../js/creatProject";
+import { WordAlignmentTool } from "word-aligner-rcl";
 // Load sample data from fixtures
 // const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 const translations = require("../uwSrc/locales/English-en_US.json");
@@ -44,6 +45,26 @@ const gatewayLanguageOwner = "unfoldingWord";
 // Initial context for checking (verse and word to check)
 
 // Bible data configuration for all languages
+function addObjectPropertyToManifest(propertyName, value) {
+  console.log(`addObjectPropertyToManifest - ${propertyName} = ${value}`);
+  // TODO need to save setting in project manifest
+}
+
+  function saveToolSettings(moduleNamespace, settingsPropertyName, toolSettingsData) {
+    const _toolSettings = cloneDeep(toolSettings); // close to make new tools state object
+
+    let moduleData = _toolSettings[moduleNamespace]
+    if (!moduleData) {
+      moduleData = {}
+      _toolSettings[moduleNamespace] = moduleData
+    }
+
+    moduleData[settingsPropertyName] = toolSettingsData
+    if (!isEqual(toolSettings, _toolSettings)) {
+      console.log(`new toolSettings`, _toolSettings)
+      _setToolSettings(_toolSettings)
+    }
+  };
 
 // Translation helper function for UI strings
 const translate = (key) => {
@@ -97,7 +118,7 @@ export const ToolWrapper = () => {
   const location = useLocation();
   console.log(contextId);
   const { i18nRef } = useContext(i18nContext);
-  
+
   const [toolName, setToolName] = useState(
     location.state?.toolName ?? "translationWords"
   );
@@ -122,7 +143,7 @@ export const ToolWrapper = () => {
     );
   };
   const saveCheckingData = async (newState) => {
-    const data = structuredClone(newState.currentCheck)
+    const data = structuredClone(newState.currentCheck);
     let id = data.contextId.checkId;
     let index = data.contextId.groupId;
     if (toolName === "translationNotes") {
@@ -300,8 +321,8 @@ export const ToolWrapper = () => {
         {
           book: originBible,
           description: "original_language",
-          languageId: isOldTestament(book)?'hbo':"el-x-koine",
-          bibleId: isOldTestament(book)?'uhb':"ugnt",
+          languageId: isOldTestament(book) ? "hbo" : "el-x-koine",
+          bibleId: isOldTestament(book) ? "uhb" : "ugnt",
           owner: "unfoldingWord",
         },
       ]);
@@ -334,16 +355,16 @@ export const ToolWrapper = () => {
   };
 
   const ready =
-    (Array.isArray(bibles) &&
-      bibles.length === 3 &&
-      targetBible != null &&
-      originBible != null &&
-      ultBible != null &&
-      checkingData != null &&
-      contextId_ != null &&
-      lexicon != null &&
-      saveCheckingData != null &&
-      !loadingTool)
+    Array.isArray(bibles) &&
+    bibles.length === 3 &&
+    targetBible != null &&
+    originBible != null &&
+    ultBible != null &&
+    checkingData != null &&
+    contextId_ != null &&
+    lexicon != null &&
+    saveCheckingData != null &&
+    !loadingTool;
 
   return (
     <div className="page">
@@ -359,7 +380,10 @@ export const ToolWrapper = () => {
           variant="extended"
           color="primary"
           size="small"
-          aria-label={doI18n("pages:uw-client-checks:book_projects", i18nRef.current)}
+          aria-label={doI18n(
+            "pages:uw-client-checks:book_projects",
+            i18nRef.current
+          )}
           onClick={() =>
             (window.location.href = `/clients/main/#/${projectName}`)
           }
@@ -389,31 +413,56 @@ export const ToolWrapper = () => {
 
       {!ready && <div>Loading translation checker…</div>}
 
-      {ready && (
-        <Checker
-          styles={{
-            width: "100%",
-            height: "100%",
-            overflowX: "scroll",
-            overflowY: "auto",
-          }}
-          alignedGlBible={ultBible}
-          bibles={bibles}
-          checkingData={checkingData}
-          checkType={toolName}
-          contextId={contextId}
-          getLexiconData={getLexiconData_}
-          changeTargetVerse={changeCurrentVerse}
-          glWordsData={toolName === "translationWords" ? dataTw : dataTn}
-          changedCurrentCheck={changedCurrentCheck}
-          saveCheckingData={saveCheckingData}
-          saveSettings={saveSettings}
-          showDocument={showDocument}
-          targetBible={targetBible}
-          targetLanguageDetails={targetLanguageDetails}
-          translate={translate}
-        />
-      )}
+      {ready &&
+        (toolName === "wordAligner" ? (
+          <WordAlignmentTool
+            addObjectPropertyToManifest={addObjectPropertyToManifest}
+            bibles={bibles}
+            bookName={bookName}
+            contextId={contextId}
+            editedTargetVerse={editedTargetVerse}
+            gatewayBook={enGlBook}
+            getLexiconData={getLexiconData_}
+            groupsData={groupsData}
+            groupsIndex={groupsIndex}
+            initialSettings={toolSettings}
+            lexiconCache={lexicon}
+            loadLexiconEntry={loadLexiconEntry}
+            saveNewAlignments={saveNewAlignments}
+            saveToolSettings={saveToolSettings}
+            showPopover={showPopover}
+            sourceBook={sourceBook}
+            sourceLanguage={sourceLanguage}
+            styles={{ maxHeight: "800px", overflowY: "auto" }}
+            targetLanguageFont={targetLanguageFont}
+            targetBook={targetBook}
+            translate={translate}
+          />
+        ) : (
+          <Checker
+            styles={{
+              width: "100%",
+              height: "100%",
+              overflowX: "scroll",
+              overflowY: "auto",
+            }}
+            alignedGlBible={ultBible}
+            bibles={bibles}
+            checkingData={checkingData}
+            checkType={toolName}
+            contextId={contextId}
+            getLexiconData={getLexiconData_}
+            changeTargetVerse={changeCurrentVerse}
+            glWordsData={toolName === "translationWords" ? dataTw : dataTn}
+            changedCurrentCheck={changedCurrentCheck}
+            saveCheckingData={saveCheckingData}
+            saveSettings={saveSettings}
+            showDocument={showDocument}
+            targetBible={targetBible}
+            targetLanguageDetails={targetLanguageDetails}
+            translate={translate}
+          />
+        ))}
     </div>
   );
 };
