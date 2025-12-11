@@ -17,6 +17,8 @@ import {
 } from "../js/checkerUtils";
 import { isOldTestament } from "../js/creatProject";
 import { WordAlignmentTool } from "word-aligner-rcl";
+
+
 // Load sample data from fixtures
 // const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 const translations = require("../uwSrc/locales/English-en_US.json");
@@ -51,19 +53,26 @@ function addObjectPropertyToManifest(propertyName, value) {
 }
 
   function saveToolSettings(moduleNamespace, settingsPropertyName, toolSettingsData) {
-    const _toolSettings = cloneDeep(toolSettings); // close to make new tools state object
+    return 
+  
+  };
 
-    let moduleData = _toolSettings[moduleNamespace]
-    if (!moduleData) {
-      moduleData = {}
-      _toolSettings[moduleNamespace] = moduleData
-    }
+  const editedTargetVerse = (chapterWithVerseEdit, verseWithVerseEdit, before, after, tags, username, gatewayLanguageCode, gatewayLanguageQuote, projectSaveLocation, currentToolName, translate, showAlert, closeAlert, showIgnorableAlert, updateTargetVerse, toolApi) => (dispatch, getState) => {
+    // const state = getState();
+    // const contextId = getContextId(state);
+    // const currentCheckContextId = contextId;
+    // const {
+    //   bookId, chapter: currentCheckChapter, verse: currentCheckVerse,
+    // } = currentCheckContextId.reference;
 
-    moduleData[settingsPropertyName] = toolSettingsData
-    if (!isEqual(toolSettings, _toolSettings)) {
-      console.log(`new toolSettings`, _toolSettings)
-      _setToolSettings(_toolSettings)
-    }
+    // const contextIdWithVerseEdit = {
+    //   ...currentCheckContextId,
+    //   reference: {
+    //     ...currentCheckContextId.reference,
+    //     chapter: chapterWithVerseEdit,
+    //     verse: verseWithVerseEdit,
+    //   },
+    // };
   };
 
 // Translation helper function for UI strings
