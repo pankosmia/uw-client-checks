@@ -1,24 +1,41 @@
 import { useEffect, useState, useMemo, useContext } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
-import { groupDataHelpers } from "word-aligner-lib";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, json } from "react-router-dom";
 import { changeTnCategories, getTnData } from "../js/checkerUtils";
 import { Box, Tabs, Tab, Fab, Typography } from "@mui/material";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import yaml from "js-yaml";
 import { buildLinkTitleMap } from "../js/checkerUtils";
-import { fsGetRust, fsWriteRust } from "../js/serverUtils";
+import { fixOccurrences, fsGetRust, fsWriteRust } from "../js/serverUtils";
 import { doI18n, i18nContext } from "pithekos-lib";
+import { loadAlignment } from "../js/checkerUtils";
+import { usfmVerseToJson } from "../wordAligner/utils/usfmHelpers";
+import { updateAlignmentsToTargetVerse } from "../wordAligner/utils/alignmentHelpers";
+import { VerseObjectUtils } from "word-aligner";
+import { getWordListFromVerseObjects } from "../wordAligner/utils/alignmentHelpers";
+import wordaligner from "word-aligner";
+
 import {
   getBookFromName,
   getglTwData,
   getCheckingData,
   getLexiconData,
+  changeDataFromtopBottomToNgramSourceNgram,
 } from "../js/checkerUtils";
+import { verseHelpers } from "word-aligner-rcl";
+import {
+  addAlignmentsToTargetVerseUsingMerge,
+  handleAddedWordsInNewText,
+  handleDeletedWords,
+} from "../wordAligner/utils/alignmentHelpers";
+
+import { addAlignmentsToVerseUSFM } from "../wordAligner/utils/alignmentHelpers";
 import { isOldTestament } from "../js/creatProject";
 import { WordAlignmentTool } from "word-aligner-rcl";
-
-
+import { groupDataHelpers as grouphelpers } from "word-aligner-rcl";
+import { groupDataHelpers } from "word-aligner-lib";
+import { toJSON } from "usfm-js";
+import { tokenizeVerseObjects } from "../wordAligner/utils/verseObjects";
 // Load sample data from fixtures
 // const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 const translations = require("../uwSrc/locales/English-en_US.json");
@@ -52,19 +69,40 @@ function addObjectPropertyToManifest(propertyName, value) {
   // TODO need to save setting in project manifest
 }
 
-  function saveToolSettings(moduleNamespace, settingsPropertyName, toolSettingsData) {
-    return 
-  
-  };
+function saveToolSettings(
+  moduleNamespace,
+  settingsPropertyName,
+  toolSettingsData
+) {
+  return;
+}
 
-  const editedTargetVerse = (chapterWithVerseEdit, verseWithVerseEdit, before, after, tags, username, gatewayLanguageCode, gatewayLanguageQuote, projectSaveLocation, currentToolName, translate, showAlert, closeAlert, showIgnorableAlert, updateTargetVerse, toolApi) => (dispatch, getState) => {
+const editedTargetVerse =
+  (
+    chapterWithVerseEdit,
+    verseWithVerseEdit,
+    before,
+    after,
+    tags,
+    username,
+    gatewayLanguageCode,
+    gatewayLanguageQuote,
+    projectSaveLocation,
+    currentToolName,
+    translate,
+    showAlert,
+    closeAlert,
+    showIgnorableAlert,
+    updateTargetVerse,
+    toolApi
+  ) =>
+  (dispatch, getState) => {
     // const state = getState();
     // const contextId = getContextId(state);
     // const currentCheckContextId = contextId;
     // const {
     //   bookId, chapter: currentCheckChapter, verse: currentCheckVerse,
     // } = currentCheckContextId.reference;
-
     // const contextIdWithVerseEdit = {
     //   ...currentCheckContextId,
     //   reference: {
@@ -95,23 +133,9 @@ const saveSettings = (settings) => {};
 
 // Callback for when checking data changes
 
-const contextId_ = {
-  checkId: "sda6",
-  occurrenceNote: "",
-  reference: {
-    bookId: "tit",
-    chapter: 1,
-    verse: 1,
-  },
-  tool: "translationWords",
-  groupId: "apostle",
-  quote: "ἀπόστολος",
-  quoteString: "ἀπόστολος",
-  glQuote: "",
-  occurrence: 1,
-};
+const contextId_ = {};
 export const ToolWrapper = () => {
-  const tools = ["translationWords", "translationNotes", "wordAligner"];
+  const tools = ["translationWords", "translationNotes", "wordAlignment"];
   const [targetBible, setTargetBible] = useState();
   const [bibles, setBibles] = useState([]);
   const [originBible, setOriginBible] = useState();
@@ -124,13 +148,20 @@ export const ToolWrapper = () => {
   const [contextId, setContextId] = useState({});
   const [loadingTool, setLoadingTool] = useState(false);
   const book = useMemo(() => tCoreName?.split("_")[2], [tCoreName]);
+  const [toolSettings, _setToolSettings] = useState(null); // TODO: need to persist tools state, and read back state on startup
+
+  const [alignmentTargetBible, setAlignementTargetBibles] = useState({});
+  const [biblesForAligner, setBiblesForAligner] = useState();
+
   const location = useLocation();
-  console.log(contextId);
   const { i18nRef } = useContext(i18nContext);
 
   const [toolName, setToolName] = useState(
     location.state?.toolName ?? "translationWords"
   );
+  useEffect(() => {
+    setBiblesForAligner(verseHelpers.getBibleObject(bibles));
+  }, [bibles]);
   const changedCurrentCheck = (newContext) => {
     setContextId(newContext);
   };
@@ -140,15 +171,37 @@ export const ToolWrapper = () => {
     newVerseText,
     targetVerseObjects
   ) => {
-    let changeFile = await fsGetRust(
+    let changeFileVerse = await fsGetRust(
       projectName,
       `book_projects/${tCoreName}/${book}/${chapter}.json`
     );
-    changeFile[verse] = newVerseText;
+    let changeFileAlignment = await fsGetRust(
+      projectName,
+      `book_projects/${tCoreName}/apps/translationCore/alignmentData/${book}/${chapter}.json`
+    );
+    let p = changeFileVerse[verse];
+    let x = changeFileAlignment[verse];
+    let a = addAlignmentsToTargetVerseUsingMerge(p, x);
+    const targetVerseObjects2 = usfmVerseToJson(a);
+    let t = updateAlignmentsToTargetVerse(targetVerseObjects2, newVerseText);
+    setAlignementTargetBibles(t["targetVerseObjects"]);
+    let m = wordaligner.unmerge(t["targetVerseObjects"]);
+    fixOccurrences(m);
+    m["alignments"] = m["alignment"];
+    delete m["alignment"];
+
+    changeFileVerse[verse] = newVerseText;
+    changeFileAlignment[verse] = m;
+
     await fsWriteRust(
       projectName,
       `book_projects/${tCoreName}/${book}/${chapter}.json`,
-      changeFile
+      changeFileVerse
+    );
+    await fsWriteRust(
+      projectName,
+      `book_projects/${tCoreName}/apps/translationCore/alignmentData/${book}/${chapter}.json`,
+      changeFileAlignment
     );
   };
   const saveCheckingData = async (newState) => {
@@ -214,7 +267,31 @@ export const ToolWrapper = () => {
       json2
     );
   };
+  console.log(alignmentTargetBible);
+  useEffect(() => {
+    const getAlignment = async () => {
+      if (targetBible) {
+        let alignBible = {};
+        let rest = await loadAlignment(projectName, tCoreName);
+        for (let c of Object.keys(rest)) {
+          alignBible[c] = {};
+          for (let v of Object.keys(rest[c])) {
+            alignBible[c][v] = {};
+            alignBible[c][v]["verseObjects"] = usfmVerseToJson(
+              addAlignmentsToTargetVerseUsingMerge(
+                targetBible[c][v],
+                rest[c][v]
+              )
+            );
+          }
+        }
+        setAlignementTargetBibles(alignBible);
+      }
+    };
+    getAlignment();
+  }, [toolName, targetBible]);
 
+  console.log(alignmentTargetBible);
   // Load all required data concurrently
   useEffect(() => {
     if (!book) return;
@@ -308,7 +385,22 @@ export const ToolWrapper = () => {
     };
     loadData();
   }, [book, projectName, tCoreName, toolName]);
-
+  useEffect(() => {
+    _setToolSettings({
+      paneSettings: bibles.map((bible) => ({
+        bibleId: bible.bibleId,
+        font: null,
+        fontSize: 100,
+        languageId: bible.languageId,
+        owner: bible.owner,
+        actualLanguage: false,
+        isPreRelease: false,
+      })),
+      paneKeySettings: {},
+      toolsSettings: {},
+      manifest: {},
+    });
+  }, [bibles]);
   // Build unified bibles list when dependencies update
   useEffect(() => {
     if (targetBible && originBible && ultBible) {
@@ -362,7 +454,50 @@ export const ToolWrapper = () => {
     const entryData = lexicon?.[lexiconId]?.[entryId] || null;
     return { [lexiconId]: { [entryId]: entryData } };
   };
+  const loadLexiconEntry = (lexiconId) => {
+    console.log(`loadLexiconEntry(${lexiconId})`);
+    return lexicon;
+  };
+  function saveNewAlignments(results) {
+    const { contextId, targetVerseJSON } = results;
+    console.log(
+      `WordAlignmentTool.saveNewAlignments() - alignment changed for `,
+      contextId
+    ); // merge alignments into target verse and convert to USFM
+    const ref = contextId.reference;
+    if (targetBible) {
+      const targetChapter = targetBible[ref.chapter];
+      if (targetChapter) {
+        const targetVerse = targetChapter[ref.verse];
+        if (targetVerse) {
+          const newChapter = { ...targetChapter };
+          newChapter[ref.verse] = { verseObjects: targetVerseJSON }; // replace with new verse
+          targetBible[ref.chapter] = newChapter;
+        } else {
+          console.error(`Invalid verse '${ref.chapter}:${ref.verse}'`);
+        }
+      } else {
+        console.error(`Invalid chapter  '${ref.chapter}'`);
+      }
+    } else {
+      console.error(`Missing book`, results);
+    }
+  }
+  const showPopover = (PopoverTitle, wordDetails, positionCoord, rawData) => {
+    console.log(`showPopover()`, rawData);
+    window.prompt(`User clicked on ${JSON.stringify(rawData)}`);
+  };
+  const { groupsData, groupsIndex } =
+    grouphelpers.initializeGroupDataForScripture(
+      book,
+      targetBible,
+      toolName,
+      originBible,
+      translate
+    );
 
+  console.log(groupsData);
+  console.log(groupsIndex);
   const ready =
     Array.isArray(bibles) &&
     bibles.length === 3 &&
@@ -373,8 +508,9 @@ export const ToolWrapper = () => {
     contextId_ != null &&
     lexicon != null &&
     saveCheckingData != null &&
+    toolSettings != null &&
     !loadingTool;
-
+  console.log(toolSettings);
   return (
     <div className="page">
       <Box
@@ -423,14 +559,22 @@ export const ToolWrapper = () => {
       {!ready && <div>Loading translation checker…</div>}
 
       {ready &&
-        (toolName === "wordAligner" ? (
+        (toolName === "wordAlignment" ? (
           <WordAlignmentTool
             addObjectPropertyToManifest={addObjectPropertyToManifest}
-            bibles={bibles}
+            bibles={biblesForAligner}
             bookName={bookName}
-            contextId={contextId}
+            contextId={{
+              reference: {
+                bookId: book,
+                chapter: 1,
+                verse: 1,
+              },
+              tool: "wordAlignment",
+              groupId: "chapter_1",
+            }}
             editedTargetVerse={editedTargetVerse}
-            gatewayBook={targetBible}
+            gatewayBook={ultBible}
             getLexiconData={getLexiconData_}
             groupsData={groupsData}
             groupsIndex={groupsIndex}
@@ -440,12 +584,13 @@ export const ToolWrapper = () => {
             saveNewAlignments={saveNewAlignments}
             saveToolSettings={saveToolSettings}
             showPopover={showPopover}
-            sourceBook={sourceBook}
-            sourceLanguage={sourceLanguage}
+            sourceBook={originBible}
+            sourceLanguage={isOldTestament(book) ? "hbo" : "el-x-koine"}
             styles={{ maxHeight: "800px", overflowY: "auto" }}
-            targetLanguageFont={targetLanguageFont}
-            targetBook={targetBook}
+            targetLanguageFont={""}
+            targetBook={alignmentTargetBible}
             translate={translate}
+            showDocument={showDocument}
           />
         ) : (
           <Checker

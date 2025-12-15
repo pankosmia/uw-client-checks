@@ -109,7 +109,7 @@ function convertOccurrencesInWord(item) {
  * @param {array} wordlist
  * @returns {array}
  */
-function convertOccurrences(wordlist) {
+export function convertOccurrences(wordlist) {
   const wordlist_ = wordlist.map(item => {
     return convertOccurrencesInWord(item);
   })
@@ -360,7 +360,7 @@ export function areAlgnmentsComplete(targetWords, verseAlignments) {
  * @param {array} wordBankList - list of target words in the word bank
  * @param {array} verseAlignments - list of verse alignments that may need updating
  */
-function handleAddedWordsInNewText(targetWordList, wordBankList, verseAlignments) {
+export function handleAddedWordsInNewText(targetWordList, wordBankList, verseAlignments) {
   for (const targetToken of targetWordList) {
     const pos = wordBankList.findIndex(word => (
       word.text === targetToken.text &&
@@ -397,7 +397,7 @@ function handleAddedWordsInNewText(targetWordList, wordBankList, verseAlignments
  * @param {array} targetWordList - list of target words in new verse text
  * @param {array} targetWords - list of target words in alignments
  * */
-function handleDeletedWords(verseAlignments, targetWordList, targetWords) {
+export function handleDeletedWords(verseAlignments, targetWordList, targetWords) {
   for (const alignment of verseAlignments) {
     let delete_ = [];
     for (let i = 0, l = alignment.targetNgram.length; i < l; i++) {

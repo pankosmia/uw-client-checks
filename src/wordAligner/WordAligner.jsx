@@ -6,7 +6,7 @@ import {
     areAlgnmentsComplete,
     parseUsfmToWordAlignerData
 } from "./utils/alignmentHelpers";
-
+import { addAlignmentsToTargetVerseUsingMerge } from './utils/alignmentHelpers';
 
 import {NT_ORIG_LANG} from "./common/constants";
 
@@ -79,6 +79,7 @@ function WordAligner() {
     function onChange(results) {
         console.log(`SuggestingWordAligner() - alignment changed, results`, results);// merge alignments into target verse and convert to USFM
         const {targetWords, verseAlignments} = results;
+        console.log(targetWords, verseAlignments)
         const verseUsfm = addAlignmentsToVerseUSFM(targetWords, verseAlignments, targetVerseUSFM);
         console.log(verseUsfm);
         const alignmentComplete = areAlgnmentsComplete(targetWords, verseAlignments);
