@@ -22,7 +22,7 @@ import {
   getLexiconData,
   changeDataFromtopBottomToNgramSourceNgram,
 } from "../js/checkerUtils";
-import { verseHelpers } from "word-aligner-rcl";
+import { verseHelpers } from "@gabrielaillet/word-aligner-rcl";
 import {
   addAlignmentsToTargetVerseUsingMerge,
   handleAddedWordsInNewText,
@@ -31,8 +31,8 @@ import {
 
 import { addAlignmentsToVerseUSFM } from "../wordAligner/utils/alignmentHelpers";
 import { isOldTestament } from "../js/creatProject";
-import { WordAlignmentTool } from "word-aligner-rcl";
-import { groupDataHelpers as grouphelpers } from "word-aligner-rcl";
+import { WordAlignmentTool } from "@gabrielaillet/word-aligner-rcl";
+import { groupDataHelpers as grouphelpers } from "@gabrielaillet/word-aligner-rcl";
 import { groupDataHelpers } from "word-aligner-lib";
 import { toJSON } from "usfm-js";
 import { tokenizeVerseObjects } from "../wordAligner/utils/verseObjects";
@@ -285,7 +285,9 @@ export const ToolWrapper = () => {
             );
           }
         }
+        fixOccurrences(alignBible)
         setAlignementTargetBibles(alignBible);
+
       }
     };
     getAlignment();
@@ -344,6 +346,14 @@ export const ToolWrapper = () => {
 
     const loadData = async () => {
       setLoadingTool(true);
+      setTargetBible(
+        await getBookFromName(
+          projectName,
+          `book_projects/${tCoreName}`,
+          book,
+          "target_language"
+        )
+      );
       let toolData;
       if (toolName === "translationWords") {
         if (!dataTw) {
@@ -459,29 +469,28 @@ export const ToolWrapper = () => {
     return lexicon;
   };
   function saveNewAlignments(results) {
-    const { contextId, targetVerseJSON } = results;
     console.log(
       `WordAlignmentTool.saveNewAlignments() - alignment changed for `,
-      contextId
+      results
     ); // merge alignments into target verse and convert to USFM
-    const ref = contextId.reference;
-    if (targetBible) {
-      const targetChapter = targetBible[ref.chapter];
-      if (targetChapter) {
-        const targetVerse = targetChapter[ref.verse];
-        if (targetVerse) {
-          const newChapter = { ...targetChapter };
-          newChapter[ref.verse] = { verseObjects: targetVerseJSON }; // replace with new verse
-          targetBible[ref.chapter] = newChapter;
-        } else {
-          console.error(`Invalid verse '${ref.chapter}:${ref.verse}'`);
-        }
-      } else {
-        console.error(`Invalid chapter  '${ref.chapter}'`);
-      }
-    } else {
-      console.error(`Missing book`, results);
-    }
+    // const ref = contextId.reference;
+    // if (targetBible) {
+    //   const targetChapter = targetBible[ref.chapter];
+    //   if (targetChapter) {
+    //     const targetVerse = targetChapter[ref.verse];
+    //     if (targetVerse) {
+    //       const newChapter = { ...targetChapter };
+    //       newChapter[ref.verse] = { verseObjects: targetVerseJSON }; // replace with new verse
+    //       targetBible[ref.chapter] = newChapter;
+    //     } else {
+    //       console.error(`Invalid verse '${ref.chapter}:${ref.verse}'`);
+    //     }
+    //   } else {
+    //     console.error(`Invalid chapter  '${ref.chapter}'`);
+    //   }
+    // } else {
+    //   console.error(`Missing book`, results);
+    // }
   }
   const showPopover = (PopoverTitle, wordDetails, positionCoord, rawData) => {
     console.log(`showPopover()`, rawData);
@@ -495,6 +504,7 @@ export const ToolWrapper = () => {
       originBible,
       translate
     );
+  console.log('alignmentTargetBible',alignmentTargetBible);
 
   console.log(groupsData);
   console.log(groupsIndex);
@@ -557,7 +567,6 @@ export const ToolWrapper = () => {
       </Box>
 
       {!ready && <div>Loading translation checker…</div>}
-
       {ready &&
         (toolName === "wordAlignment" ? (
           <WordAlignmentTool
@@ -586,7 +595,7 @@ export const ToolWrapper = () => {
             showPopover={showPopover}
             sourceBook={originBible}
             sourceLanguage={isOldTestament(book) ? "hbo" : "el-x-koine"}
-            styles={{ maxHeight: "800px", overflowY: "auto" }}
+            // styles={{ maxHeight: "800px", overflowY: "auto" }}
             targetLanguageFont={""}
             targetBook={alignmentTargetBible}
             translate={translate}
