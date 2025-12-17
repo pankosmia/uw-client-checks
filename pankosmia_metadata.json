@@ -127,6 +127,10 @@
     "book_projects" :{
       "en": "Book projects",
       "fr" : "Projet-livres"
+    },
+    "loading":{
+      "en":"Loading tool...",
+      "fr":"Chargement..."
     }
   }
 }

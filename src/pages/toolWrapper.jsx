@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useContext } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { useParams, useLocation, json } from "react-router-dom";
 import { changeTnCategories, getTnData } from "../js/checkerUtils";
-import { Box, Tabs, Tab, Fab, Typography } from "@mui/material";
+import { Box, Tabs, Tab, Fab, Typography, CircularProgress } from "@mui/material";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import yaml from "js-yaml";
 import { buildLinkTitleMap } from "../js/checkerUtils";

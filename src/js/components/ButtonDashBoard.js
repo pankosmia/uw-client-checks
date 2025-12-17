@@ -20,24 +20,27 @@ export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
 
   const tools = ["translationWords", "translationNotes", "wordAligner"];
   const bookCode = tCoreName.split("_")[2];
-
+  console.log(openedBooks);
   useEffect(() => {
     if (openedBooks.has(bookCode.toUpperCase())) {
-      getProgressChecker(
-        "translationNotes",
-        ["discourse", "figures", "culture", "grammar", "other", "numbers"],
-        projectName,
-        `book_projects/${tCoreName}`,
-        bookCode
-      ).then((e) => setProgressTranslationNotes(Number(e) || 0));
-
-      getProgressChecker(
-        "translationWords",
-        ["name", "kt", "other"],
-        projectName,
-        `book_projects/${tCoreName}`,
-        bookCode
-      ).then((e) => setProgressTranslationWords(Number(e) || 0));
+      if (progressTranslationNotes === null) {
+        getProgressChecker(
+          "translationNotes",
+          ["discourse", "figures", "culture", "grammar", "other", "numbers"],
+          projectName,
+          `book_projects/${tCoreName}`,
+          bookCode
+        ).then((e) => setProgressTranslationNotes(Number(e) || 0));
+      }
+      if (progressTranslationWords === null) {
+        getProgressChecker(
+          "translationWords",
+          ["name", "kt", "other"],
+          projectName,
+          `book_projects/${tCoreName}`,
+          bookCode
+        ).then((e) => setProgressTranslationWords(Number(e) || 0));
+      }
     }
   }, [projectName, tCoreName, bookCode, openedBooks]);
 
