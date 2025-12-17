@@ -6,6 +6,78 @@ import { fsGetManifest } from "./serverUtils";
 import { fsExistsRust } from "./serverUtils";
 import { fsGetRust } from "./serverUtils";
 import yaml from "js-yaml";
+import { convertOccurrences } from "../wordAligner/utils/alignmentHelpers";
+import { usfmVerseToJson } from "../wordAligner/utils/usfmHelpers";
+import { getWordListFromVerseObjects } from "../wordAligner/utils/alignmentHelpers";
+import { getOriginalLanguageListForVerseData } from "../wordAligner/utils/migrateOriginalLanguageHelpers";
+
+export const changeDataFromtopBottomToNgramSourceNgram = (
+  alignments,
+  targetVerse2,
+  originVerse
+) => {
+  console.log('targetVerse2',targetVerse2)
+  const targetVerse = usfmVerseToJson(targetVerse2);
+  console.log('targetVerse',targetVerse)
+  const targetTokens = getWordListFromVerseObjects(targetVerse);
+  console.log('targetTokens',targetTokens)
+  let originalLangWordList =
+    originVerse && getOriginalLanguageListForVerseData(originVerse);
+  const alignments_ = alignments.alignments.map((alignment) => {
+    const topWords = convertOccurrences(alignment.topWords);
+    const bottomWords = convertOccurrences(alignment.bottomWords);
+    return {
+      sourceNgram: topWords.map((topWord) => {
+        // word aligner uses sourceNgram instead of topWord
+        if (originalLangWordList) {
+          const pos = originalLangWordList.findIndex(
+            (item) => {
+              return (
+                topWord.word === (item.word || item.text) &&
+                topWord.occurrence == item.occurrence
+              );
+            } //Tricky: we want to allow automatic conversion between string and integer because occurrence could be either
+          );
+          const newSource = {
+            ...topWord,
+            index: pos,
+            text: topWord.text || topWord.word,
+          };
+          delete newSource.word;
+          return newSource;
+        }
+        const newSource = {
+          ...topWord,
+          text: topWord.text || topWord.word,
+        };
+        delete newSource.word;
+        delete newSource.position;
+        return newSource;
+      }),
+      targetNgram: bottomWords.map((bottomWord) => {
+        // word aligner uses targetNgram instead of bottomWords
+        const word = bottomWord.text || bottomWord.word;
+        // noinspection EqualityComparisonWithCoercionJS
+        const pos = targetTokens.findIndex(
+          (item) =>
+            word === item.text &&
+            // eslint-disable-next-line eqeqeq
+            bottomWord.occurrence == item.occurrence
+        );
+
+        const newTarget = {
+          ...bottomWord,
+          index: pos,
+          text: word,
+        };
+        delete newTarget.word;
+        return newTarget;
+      }),
+    };
+  });
+  alignments.alignments = alignments_;
+  return alignments;
+};
 
 export const getBookFromName = async (
   repoPath,
@@ -68,13 +140,13 @@ export const getBookFromName = async (
   } else if (typeBible === "original_language") {
     json["manifest"]["description"] = "original_language";
   }
-  json['manifest'] = {
-    "language_id": "en",
-    "language_name": "English",
-    "direction": "ltr",
-    "resource_id": "targetLanguage",
-    "description": "Target Language"
-  }
+  json["manifest"] = {
+    language_id: "en",
+    language_name: "English",
+    direction: "ltr",
+    resource_id: "targetLanguage",
+    description: "Target Language",
+  };
   return json;
 };
 
@@ -234,7 +306,23 @@ export const getCheckingData = async (repoName, nameArr, book, tool) => {
   }
   return json;
 };
-
+export const loadAlignment = async (reposName, nameArr) => {
+  let book = nameArr.split("_")[2];
+  let url = join(
+    "book_projects",
+    nameArr,
+    "apps",
+    "translationCore",
+    "alignmentData",
+    book
+  );
+  let chapter = await fsGetRust(reposName, url);
+  let json = {};
+  for (let c of chapter) {
+    json[c.split(".")[0]] = await fsGetRust(reposName, join(url, c));
+  }
+  return json;
+};
 export const getLexiconData = async (repoName) => {
   let suffixe = "";
   if (repoName.includes("uhl")) {

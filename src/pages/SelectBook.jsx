@@ -161,7 +161,7 @@ export default function SelectBook() {
 
     const entry = Object.entries(manifestsObj)
       .filter(([path]) => path.includes("_local_/_local_"))
-      .find(([, manifest]) => manifest.abbreviation === AbrName);
+      .find(([, manifest]) => manifest.abbreviation.toUpperCase() === AbrName.toUpperCase() ||manifest.abbreviation.toLowerCase() === AbrName.toLowerCase() );
 
     if (!entry) return null;
 
