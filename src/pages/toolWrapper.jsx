@@ -2,7 +2,14 @@ import { useEffect, useState, useMemo, useContext } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { useParams, useLocation, json } from "react-router-dom";
 import { changeTnCategories, getTnData } from "../js/checkerUtils";
-import { Box, Tabs, Tab, Fab, Typography, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Tabs,
+  Tab,
+  Fab,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import yaml from "js-yaml";
 import { buildLinkTitleMap } from "../js/checkerUtils";
@@ -543,7 +550,9 @@ export const ToolWrapper = () => {
           }
         >
           <ArrowBack sx={{ mr: 1 }} />
-          <Typography variant="body2">Change book project</Typography>
+          <Typography variant="body2">
+            {doI18n("pages:uw-client-checks:back", i18nRef.current)}
+          </Typography>
         </Fab>
 
         {/* CENTER: Tabs */}
@@ -565,7 +574,24 @@ export const ToolWrapper = () => {
         <Box sx={{ width: 140 }} />
       </Box>
 
-      {!ready && <div>Loading translation checker…</div>}
+      {!ready && (
+        <Box
+          sx={{
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 2,
+            bgcolor: "background.default",
+          }}
+        >
+          <CircularProgress size={48} />
+          <Typography variant="h6" color="text.secondary">
+            {doI18n("pages:uw-client-checks:loading", i18nRef.current)}
+          </Typography>
+        </Box>
+      )}
       {ready &&
         (toolName === "wordAlignment" ? (
           <WordAlignmentTool
