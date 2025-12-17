@@ -771,9 +771,9 @@ export default function SelectBook() {
                 }}
               >
                 <Typography>{r.path}</Typography>
-                <Typography color="error" fontWeight={600}>
+                {/* <Typography color="error" fontWeight={600}>
                   {doI18n("pages:uw-client-checks:missing", i18nRef.current)}
-                </Typography>
+                </Typography> */}
               </Box>
             ))}
         </Box>

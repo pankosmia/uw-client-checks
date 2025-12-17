@@ -37,8 +37,8 @@
       "fr": "Ajouter un livre au projet tCore"
     },
     "add_book": {
-      "en": "Add book",
-      "fr": "Ajouter un livre"
+      "en": "Import book",
+      "fr": "Importer livre"
     },
     "required_ressources_check": {
       "en": "Resources required for tCore",
@@ -85,7 +85,7 @@
       "fr": "ouvrir"
     },
     "no_tCoreProject_found": {
-      "en": "No tCoreProject Fround",
+      "en": "No tCore Project Found",
       "fr": "Aucun projet tCore trouvé"
     },
     "book": {
@@ -131,6 +131,10 @@
     "loading":{
       "en":"Loading tool...",
       "fr":"Chargement..."
+    },
+    "back":{
+      "en": "Back",
+      "fr": "Retour"
     }
   }
 }
