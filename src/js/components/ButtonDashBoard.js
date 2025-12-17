@@ -93,10 +93,10 @@ export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
           <Button
             variant="contained"
             fullWidth
-            disabled={tool === "wordAligner"}
+            // disabled={tool === "wordAligner"}
             onClick={() => {
               navigate(`/${projectName}/ToolWrapper/${tCoreName}`, {
-                state: { toolName: tool },
+                state: { toolName: tool === "wordAligner"?"wordAlignment" :tool },
               });
             }}
           >

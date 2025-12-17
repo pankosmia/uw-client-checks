@@ -285,9 +285,8 @@ export const ToolWrapper = () => {
             );
           }
         }
-        fixOccurrences(alignBible)
+        fixOccurrences(alignBible);
         setAlignementTargetBibles(alignBible);
-
       }
     };
     getAlignment();
@@ -504,7 +503,7 @@ export const ToolWrapper = () => {
       originBible,
       translate
     );
-  console.log('alignmentTargetBible',alignmentTargetBible);
+  console.log("alignmentTargetBible", alignmentTargetBible);
 
   console.log(groupsData);
   console.log(groupsIndex);
@@ -595,7 +594,14 @@ export const ToolWrapper = () => {
             showPopover={showPopover}
             sourceBook={originBible}
             sourceLanguage={isOldTestament(book) ? "hbo" : "el-x-koine"}
-            // styles={{ maxHeight: "800px", overflowY: "auto" }}
+            styles={{
+              wordListContainer: {
+                minWidth: "100px",
+                // maxWidth: "400px",
+                height: "60vh",
+                display: "flex",
+              },
+            }}
             targetLanguageFont={""}
             targetBook={alignmentTargetBible}
             translate={translate}
