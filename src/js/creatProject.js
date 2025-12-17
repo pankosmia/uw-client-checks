@@ -948,9 +948,10 @@ const generateHelperForTool = async (
       if (tsv[i][3] === "") {
         continue;
       }
-      category = findCategoriesForTn(tsv[i][3].split("/").slice(-1)[0]);
+      category = findCategoriesForTn(tsv[i][3].split("/").slice(-1)[0].trim());
+      console.log('category' , category)
     } else {
-      category = tsv[i][5].split("/")[2];
+      category = tsv[i][5].split("/")[2].trim();
     }
     let newJson = { ...emptyJson };
     newJson.contextId.reference = {
@@ -976,7 +977,7 @@ const generateHelperForTool = async (
         "index",
         typeOfTools,
         book,
-        `${tsv[i][3].split("/").slice(-1)[0]}.json`
+        `${tsv[i][3].split("/").slice(-1)[0].trim()}.json`
       );
     } else {
       newJson.contextId.quoteString = tsv[i][3];
@@ -991,7 +992,7 @@ const generateHelperForTool = async (
         "index",
         typeOfTools,
         book,
-        `${tsv[i][5].split("/")[3]}.json`
+        `${tsv[i][5].split("/")[3].trim()}.json`
       );
     }
 
@@ -1011,15 +1012,15 @@ const generateHelperForTool = async (
     }
     if (categories[category]) {
       if (typeOfTools === "translationNotes") {
-        categories[category].push(`${tsv[i][3].split("/").slice(-1)[0]}.json`);
+        categories[category].push(`${tsv[i][3].split("/").slice(-1)[0].trim()}.json`);
       } else {
-        categories[category].push(`${tsv[i][5].split("/")[3]}.json`);
+        categories[category].push(`${tsv[i][5].split("/")[3].trim()}.json`);
       }
     } else {
       if (typeOfTools === "translationNotes") {
-        categories[category] = [`${tsv[i][3].split("/").slice(-1)[0]}.json`];
+        categories[category] = [`${tsv[i][3].split("/").slice(-1)[0].trim()}.json`];
       } else {
-        categories[category] = [`${tsv[i][5].split("/")[3]}.json`];
+        categories[category] = [`${tsv[i][5].split("/")[3].trim()}.json`];
       }
     }
   }
