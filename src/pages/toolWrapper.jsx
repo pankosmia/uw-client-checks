@@ -1,7 +1,8 @@
-import { useEffect, useState, useMemo,  useContext } from "react";
+import { useEffect, useState, useMemo, useContext } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { useParams, useLocation, json } from "react-router-dom";
 import { changeTnCategories, getTnData } from "../js/checkerUtils";
+import "./test.css";
 import {
   Box,
   Tabs,
@@ -9,7 +10,9 @@ import {
   Fab,
   Typography,
   CircularProgress,
+  Divider,
 } from "@mui/material";
+
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import yaml from "js-yaml";
 import { buildLinkTitleMap } from "../js/checkerUtils";
@@ -163,7 +166,6 @@ export const ToolWrapper = () => {
 
   const location = useLocation();
   const { i18nRef } = useContext(i18nContext);
-
 
   const [toolName, setToolName] = useState(
     location.state?.toolName ?? "translationWords"
@@ -532,12 +534,13 @@ export const ToolWrapper = () => {
     !loadingTool;
   console.log(toolSettings);
   return (
-    <div className="page">
+    <div style={{ height: "calc(100vh - 100px)" }}>
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           px: 2,
+          marginTop: "4px",
         }}
       >
         {/* LEFT: Back button */}
@@ -545,10 +548,6 @@ export const ToolWrapper = () => {
           variant="extended"
           color="primary"
           size="small"
-          aria-label={doI18n(
-            "pages:uw-client-checks:book_projects",
-            i18nRef.current
-          )}
           aria-label={doI18n(
             "pages:uw-client-checks:book_projects",
             i18nRef.current
@@ -562,7 +561,6 @@ export const ToolWrapper = () => {
             {doI18n("pages:uw-client-checks:back", i18nRef.current)}
           </Typography>
         </Fab>
-
         {/* CENTER: Tabs */}
         <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <Tabs
@@ -580,11 +578,14 @@ export const ToolWrapper = () => {
 
         {/* RIGHT spacer to keep tabs centered */}
         <Box sx={{ width: 140 }}>
-          <Typography variant="h4" fontWeight="bold">{isOldTestament(book)
-          ? BIBLE_BOOKS["oldTestament"][book]
-          : BIBLE_BOOKS["newTestament"][book]}</Typography>
+          <Typography variant="h4" fontWeight="bold">
+            {isOldTestament(book)
+              ? BIBLE_BOOKS["oldTestament"][book]
+              : BIBLE_BOOKS["newTestament"][book]}
+          </Typography>
         </Box>
       </Box>
+      <Divider />
 
       {!ready && (
         <Box
@@ -636,7 +637,6 @@ export const ToolWrapper = () => {
               wordListContainer: {
                 minWidth: "100px",
                 // maxWidth: "400px",
-                height: "60vh",
                 display: "flex",
               },
             }}
