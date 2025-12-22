@@ -16,11 +16,8 @@ export const changeDataFromtopBottomToNgramSourceNgram = (
   targetVerse2,
   originVerse
 ) => {
-  console.log('targetVerse2',targetVerse2)
   const targetVerse = usfmVerseToJson(targetVerse2);
-  console.log('targetVerse',targetVerse)
   const targetTokens = getWordListFromVerseObjects(targetVerse);
-  console.log('targetTokens',targetTokens)
   let originalLangWordList =
     originVerse && getOriginalLanguageListForVerseData(originVerse);
   const alignments_ = alignments.alignments.map((alignment) => {
@@ -282,25 +279,20 @@ export const changeTnCategories = async (
 };
 
 export const getCheckingData = async (repoName, nameArr, book, tool) => {
-  let path = `${nameArr}/apps/translationCore/index/${tool}/${book}/`;
+  let path = `${nameArr}/apps/translationCore/index/${tool}/${book}`;
   const json = {};
   const categories = await fsGetRust(
     repoName,
-    path + "categoryIndex",
+    path + "/categoryIndex",
     "_local_/_local_"
   );
+  let checkingData = await fsGetRust(repoName, path,"_local_/_local_",false,true);
   for (let t of categories) {
     json[t.split(".")[0]] = { groups: {} };
-    const folder = await fsGetRust(repoName, path + "categoryIndex/" + t);
+    const folder = await fsGetRust(repoName, path + "/categoryIndex/" + t);
     for (const e of folder) {
       if (!e.includes("headers")) {
-        let arr = e.split(".");
-        if (arr.length > 1) {
-          json[t.split(".")[0]]["groups"][e.split(".")[0]] = await fsGetRust(
-            repoName,
-            path + e
-          );
-        }
+        json[t.split(".")[0]]["groups"][e] = JSON.parse(checkingData[e + ".json"]);
       }
     }
   }

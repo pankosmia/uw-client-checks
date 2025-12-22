@@ -76,7 +76,6 @@ const gatewayLanguageOwner = "unfoldingWord";
 
 // Bible data configuration for all languages
 function addObjectPropertyToManifest(propertyName, value) {
-  console.log(`addObjectPropertyToManifest - ${propertyName} = ${value}`);
   // TODO need to save setting in project manifest
 }
 
@@ -278,32 +277,34 @@ export const ToolWrapper = () => {
       json2
     );
   };
-  console.log(alignmentTargetBible);
   useEffect(() => {
-    const getAlignment = async () => {
-      if (targetBible) {
-        let alignBible = {};
-        let rest = await loadAlignment(projectName, tCoreName);
-        for (let c of Object.keys(rest)) {
-          alignBible[c] = {};
-          for (let v of Object.keys(rest[c])) {
-            alignBible[c][v] = {};
-            alignBible[c][v]["verseObjects"] = usfmVerseToJson(
-              addAlignmentsToTargetVerseUsingMerge(
-                targetBible[c][v],
-                rest[c][v]
-              )
-            );
+    if (toolName === "wordAlignment") {
+      const getAlignment = async () => {
+        if (targetBible) {
+          let alignBible = {};
+          let rest = await loadAlignment(projectName, tCoreName);
+          for (let c of Object.keys(rest)) {
+            alignBible[c] = {};
+            for (let v of Object.keys(rest[c])) {
+              alignBible[c][v] = {};
+              alignBible[c][v]["verseObjects"] = usfmVerseToJson(
+                addAlignmentsToTargetVerseUsingMerge(
+                  targetBible[c][v],
+                  rest[c][v]
+                )
+              );
+            }
           }
+          fixOccurrences(alignBible);
+          setAlignementTargetBibles(alignBible);
+          setLoadingTool(false);
         }
-        fixOccurrences(alignBible);
-        setAlignementTargetBibles(alignBible);
-      }
-    };
-    getAlignment();
+      };
+
+      getAlignment();
+    }
   }, [toolName, targetBible]);
 
-  console.log(alignmentTargetBible);
   // Load all required data concurrently
   useEffect(() => {
     if (!book) return;
@@ -387,21 +388,22 @@ export const ToolWrapper = () => {
           setDataTn(toolData);
         }
       }
-
-      let checkingRes = await getCheckingData(
-        projectName,
-        `book_projects/${tCoreName}`,
-        book,
-        toolName
-      );
-      if (toolName === "translationNotes") {
-        checkingRes = await changeTnCategories(
-          "en_ta",
-          "git.door43.org/uW",
-          checkingRes
+      if (toolName != "wordAlignment") {
+        let checkingRes = await getCheckingData(
+          projectName,
+          `book_projects/${tCoreName}`,
+          book,
+          toolName
         );
+        if (toolName === "translationNotes") {
+          checkingRes = await changeTnCategories(
+            "en_ta",
+            "git.door43.org/uW",
+            checkingRes
+          );
+        }
+        setCheckingData(groupDataHelpers.extractGroupData(checkingRes));
       }
-      setCheckingData(groupDataHelpers.extractGroupData(checkingRes));
     };
     loadData();
   }, [book, projectName, tCoreName, toolName]);
@@ -477,62 +479,65 @@ export const ToolWrapper = () => {
     return { [lexiconId]: { [entryId]: entryData } };
   };
   const loadLexiconEntry = (lexiconId) => {
-    console.log(`loadLexiconEntry(${lexiconId})`);
     return lexicon;
   };
-  function saveNewAlignments(results) {
-    console.log(
-      `WordAlignmentTool.saveNewAlignments() - alignment changed for `,
-      results
-    ); // merge alignments into target verse and convert to USFM
-    // const ref = contextId.reference;
-    // if (targetBible) {
-    //   const targetChapter = targetBible[ref.chapter];
-    //   if (targetChapter) {
-    //     const targetVerse = targetChapter[ref.verse];
-    //     if (targetVerse) {
-    //       const newChapter = { ...targetChapter };
-    //       newChapter[ref.verse] = { verseObjects: targetVerseJSON }; // replace with new verse
-    //       targetBible[ref.chapter] = newChapter;
-    //     } else {
-    //       console.error(`Invalid verse '${ref.chapter}:${ref.verse}'`);
-    //     }
-    //   } else {
-    //     console.error(`Invalid chapter  '${ref.chapter}'`);
-    //   }
-    // } else {
-    //   console.error(`Missing book`, results);
-    // }
+  async function saveNewAlignments(results) {
+    
+    let newVerseAlignment = wordaligner.unmerge(results.targetVerseJSON);
+    newVerseAlignment["alignments"] = newVerseAlignment["alignment"];
+    delete newVerseAlignment["alignment"];
+    let alignment = await fsGetRust(
+      projectName,
+      `book_projects/${tCoreName}/apps/translationCore/alignmentData/${book}/${results.contextId.reference.chapter}.json`
+    );
+    setAlignementTargetBibles((prev) => {
+      const chapter = results.contextId.reference.chapter;
+      const verse = results.contextId.reference.verse;
+
+      return {
+        ...prev,
+        [chapter]: {
+          ...prev[chapter],
+          [verse]: {
+            ...prev[chapter][verse],
+            verseObjects: results.targetVerseJSON,
+          },
+        },
+      };
+    });
+    alignment[results.contextId.reference.verse] = newVerseAlignment;
+    fixOccurrences(alignment);
+    await fsWriteRust(
+      projectName,
+      `book_projects/${tCoreName}/apps/translationCore/alignmentData/${book}/${results.contextId.reference.chapter}.json`,
+      alignment
+    );
   }
   const showPopover = (PopoverTitle, wordDetails, positionCoord, rawData) => {
-    console.log(`showPopover()`, rawData);
     window.prompt(`User clicked on ${JSON.stringify(rawData)}`);
   };
   const { groupsData, groupsIndex } =
     grouphelpers.initializeGroupDataForScripture(
       book,
-      targetBible,
+      alignmentTargetBible,
       toolName,
       originBible,
       translate
     );
-  console.log("alignmentTargetBible", alignmentTargetBible);
-
-  console.log(groupsData);
-  console.log(groupsIndex);
   const ready =
     Array.isArray(bibles) &&
     bibles.length === 3 &&
     targetBible != null &&
     originBible != null &&
     ultBible != null &&
-    checkingData != null &&
+    (checkingData != null || alignmentTargetBible != {}) &&
     contextId_ != null &&
     lexicon != null &&
     saveCheckingData != null &&
     toolSettings != null &&
     !loadingTool;
-  console.log(toolSettings);
+
+  
   return (
     <div style={{ height: "calc(100vh - 100px)" }}>
       <Box
