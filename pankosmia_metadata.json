@@ -68,8 +68,8 @@
       "en": "Ok",
       "fr": "Ok"
     },
-    "close":{
-      "en":"Close",
+    "close": {
+      "en": "Close",
       "fr": "Fermer"
     },
     "manage_content": {
@@ -124,17 +124,29 @@
       "en": "scope",
       "fr": "scope"
     },
-    "book_projects" :{
+    "book_projects": {
       "en": "Book projects",
-      "fr" : "Projet-livres"
+      "fr": "Projet-livres"
     },
-    "loading":{
-      "en":"Loading tool...",
-      "fr":"Chargement..."
+    "loading": {
+      "en": "Loading tool...",
+      "fr": "Chargement..."
     },
-    "back":{
+    "back": {
       "en": "Back",
       "fr": "Retour"
+    },
+    "checks_settings": {
+      "en": "Checks settings",
+      "fr": "Paramètre de Projet"
+    },
+    "checks_settings_book": {
+      "en": "Book Checks settings ",
+      "fr": "Paramètre de Projet du libre"
+    },
+    "gateway_language" : {
+      "en": "Gateway Language",
+      "fr": "Langue passerelle"
     }
   }
 }

@@ -34,7 +34,7 @@ export default function AppDialog({
         }}
       >
         <Toolbar>
-          <Typography variant="h6">{title}</Typography>
+          <Typography variant="h6" sx={{fontWeight:500}}>{title}</Typography>
         </Toolbar>
       </AppBar>
 

@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
-import { useState, useEffect, useContext, use } from "react";
+import { useState, useEffect, useContext } from "react";
 import { doI18n, i18nContext } from "pithekos-lib";
 import AddIcon from "@mui/icons-material/Add";
 import CircularProgress from "@mui/material/CircularProgress";
-
+import CheckerSetting from "../js/components/CheckerSetting";
 import {
   Box,
   Button,
@@ -11,9 +11,7 @@ import {
   FormControl,
   TextField,
   MenuItem,
-  Modal,
   Divider,
-  Paper,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -161,7 +159,11 @@ export default function SelectBook() {
 
     const entry = Object.entries(manifestsObj)
       .filter(([path]) => path.includes("_local_/_local_"))
-      .find(([, manifest]) => manifest.abbreviation.toUpperCase() === AbrName.toUpperCase() ||manifest.abbreviation.toLowerCase() === AbrName.toLowerCase() );
+      .find(
+        ([, manifest]) =>
+          manifest.abbreviation.toUpperCase() === AbrName.toUpperCase() ||
+          manifest.abbreviation.toLowerCase() === AbrName.toLowerCase()
+      );
 
     if (!entry) return null;
 
@@ -328,37 +330,21 @@ export default function SelectBook() {
   return (
     <Box
       sx={{
-        mb: 2,
-        position: "fixed",
-        top: "64px",
-        bottom: 0,
-        right: 0,
-        overflow: "scroll",
-        width: "100%",
       }}
     >
       {burritos ? (
-        <Paper
-          elevation={1}
+        <Box
           sx={{
-            p: 3,
-            mx: "auto",
-            maxWidth: 600,
-            textAlign: "center",
-            mb: 2,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            width: "100%",
+            px: 2,
+            py:1
           }}
         >
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            {doI18n(
-              "pages:uw-client-checks:select_tCore_project",
-              i18nRef.current
-            )}
-          </Typography>
-          <FormControl
-            fullWidth
-            disabled={!allResourcesPresent}
-            sx={{ paddingLeft: "1rem", paddingRight: "1rem" }}
-          >
+          <FormControl disabled={!allResourcesPresent} sx={{ minWidth: 320 }}>
             <TextField
               required
               disabled={!allResourcesPresent}
@@ -367,36 +353,40 @@ export default function SelectBook() {
               value={selectedBurrito?.name || ""}
               onChange={handleSelectBurrito}
               label={doI18n(
-                `pages:uw-client-checks:choose_document`,
+                "pages:uw-client-checks:choose_document",
                 i18nRef.current
               )}
             >
-              {burritos &&
-                burritos.map((burrito) => (
-                  <MenuItem key={burrito.name} value={burrito.name}>
-                    {burrito.name}
-                  </MenuItem>
-                ))}
+              {burritos.map((burrito) => (
+                <MenuItem key={burrito.name} value={burrito.name}>
+                  {burrito.name}
+                </MenuItem>
+              ))}
             </TextField>
           </FormControl>
-        </Paper>
+
+          {/* {selectedBurrito && (
+            <CheckerSetting repoName={selectedBurrito.abbreviation} />
+          )} */}
+        </Box>
       ) : (
-        <Paper
-          elevation={1}
+        <Box
           sx={{
-            p: 3,
-            mx: "auto",
-            maxWidth: 600,
-            textAlign: "center",
-            mb: 2,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            gap: "8px",
+            width: "100%",
           }}
         >
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
             {doI18n(
               "pages:uw-client-checks:no_tCoreProject_found",
               i18nRef.current
             )}
           </Typography>
+
           <Button
             onClick={() =>
               (window.location.href =
@@ -408,7 +398,7 @@ export default function SelectBook() {
               i18nRef.current
             )}
           </Button>
-        </Paper>
+        </Box>
       )}
       <Divider
         sx={{
@@ -429,7 +419,29 @@ export default function SelectBook() {
               size="small"
               aria-label={doI18n("pages:content:fab_import", i18nRef.current)}
               onClick={(event) => setOpenModal(event.currentTarget)}
-              sx={{ mb: 1 }}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                padding: "0px",
+
+                width: "160px",
+                height: "40px",
+
+                backgroundColor: "#014263",
+                boxShadow:
+                  "0px 1px 18px rgba(0, 0, 0, 0.12), " +
+                  "0px 6px 10px rgba(0, 0, 0, 0.14), " +
+                  "0px 3px 5px -1px rgba(0, 0, 0, 0.2)",
+
+                borderRadius: "100px",
+
+                flex: "none",
+                order: 3,
+                flexGrow: 0,
+
+                // optional: prevent MUI default hover color override
+              }}
             >
               <AddIcon sx={{ mr: 1 }} />
               <Typography variant="body2">
@@ -476,13 +488,6 @@ export default function SelectBook() {
                       <Typography variant="subtitle1" fontWeight={600}>
                         {book.bookCode}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {doI18n(
-                          `pages:uw-client-checks:language`,
-                          i18nRef.current
-                        )}
-                        {book.language}
-                      </Typography>
                     </Box>
 
                     <Box>
@@ -507,38 +512,16 @@ export default function SelectBook() {
 
                 <AccordionDetails>
                   <Divider sx={{ mb: 2 }} />
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: 2,
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body2">
-                        <strong>
-                          {doI18n(
-                            `pages:uw-client-checks:book_code`,
-                            i18nRef.current
-                          )}
-                        </strong>{" "}
-                        {book.bookCode}
-                      </Typography>
-                      <Typography variant="body2">
-                        <strong>
-                          {doI18n(
-                            `pages:uw-client-checks:language`,
-                            i18nRef.current
-                          )}
-                        </strong>{" "}
-                        {book.language}
-                      </Typography>
-                    </Box>
-
-                    <Box>
+                  <Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        width: "100%",
+                        minHeight: 80, // optional: gives breathing space
+                      }}
+                    >
                       {book.hasManifest ? (
                         <ButtonDashBoard
                           openedBooks={openedBooks}
@@ -558,12 +541,6 @@ export default function SelectBook() {
                               setCurrentErrors(errorsData[book.bookCode]);
                               setErrorModalOpen(true);
                             } else {
-                              // const status = await checkRequiredResources();
-                              // setResourcesStatus(status);
-                              // setPendingConvert({
-                              //   sourceProjectPath: book.projectName,
-                              //   selectedProjectFilename: book.tCoreName,
-                              // });
                               setInitializing((prev) => [
                                 ...prev,
                                 [book.projectName, book.tCoreName],
@@ -572,7 +549,6 @@ export default function SelectBook() {
                                 book.projectName,
                                 book.tCoreName
                               );
-                              // setOpenCheckModal(true);
                             }
                           }}
                         >
@@ -589,6 +565,20 @@ export default function SelectBook() {
                           )}
                         </Button>
                       )}
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end", // ✅ right
+                        width: "100%",
+                        mt: 1,
+                      }}
+                    >
+                      {" "}
+                      <CheckerSetting
+                        repoName={selectedBurrito.abbreviation}
+                        tCoreNameProject={book.tCoreName}
+                      />
                     </Box>
                   </Box>
                 </AccordionDetails>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useContext } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { useParams, useLocation, json } from "react-router-dom";
-import { changeTnCategories, getTnData } from "../js/checkerUtils";
+import { changeTnCategories, getTnData, removeNotServiceTNCategories } from "../js/checkerUtils";
 import "./test.css";
 import {
   Box,
@@ -145,7 +145,15 @@ const saveSettings = (settings) => {};
 
 const contextId_ = {};
 export const ToolWrapper = () => {
+  const location = useLocation();
+  const { i18nRef } = useContext(i18nContext);
+
   const tools = ["translationWords", "translationNotes", "wordAlignment"];
+  const [loadingTool, setLoadingTool] = useState(false);
+  const [toolName, setToolName] = useState(
+    location.state?.toolName ?? "translationWords"
+  );
+
   const [targetBible, setTargetBible] = useState();
   const [bibles, setBibles] = useState([]);
   const [originBible, setOriginBible] = useState();
@@ -156,19 +164,12 @@ export const ToolWrapper = () => {
   const { projectName, tCoreName } = useParams();
   const [lexicon, setLexicon] = useState();
   const [contextId, setContextId] = useState({});
-  const [loadingTool, setLoadingTool] = useState(false);
   const book = useMemo(() => tCoreName?.split("_")[2], [tCoreName]);
   const [toolSettings, _setToolSettings] = useState(null); // TODO: need to persist tools state, and read back state on startup
 
   const [alignmentTargetBible, setAlignementTargetBibles] = useState({});
   const [biblesForAligner, setBiblesForAligner] = useState();
 
-  const location = useLocation();
-  const { i18nRef } = useContext(i18nContext);
-
-  const [toolName, setToolName] = useState(
-    location.state?.toolName ?? "translationWords"
-  );
   useEffect(() => {
     setBiblesForAligner(verseHelpers.getBibleObject(bibles));
   }, [bibles]);
@@ -396,17 +397,26 @@ export const ToolWrapper = () => {
           toolName
         );
         if (toolName === "translationNotes") {
+          checkingRes = await removeNotServiceTNCategories(
+            "en_ta",
+            "git.door43.org/uW",
+            checkingRes
+          );
+          
           checkingRes = await changeTnCategories(
             "en_ta",
             "git.door43.org/uW",
             checkingRes
           );
         }
+
         setCheckingData(groupDataHelpers.extractGroupData(checkingRes));
       }
     };
     loadData();
   }, [book, projectName, tCoreName, toolName]);
+
+  console.log(dataTn);
   useEffect(() => {
     _setToolSettings({
       paneSettings: bibles.map((bible) => ({
@@ -482,7 +492,6 @@ export const ToolWrapper = () => {
     return lexicon;
   };
   async function saveNewAlignments(results) {
-    
     let newVerseAlignment = wordaligner.unmerge(results.targetVerseJSON);
     newVerseAlignment["alignments"] = newVerseAlignment["alignment"];
     delete newVerseAlignment["alignment"];
@@ -530,14 +539,20 @@ export const ToolWrapper = () => {
     targetBible != null &&
     originBible != null &&
     ultBible != null &&
-    (checkingData != null || alignmentTargetBible != {}) &&
-    contextId_ != null &&
+    (toolName === "wordAlignment"
+      ? alignmentTargetBible && Object.keys(alignmentTargetBible).length > 0
+      : checkingData != null) &&
+    (toolName === "translationWords"
+      ? dataTw != null
+      : toolName === "translationNotes"
+      ? dataTn != null
+      : true) &&
+    contextId != null &&
     lexicon != null &&
     saveCheckingData != null &&
     toolSettings != null &&
     !loadingTool;
 
-  
   return (
     <div style={{ height: "calc(100vh - 100px)" }}>
       <Box

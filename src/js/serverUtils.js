@@ -146,7 +146,7 @@ export async function fsExistsRust(
       treeCache = data;
     }
 
-    const found = treeCache.some((item) => item.includes(ipath));
+    const found = treeCache.some((item) => item.startsWith(ipath));
     return found;
   } catch (err) {
     console.error(`fsExistsRust(${repoPath}, ${ipath}) error:`, err);

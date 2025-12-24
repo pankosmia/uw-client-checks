@@ -1,18 +1,15 @@
 import { getProgressChecker } from "../checkerUtils";
-import { doI18n, i18nContext } from "pithekos-lib";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LinearProgress,
-  Button,
   Box,
   Typography,
   CircularProgress,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
+export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks, lexiconNameForProgress='en_ta' }) => {
   const navigate = useNavigate();
-  const { i18nRef } = useContext(i18nContext);
   const [progressTranslationWords, setProgressTranslationWords] =
     useState(null);
   const [progressTranslationNotes, setProgressTranslationNotes] =
@@ -28,7 +25,8 @@ export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
           ["discourse", "figures", "culture", "grammar", "other", "numbers"],
           projectName,
           `book_projects/${tCoreName}`,
-          bookCode
+          bookCode,
+          lexiconNameForProgress
         ).then((e) => setProgressTranslationNotes(Number(e) || 0));
       }
       if (progressTranslationWords === null) {
@@ -86,25 +84,26 @@ export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
             borderColor: "divider",
             borderRadius: 2,
             p: 2,
+            cursor: "pointer",
+
+            // 👇 hover styles
+            transition: "background-color 0.2s ease, box-shadow 0.2s ease",
+            "&:hover": {
+              backgroundColor: "action.hover",
+              boxShadow: 3,
+            },
+          }}
+          onClick={() => {
+            navigate(`/${projectName}/ToolWrapper/${tCoreName}`, {
+              state: {
+                toolName: tool === "wordAlignment" ? "wordAlignment" : tool,
+              },
+            });
           }}
         >
           <Typography fontWeight={600} sx={{ mb: 1 }}>
             {tool}
           </Typography>
-
-          <Button
-            variant="contained"
-            fullWidth
-            // disabled={tool === "wordAligner"}
-            onClick={() => {
-              navigate(`/${projectName}/ToolWrapper/${tCoreName}`, {
-                state: { toolName: tool === "wordAlignment"?"wordAlignment" :tool },
-              });
-            }}
-          >
-            {doI18n("pages:uw-client-checks:open", i18nRef.current)}
-          </Button>
-
           {tool === "translationWords" &&
             renderProgress(progressTranslationWords)}
           {tool === "translationNotes" &&
