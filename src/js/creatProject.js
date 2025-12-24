@@ -427,7 +427,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
       // check if chapter has alignment data
       const alignmentIndex = verses.findIndex((verse) => {
         const verseParts = chaptersObject[chapter][verse];
-        let alignmentData = false;
+        let alignmentData = true;
 
         for (let part of verseParts.verseObjects) {
           if (part.type === "milestone") {
@@ -949,7 +949,6 @@ const generateHelperForTool = async (
         continue;
       }
       category = findCategoriesForTn(tsv[i][3].split("/").slice(-1)[0].trim());
-      console.log('category' , category)
     } else {
       category = tsv[i][5].split("/")[2].trim();
     }
@@ -1012,15 +1011,15 @@ const generateHelperForTool = async (
     }
     if (categories[category]) {
       if (typeOfTools === "translationNotes") {
-        categories[category].push(`${tsv[i][3].split("/").slice(-1)[0].trim()}.json`);
+        categories[category].push(`${tsv[i][3].split("/").slice(-1)[0].trim()}`);
       } else {
-        categories[category].push(`${tsv[i][5].split("/")[3].trim()}.json`);
+        categories[category].push(`${tsv[i][5].split("/")[3].trim()}`);
       }
     } else {
       if (typeOfTools === "translationNotes") {
-        categories[category] = [`${tsv[i][3].split("/").slice(-1)[0].trim()}.json`];
+        categories[category] = [`${tsv[i][3].split("/").slice(-1)[0].trim()}`];
       } else {
-        categories[category] = [`${tsv[i][5].split("/")[3].trim()}.json`];
+        categories[category] = [`${tsv[i][5].split("/")[3].trim()}`];
       }
     }
   }

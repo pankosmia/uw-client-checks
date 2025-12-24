@@ -18,9 +18,8 @@ export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
   const [progressTranslationNotes, setProgressTranslationNotes] =
     useState(null);
 
-  const tools = ["translationWords", "translationNotes", "wordAligner"];
+  const tools = ["translationWords", "translationNotes", "wordAlignment"];
   const bookCode = tCoreName.split("_")[2];
-  console.log(openedBooks);
   useEffect(() => {
     if (openedBooks.has(bookCode.toUpperCase())) {
       if (progressTranslationNotes === null) {
@@ -99,7 +98,7 @@ export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
             // disabled={tool === "wordAligner"}
             onClick={() => {
               navigate(`/${projectName}/ToolWrapper/${tCoreName}`, {
-                state: { toolName: tool === "wordAligner"?"wordAlignment" :tool },
+                state: { toolName: tool === "wordAlignment"?"wordAlignment" :tool },
               });
             }}
           >

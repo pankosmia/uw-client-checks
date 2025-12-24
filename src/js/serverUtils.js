@@ -1,5 +1,5 @@
 import { getJson, getText, postJson } from "pithekos-lib";
-import { EXIST_PATH, BASE_URL, IMPORTS_PATH } from "../common/constants";
+import { EXIST_PATH, BASE_URL, IMPORTS_PATH, IMPORTS_PATH_BATCH } from "../common/constants";
 import { join } from "./creatProject";
 let treeCache = []; // cache tree data across calls
 
@@ -14,9 +14,20 @@ export async function fsGetRust(
   repoPath,
   ipath,
   intermediatePath = "_local_/_local_",
-  debug=false
+  debug = false,
+  batchGet = false
 ) {
   try {
+    if (batchGet) {
+      let url =
+        getUrlForGetBatchDocumentInProject(repoPath, intermediatePath) + ipath;
+      return getJson(url).then((res) => {
+        if (!res.ok) {
+          throw new Error(`GET failed: ${res.status} ${res.statusText}`);
+        }
+        return res.json;
+      });
+    }
     let typeSearch = getTailsOfWantedDocumentArray(ipath);
     if (typeSearch.length <= 1) {
       if (true) {
@@ -25,8 +36,8 @@ export async function fsGetRust(
         const data = res.json;
 
         treeCache = data;
-        if(debug){
-          console.log(data)
+        if (debug) {
+          console.log(data);
         }
       }
       if (!ipath || ipath === "") {
@@ -98,10 +109,14 @@ export async function fsGetRust(
  * @param {string|object} data - content to write
  * @returns {Promise<void>}
  */
-export async function fsWriteRust(repoPath, ipath, data,intermediatePath='_local_/_local_') {
+export async function fsWriteRust(
+  repoPath,
+  ipath,
+  data,
+  intermediatePath = "_local_/_local_"
+) {
   try {
-    let url =
-      getUrlForGetDocumentInProject(repoPath,intermediatePath) + ipath;
+    let url = getUrlForGetDocumentInProject(repoPath, intermediatePath) + ipath;
     let res;
     const body = {
       payload: typeof data === "object" ? JSON.stringify(data, null, 2) : data,
@@ -145,6 +160,22 @@ export async function fsGetManifest(first, second, third) {
     join("burrito", "metadata", "summary", first, second, third);
   const res = await getJson(url);
   return res;
+}
+function getUrlForGetBatchDocumentInProject(
+  repoPath,
+  intermediatePath = "_local_/_local_"
+) {
+  if (!intermediatePath.includes("_local_/_local_")) {
+    return (
+      BASE_URL +
+      "/" +
+      IMPORTS_PATH_BATCH.replace("_local_/_local_", intermediatePath).replace(
+        "%Project%",
+        `${repoPath}`
+      )
+    );
+  }
+  return BASE_URL + "/" + IMPORTS_PATH_BATCH.replace("%Project%", `${repoPath}`);
 }
 function getUrlForGetDocumentInProject(
   repoPath,

@@ -5,7 +5,7 @@
     "debug": false,
     "excludeFromMenu": true
   },
-
+  "minServerVersion":"0.12.3",
   "i18n": {
     "title": {
       "en": "unfoldingWord Checks"
