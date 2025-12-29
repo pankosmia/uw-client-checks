@@ -1,5 +1,19 @@
+.MuiListSubheader-root {
+  background-color: var(--accent-color-dark) !important; 
+}
 
-.my-wrapper .leftSide {
-  background-color: red !important;
-  color: #000;
+.MuiToolbar-root.expanded-scripture-draggable-handle {
+  width: auto !important; 
+}
+
+.MuiFormControlLabel-root.MuiFormControlLabel-labelPlacementEnd {
+  margin-left: 0 !important;
+}
+
+.scripture-pane-container {
+  margin-top: 0px !important;
+}
+
+.checker {
+  height: auto !important;
 }
