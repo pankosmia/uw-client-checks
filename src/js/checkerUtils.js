@@ -31,7 +31,7 @@ export const changeDataFromtopBottomToNgramSourceNgram = (
             (item) => {
               return (
                 topWord.word === (item.word || item.text) &&
-                topWord.occurrence == item.occurrence
+                topWord.occurrence === item.occurrence
               );
             } //Tricky: we want to allow automatic conversion between string and integer because occurrence could be either
           );
@@ -86,7 +86,7 @@ export const getBookFromName = async (
   let json = {};
   let isBookUsfmOnly = await fsExistsRust(
     repoPath,
-    `${book}/1.json`,
+    `${nameArr}/${book}/1.json`,
     insidePath
   );
   if (!isBookUsfmOnly) {
@@ -220,7 +220,7 @@ export const getglTwData = async (
 const renameCategories = (tnData, linkTitleMap, group = true) => {
   const result = {};
 
-  for (const [key, value] of Object.entries(tnData)) {
+  for (let key of Object.keys(tnData)) {
     if (group) {
       result[key] = { groups: {} };
       for (const [key2, value2] of Object.entries(tnData[key]["groups"])) {
@@ -235,10 +235,10 @@ const renameCategories = (tnData, linkTitleMap, group = true) => {
     } else {
       result[key] = {};
       for (const [key2, value2] of Object.entries(tnData[key])) {
-        {
+        
           const newKey = linkTitleMap[key2] || key2;
           result[key][newKey] = value2;
-        }
+        
       }
     }
   }
@@ -251,7 +251,7 @@ export const buildLinkTitleMap = (node, map = {}) => {
   }
 
   if (node?.link && node?.title) {
-    map[node.link] = node.title;
+    map[node.link.toLowerCase()] = node.title;
   }
 
   if (node?.sections) {
@@ -278,22 +278,153 @@ export const changeTnCategories = async (
   return renamed;
 };
 
+
+
+export async function removeNotServiceTNCategories(
+  repoName,
+  originFolder,
+  data
+) {
+  let categories = await fsGetRust(
+    repoName,
+    "translate/toc.yaml",
+    originFolder
+  );
+  let dataYaml = yaml.load(categories);
+  // build { "figs-abstractnouns": "Abstract Nouns", ... }
+  const linkTitleMap = buildLinkTitleMap(dataYaml.sections);
+  console.log(linkTitleMap);
+  let json = {};
+  for (let c1 of Object.keys(data)) {
+    json[c1] = { groups: {} };
+    for (let [c2, v2] of Object.entries(data[c1]["groups"])) {
+      console.log(c2);
+      if (Object.prototype.hasOwnProperty.call(linkTitleMap, c2)) {
+        json[c1]["groups"][c2] = v2;
+        console.log("ici");
+      }
+    }
+  }
+  return json;
+}
 export const getCheckingData = async (repoName, nameArr, book, tool) => {
   let path = `${nameArr}/apps/translationCore/index/${tool}/${book}`;
   const json = {};
-  const categories = await fsGetRust(
+  let checkingData = await fsGetRust(
+    repoName,
+    path,
+    "_local_/_local_",
+    false,
+    true
+  );
+  let categories;
+  let objectCategories;
+  let existLocalSetting = await fsExistsRust(
+    repoName,
+    `${nameArr}/checker_setting.json`
+  );
+  if (existLocalSetting) {
+    objectCategories = await fsGetRust(
+      repoName,
+      `${nameArr}/checker_setting.json`
+    );
+  } else {
+    let existSetting = await fsExistsRust(repoName, `checker_setting.json`);
+    console.log(existSetting, repoName, `checker_setting.json`);
+    if (existSetting) {
+      objectCategories = await fsGetRust(repoName, `checker_setting.json`);
+    }
+  }
+  if (objectCategories) {
+    for (let [ocKeys, ocValues] of Object.entries(objectCategories[tool])) {
+      if (typeof ocValues === typeof true) {
+        if (ocValues) {
+          json[ocKeys] = { groups: {} };
+          const folder = await fsGetRust(
+            repoName,
+            path + "/categoryIndex/" + ocKeys + ".json"
+          );
+          for (const e of folder) {
+            if (!e.includes("headers")) {
+              json[ocKeys]["groups"][e] = JSON.parse(checkingData[e + ".json"]);
+            }
+          }
+        }
+      } else {
+        json[ocKeys] = { groups: {} };
+        for (let [oc2Keys, ocValues2] of Object.entries(ocValues)) {
+          if (ocValues2 && checkingData[oc2Keys + ".json"]) {
+            console.log([oc2Keys, ocValues2]);
+            json[ocKeys]["groups"][oc2Keys] = JSON.parse(
+              checkingData[oc2Keys + ".json"]
+            );
+          }
+        }
+      }
+    }
+  } else {
+    categories = await fsGetRust(
+      repoName,
+      path + "/categoryIndex",
+      "_local_/_local_"
+    );
+    for (let t of categories) {
+      json[t.split(".")[0]] = { groups: {} };
+      const folder = await fsGetRust(repoName, path + "/categoryIndex/" + t);
+      for (const e of folder) {
+        if (!e.includes("headers")) {
+          json[t.split(".")[0]]["groups"][e] = JSON.parse(
+            checkingData[e + ".json"]
+          );
+        }
+      }
+    }
+  }
+
+  return json;
+};
+
+export const getAllCheckingCategories = async (
+  repoName,
+  nameArr,
+  book,
+  tool,
+  lecixonName = null
+) => {
+  let path = `${nameArr}/apps/translationCore/index/${tool}/${book}`;
+  const json = {};
+  let categories;
+
+  categories = await fsGetRust(
     repoName,
     path + "/categoryIndex",
     "_local_/_local_"
   );
-  let checkingData = await fsGetRust(repoName, path,"_local_/_local_",false,true);
+  if (tool === "translationWords") {
+    return tool;
+  }
+  let linkTitleMap;
+  if (lecixonName) {
+    let categories = await fsGetRust(
+      lecixonName,
+      "translate/toc.yaml",
+      "git.door43.org/uW"
+    );
+    let dataYaml = yaml.load(categories);
+    // build { "figs-abstractnouns": "Abstract Nouns", ... }
+    linkTitleMap = buildLinkTitleMap(dataYaml.sections);
+  }
   for (let t of categories) {
-    json[t.split(".")[0]] = { groups: {} };
     const folder = await fsGetRust(repoName, path + "/categoryIndex/" + t);
-    for (const e of folder) {
-      if (!e.includes("headers")) {
-        json[t.split(".")[0]]["groups"][e] = JSON.parse(checkingData[e + ".json"]);
+    if (linkTitleMap) {
+      json[t.split(".")[0]] = [];
+      for (let e of folder) {
+        if (Object.prototype.hasOwnProperty.call(linkTitleMap, e)) {
+          json[t.split(".")[0]].push(e);
+        }
       }
+    } else {
+      json[t.split(".")[0]] = folder;
     }
   }
   return json;
@@ -356,9 +487,18 @@ export const getProgressChecker = async (
   selectedCategories,
   repoName,
   nameArr,
-  book
+  book,
+  lexiconNameForProgress = null
 ) => {
-  const checks = await getCheckingData(repoName, nameArr, book, toolName);
+  let checks = await getCheckingData(repoName, nameArr, book, toolName);
+  if (lexiconNameForProgress) {
+    checks = await removeNotServiceTNCategories(
+      lexiconNameForProgress,
+      "git.door43.org/uW",
+      checks
+    );
+    console.log(checks);
+  }
   const filteredChecks = Object.fromEntries(
     Object.entries(checks).filter(([key]) => selectedCategories.includes(key))
   );

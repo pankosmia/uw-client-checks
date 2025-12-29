@@ -1,9 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { createHashRouter, RouterProvider, Outlet } from "react-router-dom";
 import { ToolWrapper } from "./pages/toolWrapper";
-import WordAligner from "./wordAligner/WordAligner";
 import { Box } from "@mui/system";
-import { RedirectToContent } from "./pages/RedirectToContent";
 // import ToolsManagementContainer from "./pages/ToolsManagementContainer";
 // import ReduxStateViewer from "./pages/ReduxStateViewer";
 import { useEffect } from "react";
@@ -52,7 +50,6 @@ const router = createHashRouter([
         path: ":projectName/ToolWrapper/:tCoreName/*",
         element: <ToolWrapper />,
       },
-      { path: "/WordAligner", element: <WordAligner /> },
     ],
   },
 ]);
