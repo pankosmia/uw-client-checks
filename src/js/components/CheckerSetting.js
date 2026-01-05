@@ -19,9 +19,15 @@ import { fsExistsRust, fsGetRust, fsWriteRust } from "../serverUtils";
 import { getAllCheckingCategories } from "../checkerUtils";
 import yaml from "js-yaml";
 import { buildLinkTitleMap } from "../checkerUtils";
-const CheckerSetting = ({ repoName, tCoreNameProject = null, lecixonName = 'en_ta' }) => {
+const CheckerSetting = ({
+  repoName,
+  tCoreNameProject = null,
+  lecixonName = "en_ta",
+  callBack,
+}) => {
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
-
+  const [canWeClose, setCanWeClose] = useState(false);
+  const [firstPass, setFirstPass] = useState(true);
   const { i18nRef } = useContext(i18nContext);
   const tools = ["translationWords", "translationNotes", "wordAlignment"];
 
@@ -30,11 +36,45 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, lecixonName = 'en_t
   const [translationWordsCategories, setTranslationWordsCategories] = useState(
     []
   );
-
   const [translationNotesCategories, setTranslationNotesCategories] = useState(
     []
   );
   const [settingJson, setSettingJson] = useState({});
+  useEffect(() => {
+    setCanWeClose(checkIfOneCategoriesIsOk());
+  }, [settingJson]);
+
+  function checkIfOneCategoriesIsOk() {
+    let isOk = true;
+    for (let k of Object.keys(settingJson)) {
+      let categoryIsOk = false;
+      for (let k2 of Object.keys(settingJson[k]))
+        if (k === "translationWords") {
+          if (settingJson[k][k2]) {
+            categoryIsOk = true;
+          }
+        } else if (k === "translationNotes") {
+          for (let [k3, val] of Object.entries(settingJson[k][k2])) {
+            if (val) {
+              categoryIsOk = true;
+            }
+          }
+        }
+      isOk = isOk && categoryIsOk;
+    }
+    return isOk;
+  }
+
+  useEffect(() => {
+    if (firstPass) {
+      setFirstPass(false);
+    } else {
+      if (!openResourcesDialog) {
+        console.log("ici");
+        callBack?.();
+      }
+    }
+  }, [openResourcesDialog]);
 
   useEffect(() => {
     async function getTranslationNotesCategories() {
@@ -52,8 +92,6 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, lecixonName = 'en_t
   }, []);
 
   //changeCategories TranslationWords
-  
-    
 
   //load setting file if exist
   useEffect(() => {
@@ -81,7 +119,7 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, lecixonName = 'en_t
         "translationNotes",
         lecixonName
       );
-      console.log(categoriesTN)
+      console.log(categoriesTN);
       json["translationNotes"] = {};
       for (let [k, v] of Object.entries(categoriesTN)) {
         if (!json["translationNotes"][k]) {
@@ -96,21 +134,21 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, lecixonName = 'en_t
         "payload",
         "git.door43.org/uW"
       );
-       if (!json["translationWords"]) {
-          json["translationWords"] = {};
-        }
-        for (let c of categoriesTW) {
-          json["translationWords"][c] = true;
-        }
-        setSettingJson(json)
-        return;
+      if (!json["translationWords"]) {
+        json["translationWords"] = {};
+      }
+      for (let c of categoriesTW) {
+        json["translationWords"][c] = true;
+      }
+      setSettingJson(json);
+      return;
     }
     getSettingJson();
   }, []);
 
   //write settingJson
   async function writeSettingJson(json) {
-    if (settingJson !== {}) {
+    if (Object.keys(settingJson).length > 0) {
       if (tCoreNameProject) {
         await fsWriteRust(
           repoName,
@@ -196,7 +234,11 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, lecixonName = 'en_t
       {openResourcesDialog && (
         <AppDialog
           open={openResourcesDialog}
-          onClose={() => setOpenResourcesDialog(false)}
+          onClose={() => {
+            if (canWeClose) {
+              setOpenResourcesDialog(false);
+            }
+          }}
           maxWidth="md"
           title={
             tCoreNameProject
@@ -212,7 +254,12 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, lecixonName = 'en_t
           actions={
             <Button
               variant="contained"
-              onClick={() => setOpenResourcesDialog(false)}
+              disabled={!canWeClose}
+              onClick={() => {
+                if (canWeClose) {
+                  setOpenResourcesDialog(false);
+                }
+              }}
             >
               {doI18n("pages:uw-client-checks:close", i18nRef.current)}
             </Button>
@@ -311,7 +358,10 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, lecixonName = 'en_t
                                         }
                                       />
                                     }
-                                    label={translationNotesCategories[catKey] || catKey}
+                                    label={
+                                      translationNotesCategories[catKey] ||
+                                      catKey
+                                    }
                                   />
                                 ))}
                               </FormGroup>

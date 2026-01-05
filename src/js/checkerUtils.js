@@ -6,11 +6,14 @@ import { fsGetManifest } from "./serverUtils";
 import { fsExistsRust } from "./serverUtils";
 import { fsGetRust } from "./serverUtils";
 import yaml from "js-yaml";
+import { parseUsfmToWordAlignerData } from "../wordAligner/utils/alignmentHelpers";
+import { groupDataHelpers } from "@gabrielaillet/word-aligner-rcl";
+import { areAlgnmentsComplete } from "../wordAligner/utils/alignmentHelpers";
 import { convertOccurrences } from "../wordAligner/utils/alignmentHelpers";
 import { usfmVerseToJson } from "../wordAligner/utils/usfmHelpers";
 import { getWordListFromVerseObjects } from "../wordAligner/utils/alignmentHelpers";
 import { getOriginalLanguageListForVerseData } from "../wordAligner/utils/migrateOriginalLanguageHelpers";
-
+import { addAlignmentsToTargetVerseUsingMerge } from "../wordAligner/utils/alignmentHelpers";
 export const changeDataFromtopBottomToNgramSourceNgram = (
   alignments,
   targetVerse2,
@@ -81,7 +84,8 @@ export const getBookFromName = async (
   nameArr,
   book,
   typeBible,
-  insidePath = "_local_/_local_"
+  insidePath = "_local_/_local_",
+  getManifestFromBookProject=null
 ) => {
   let json = {};
   let isBookUsfmOnly = await fsExistsRust(
@@ -122,6 +126,12 @@ export const getBookFromName = async (
       repoPath
     )
   ).json;
+
+  if(getManifestFromBookProject){
+    let newManifest = await fsGetRust(repoPath,nameArr+'/manifest.json',insidePath)
+    json['manifest'] = {...json['manifest'],...newManifest}
+  }
+
   json["manifest"]["language_id"] = json.manifest.language_code;
   if (LANG_CODE[json.manifest.language_code]) {
     json["manifest"]["language_name"] = LANG_CODE[json.manifest.language_code];
@@ -137,13 +147,13 @@ export const getBookFromName = async (
   } else if (typeBible === "original_language") {
     json["manifest"]["description"] = "original_language";
   }
-  json["manifest"] = {
-    language_id: "en",
-    language_name: "English",
-    direction: "ltr",
-    resource_id: "targetLanguage",
-    description: "Target Language",
-  };
+  // json["manifest"] = {
+  //   language_id: "en",
+  //   language_name: "English",
+  //   direction: "ltr",
+  //   resource_id: "targetLanguage",
+  //   description: "Target Language",
+  // };
   return json;
 };
 
@@ -235,10 +245,8 @@ const renameCategories = (tnData, linkTitleMap, group = true) => {
     } else {
       result[key] = {};
       for (const [key2, value2] of Object.entries(tnData[key])) {
-        
-          const newKey = linkTitleMap[key2] || key2;
-          result[key][newKey] = value2;
-        
+        const newKey = linkTitleMap[key2] || key2;
+        result[key][newKey] = value2;
       }
     }
   }
@@ -278,8 +286,6 @@ export const changeTnCategories = async (
   return renamed;
 };
 
-
-
 export async function removeNotServiceTNCategories(
   repoName,
   originFolder,
@@ -293,15 +299,12 @@ export async function removeNotServiceTNCategories(
   let dataYaml = yaml.load(categories);
   // build { "figs-abstractnouns": "Abstract Nouns", ... }
   const linkTitleMap = buildLinkTitleMap(dataYaml.sections);
-  console.log(linkTitleMap);
   let json = {};
   for (let c1 of Object.keys(data)) {
     json[c1] = { groups: {} };
     for (let [c2, v2] of Object.entries(data[c1]["groups"])) {
-      console.log(c2);
       if (Object.prototype.hasOwnProperty.call(linkTitleMap, c2)) {
         json[c1]["groups"][c2] = v2;
-        console.log("ici");
       }
     }
   }
@@ -330,7 +333,6 @@ export const getCheckingData = async (repoName, nameArr, book, tool) => {
     );
   } else {
     let existSetting = await fsExistsRust(repoName, `checker_setting.json`);
-    console.log(existSetting, repoName, `checker_setting.json`);
     if (existSetting) {
       objectCategories = await fsGetRust(repoName, `checker_setting.json`);
     }
@@ -354,7 +356,6 @@ export const getCheckingData = async (repoName, nameArr, book, tool) => {
         json[ocKeys] = { groups: {} };
         for (let [oc2Keys, ocValues2] of Object.entries(ocValues)) {
           if (ocValues2 && checkingData[oc2Keys + ".json"]) {
-            console.log([oc2Keys, ocValues2]);
             json[ocKeys]["groups"][oc2Keys] = JSON.parse(
               checkingData[oc2Keys + ".json"]
             );
@@ -490,6 +491,7 @@ export const getProgressChecker = async (
   book,
   lexiconNameForProgress = null
 ) => {
+
   let checks = await getCheckingData(repoName, nameArr, book, toolName);
   if (lexiconNameForProgress) {
     checks = await removeNotServiceTNCategories(
@@ -497,56 +499,84 @@ export const getProgressChecker = async (
       "git.door43.org/uW",
       checks
     );
-    console.log(checks);
   }
   const filteredChecks = Object.fromEntries(
     Object.entries(checks).filter(([key]) => selectedCategories.includes(key))
   );
-  let isDone = 1;
-  let maxCount = 1;
+  let isDone = 0;
+  let isInvalidated = 0
+  let TotalCount = 0;
+
   for (let cat of Object.keys(filteredChecks)) {
     for (let context of Object.values(filteredChecks[cat]["groups"])) {
       for (let e of context) {
-        if (e.nothingToSelect || Boolean(e.selections)) {
+        if (e.nothingToSelect || Boolean(e.selections) && !e.invalidated) {
           isDone += 1;
         }
-        maxCount += 1;
+        if(e.invalidated){
+          isInvalidated += 1
+        }
+        TotalCount += 1;
       }
     }
   }
-  return (isDone / maxCount) * 100;
+  return ({selection :(isDone / TotalCount) * 100, invalidated:isInvalidated});
 };
 
-// export const getResourcesFrom = async (repoName, nameArr, book) => {
-//   const all_part = await fsGetRust(
-//     repoName,
-//     `${nameArr}/translationHelps/translationWords`
-//   );
-//   const version = all_part[0];
-//   const json = {
-//     kt: { groups: {} },
-//     names: { groups: {} },
-//     other: { groups: {} },
-//   };
-//   const things = ["kt", "names", "other"];
-//   for (const t of things) {
-//     const folder = await fsGetRust(
-//       repoName,
-//       `${nameArr}/translationHelps/translationWords/${version}/${t}/groups/${book}`
-//     );
-//     for (const e of folder) {
-//       if (!e.includes("headers")) {
-//         json[t]["groups"][e.split(".")[0]] = await fsGetRust(
-//           repoName,
-//           `${nameArr}/translationHelps/translationWords/${version}/${t}/groups/${book}/${e}`
-//         );
-//       }
-//     }
-//   }
+export const getProgressAligment = async (repoName, nameArr, originBible) => {
+  let alignBible = {};
+  let targetBible = await getBookFromName(
+    repoName,
+    `book_projects/${nameArr}`,
+    nameArr.split("_")[2]
+  );
+  if (targetBible) {
+    let rest = await loadAlignment(repoName, nameArr);
+    for (let c of Object.keys(rest)) {
+      alignBible[c] = {};
+      for (let v of Object.keys(rest[c])) {
+        alignBible[c][v] = {};
+        alignBible[c][v]["verseObjects"] = usfmVerseToJson(
+          addAlignmentsToTargetVerseUsingMerge(targetBible[c][v], rest[c][v])
+        );
+      }
+    }
+    fixOccurrences(alignBible);
+  }
+  let totalNumber = 0;
+  let number = 0;
+  for (let chapter of Object.keys(alignBible)) {
+    for (let verse of Object.keys(alignBible[chapter])) {
+      if (verse != "front") {
+        const targetVerseUSFM = groupDataHelpers.getVerseUSFM(
+          alignBible,
+          chapter,
+          verse
+        );
+        const sourceVerseUSFM = groupDataHelpers.getVerseUSFM(
+          originBible,
+          chapter,
+          verse
+        );
 
-//   json["manifest"] = await fsGetRust(
-//     repoName,
-//     `${nameArr}/translationHelps/translationWords/${version}/manifest.json`
-//   );
-//   return json;
-// };
+        if (targetVerseUSFM && sourceVerseUSFM) {
+          const { targetWords, verseAlignments } = parseUsfmToWordAlignerData(
+            targetVerseUSFM,
+            sourceVerseUSFM
+          );
+
+          const alignmentComplete = areAlgnmentsComplete(
+            targetWords,
+            verseAlignments
+          );
+         
+          totalNumber += 1;
+          if (alignmentComplete) {
+            number += 1;
+          }
+        }
+      }
+    }
+  }
+  return (number / totalNumber) * 100;
+};

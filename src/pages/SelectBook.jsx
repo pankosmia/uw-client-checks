@@ -3,6 +3,7 @@ import { useState, useEffect, useContext } from "react";
 import { doI18n, i18nContext } from "pithekos-lib";
 import AddIcon from "@mui/icons-material/Add";
 import CircularProgress from "@mui/material/CircularProgress";
+import DeleteDialogueButton from "../js/components/DeleteDialogueButton";
 import CheckerSetting from "../js/components/CheckerSetting";
 import {
   Box,
@@ -328,10 +329,7 @@ export default function SelectBook() {
   }, [inDirectory, selectedBurrito]);
 
   return (
-    <Box
-      sx={{
-      }}
-    >
+    <Box sx={{}}>
       {burritos ? (
         <Box
           sx={{
@@ -341,7 +339,7 @@ export default function SelectBook() {
             justifyContent: "flex-start",
             width: "100%",
             px: 2,
-            py:1
+            py: 1,
           }}
         >
           <FormControl disabled={!allResourcesPresent} sx={{ minWidth: 320 }}>
@@ -455,6 +453,7 @@ export default function SelectBook() {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {books.map((book) => (
               <Accordion
+                expanded={openedBooks.has(book.bookCode)}
                 onChange={() => {
                   setOpenedBooks((prev) => {
                     const next = new Set(prev);
@@ -574,11 +573,41 @@ export default function SelectBook() {
                         mt: 1,
                       }}
                     >
-                      {" "}
-                      <CheckerSetting
-                        repoName={selectedBurrito.abbreviation}
-                        tCoreNameProject={book.tCoreName}
-                      />
+                      <Box sx={{ gap: 1, display: "flex" }}>
+                        <CheckerSetting
+                          repoName={selectedBurrito.abbreviation}
+                          tCoreNameProject={book.tCoreName}
+                          callBack={() => {
+                            setOpenedBooks((prev) => {
+                              const next = new Set(prev);
+
+                              if (next.has(book.bookCode)) {
+                                next.delete(book.bookCode); // close → remove
+                              } else {
+                                next.add(book.bookCode); // open → add
+                              }
+
+                              return next;
+                            });
+                            setOpenedBooks((prev) => {
+                              const next = new Set(prev);
+
+                              if (next.has(book.bookCode)) {
+                                next.delete(book.bookCode); // close → remove
+                              } else {
+                                next.add(book.bookCode); // open → add
+                              }
+
+                              return next;
+                            });
+                          }}
+                        />
+                        <DeleteDialogueButton
+                          repoName={selectedBurrito.abbreviation}
+                          tCoreNameProject={book.tCoreName}
+                          callBack={() => fetchData()}
+                        />
+                      </Box>
                     </Box>
                   </Box>
                 </AccordionDetails>

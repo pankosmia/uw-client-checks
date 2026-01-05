@@ -5,6 +5,7 @@
     "debug": false,
     "excludeFromMenu": true
   },
+  "minServerVersion":"0.12.4",
 
   "i18n": {
     "title": {
@@ -37,8 +38,8 @@
       "fr": "Ajouter un livre au projet tCore"
     },
     "add_book": {
-      "en": "Import book",
-      "fr": "Importer livre"
+      "en": "Add book",
+      "fr": "Ajouter livre"
     },
     "required_ressources_check": {
       "en": "Resources required for tCore",
@@ -147,6 +148,18 @@
     "gateway_language" : {
       "en": "Gateway Language",
       "fr": "Langue passerelle"
+    },
+    "delette_book_project":{
+      "en":"delete book",
+      "fr":"supprimer livre"
+    },
+    "delete_book_project_texte":{
+      "en":"Are you sure you want to delete this book project",
+      "fr": "Etes vous sur de vouloir supprimer ce project de livre"
+    },
+    "invalidate_checks":{
+      "fr":"alignement invalide",
+      "en":"invalidated checks"
     }
   }
 }
