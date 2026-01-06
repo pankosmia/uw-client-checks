@@ -577,6 +577,7 @@ export default function SelectBook() {
                       }}
                     >
                       <Box sx={{ gap: 1, display: "flex" }}>
+                         {book.hasManifest ?
                         <CheckerSetting
                           repoName={selectedBurrito.abbreviation}
                           tCoreNameProject={book.tCoreName}
@@ -604,7 +605,7 @@ export default function SelectBook() {
                               return next;
                             });
                           }}
-                        />
+                        />:<></>}
                         <DeleteDialogueButton
                           repoName={selectedBurrito.abbreviation}
                           tCoreNameProject={book.tCoreName}
