@@ -42,7 +42,7 @@ const DeleteDialogueButton = ({ repoName, tCoreNameProject, callBack }) => {
       >
         <Typography>
           {doI18n(
-            "pages:uw-client-checks:delette_book_project",
+            "pages:uw-client-checks:delete_book_project",
             i18nRef.current
           )}
         </Typography>
@@ -52,10 +52,10 @@ const DeleteDialogueButton = ({ repoName, tCoreNameProject, callBack }) => {
           open={openResourcesDialog}
           onClose={() => setOpenResourcesDialog(false)}
           maxWidth="md"
-          title={doI18n(
-            "pages:uw-client-checks:delette_book_project",
+          title={`${doI18n(
+            "pages:uw-client-checks:delete_book_project",
             i18nRef.current
-          )}
+          )}  : ${tCoreNameProject}`}
           actions={
             <>
               <Button
@@ -77,10 +77,10 @@ const DeleteDialogueButton = ({ repoName, tCoreNameProject, callBack }) => {
                   setOpenResourcesDialog(false);
                 }}
               >
-                {`${doI18n(
+                {doI18n(
                   "pages:uw-client-checks:delete_book_project",
                   i18nRef.current
-                )} : ${tCoreNameProject}`}
+                )}
               </Button>
               <Button
                 variant="contained"
