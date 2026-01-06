@@ -55,18 +55,19 @@ export const ButtonDashBoard = ({
         bookCode,
         lexiconNameForProgress
       ).then((e) => {
-        setProgressTranslationNotes(Number(e["selection"]) || 0);
+        setProgressTranslationNotes(e.selection || 0);
         setInvalidatedTn(e.invalidated);
       });
 
       getProgressChecker(
         "translationWords",
-        ["name", "kt", "other"],
+        ["names", "kt", "other"],
         projectName,
         `book_projects/${tCoreName}`,
         bookCode
       ).then((e) => {
-        setProgressTranslationWords(Number(e["selection"]) || 0);
+        console.log(e)
+        setProgressTranslationWords(e.selection || 0);
         setInvalidatedTw(e.invalidated);
       });
       isOldTestament(tCoreName.split("_")[2])

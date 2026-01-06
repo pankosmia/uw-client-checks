@@ -16,11 +16,7 @@ import { deleteBookProject } from "../serverUtils";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useState, useContext } from "react";
 import { doI18n, i18nContext } from "pithekos-lib";
-const DeleteDialogueButton = ({
-  repoName,
-  tCoreNameProject,
-  callBack
-}) => {
+const DeleteDialogueButton = ({ repoName, tCoreNameProject, callBack }) => {
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
 
   const { i18nRef } = useContext(i18nContext);
@@ -61,25 +57,48 @@ const DeleteDialogueButton = ({
             i18nRef.current
           )}
           actions={
-            <Button
-              variant="contained"
-              onClick={() => setOpenResourcesDialog(false)}
-            >
-              {doI18n("pages:uw-client-checks:close", i18nRef.current)}
-            </Button>
+            <>
+              <Button
+                color="error"
+                sx={{
+                  height: 36,
+                  pt: 1.5,
+                  pr: 2,
+                  pb: 1.5,
+                  pl: 2,
+                  borderRadius: 1,
+                  borderWidth: 1,
+                  borderStyle: "solid",
+                  whiteSpace: "nowrap",
+                }}
+                onClick={() => {
+                  deleteBookProject(repoName, tCoreNameProject);
+                  callBack?.();
+                  setOpenResourcesDialog(false);
+                }}
+              >
+                {`${doI18n(
+                  "pages:uw-client-checks:delete_book_project",
+                  i18nRef.current
+                )} : ${tCoreNameProject}`}
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => setOpenResourcesDialog(false)}
+              >
+                {doI18n("pages:uw-client-checks:cancel", i18nRef.current)}
+              </Button>
+            </>
           }
         >
-          {doI18n("pages:uw-client-checks:delete_book_project_texte", i18nRef.current)}
-          <Button
-          onClick={() => {deleteBookProject(repoName,tCoreNameProject)
-            callBack?.()
-            setOpenResourcesDialog(false)
-          }}
-          color="error"
-          >{doI18n(
-            "pages:uw-client-checks:delette_book_project",
-            i18nRef.current
-          )}</Button>
+          <Box display="flex" flexDirection="column" gap={3}>
+            <Typography>
+              {doI18n(
+                "pages:uw-client-checks:delete_book_project_texte",
+                i18nRef.current
+              )}
+            </Typography>
+          </Box>
         </AppDialog>
       )}
     </>

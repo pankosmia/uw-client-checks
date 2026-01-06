@@ -265,7 +265,7 @@ const CheckerSetting = ({
             </Button>
           }
         >
-          {tools.map((tool) => (
+          {tools.filter(t => t !== "wordAlignment").map((tool) => (
             <>
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
                 {tool}
@@ -373,7 +373,7 @@ const CheckerSetting = ({
                   </Box>
                 )}
               <Box sx={{ marginTop: 1 }} />
-              <FormControl fullWidth sx={{ mt: 2 }}>
+              {/* <FormControl fullWidth sx={{ mt: 2 }}>
                 <TextField
                   id="burrito-select-label"
                   select
@@ -386,7 +386,7 @@ const CheckerSetting = ({
                 >
                   {}
                 </TextField>
-              </FormControl>
+              </FormControl> */}
             </>
           ))}
         </AppDialog>

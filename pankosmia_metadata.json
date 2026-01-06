@@ -5,7 +5,7 @@
     "debug": false,
     "excludeFromMenu": true
   },
-  "minServerVersion":"0.12.4",
+  "minServerVersion": "0.12.11",
 
   "i18n": {
     "title": {
@@ -81,6 +81,7 @@
       "en": "tCore project",
       "fr": "project tCore"
     },
+
     "open": {
       "en": "open",
       "fr": "ouvrir"
@@ -145,21 +146,21 @@
       "en": "Book Checks settings ",
       "fr": "Paramètre de Projet du libre"
     },
-    "gateway_language" : {
+    "gateway_language": {
       "en": "Gateway Language",
       "fr": "Langue passerelle"
     },
-    "delette_book_project":{
-      "en":"delete book",
-      "fr":"supprimer livre"
+    "delete_book_project": {
+      "en": "Delete book project",
+      "fr": "Supprimer un projet livre"
     },
-    "delete_book_project_texte":{
-      "en":"Are you sure you want to delete this book project",
-      "fr": "Etes vous sur de vouloir supprimer ce project de livre"
+    "delete_book_project_texte": {
+      "en": "Are you sure you want to delete this book project? All data will be permanently lost.",
+      "fr": "Êtes-vous sûr de vouloir supprimer ce projet de livre ? Toutes les données seront définitivement perdues."
     },
-    "invalidate_checks":{
-      "fr":"alignement invalide",
-      "en":"invalidated checks"
+    "invalidate_checks": {
+      "fr": "alignement invalide",
+      "en": "invalidated checks"
     }
   }
 }

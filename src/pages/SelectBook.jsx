@@ -198,20 +198,23 @@ export default function SelectBook() {
     projectExemple
   ) => {
     try {
-      let projectExempleArray = projectExemple.split("_");
-      projectExempleArray[2] = bookCode.toLowerCase();
-      projectExempleArray = projectExempleArray.join("_");
       let nameProject = manifestPath.split("/")[2];
+
+      let lang = selectedBurrito.language_code;
+      let abr = selectedBurrito.abbreviation.split("_")[0];
+      let nameBook = bookCode.toLowerCase();
+      let name = lang + "_" + abr + "_" + nameBook + "_book";
+
       let usfm = await fsGetRust(nameProject, `${bookCode}.usfm`);
       await fsWriteRust(
         currentProject,
-        `book_projects/${projectExempleArray}/${bookCode.toLowerCase()}.usfm`,
+        `book_projects/${name}/${bookCode.toLowerCase()}.usfm`,
         usfm
       );
       fetchData();
       setOpenModal(false);
     } catch (err) {
-      alert(`Failed to add ${bookCode}`);
+      console.log(`Failed to add ${bookCode}`);
     }
   };
   function find_manifest(path) {
@@ -662,8 +665,7 @@ export default function SelectBook() {
                       handleAddBook(
                         code,
                         manifestPath[0],
-                        selectedBurrito.abbreviation,
-                        inDirectory[0]
+                        selectedBurrito.abbreviation
                       );
                     }
                   }}

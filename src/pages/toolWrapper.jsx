@@ -112,7 +112,6 @@ const editedTargetVerse =
     toolApi
   ) =>
   (dispatch, getState) => {
-
     // const state = getState();
     // const contextId = getContextId(state);
     // const currentCheckContextId = contextId;
@@ -237,43 +236,97 @@ export const ToolWrapper = () => {
       )}.json`,
       changeFileAlignment
     );
-    // setTargetBible((prev) => {
-    //   let p = { ...prev };
-    //   p[chapter] = changeFileVerse;
-    //   return p;
-    // });
-    // let p2 = targetBible
-    // p2[chapter] = changeFileVerse
-    // let batch = await fsGetRust(
-    //   projectName,
-    //   `book_projects/${tCoreName}/apps/translationCore/index/translationWords/${book}`,
-    //   "_local_/_local_",
-    //   false,
-    //   true
-    // );
-    // console.log(p2)
-    // selectionsHelpers.validateSelectionsForAllChecks(p2, flattenOneLevel(checkingData), (e) =>
-    //   console.log("CALLBACK:", e)
-    // );
-
-    // let cat = Object.fromEntries(
-    //   Object.entries(batch)
-    //     .map(([key, val]) => [key, JSON.parse(val)])
-    //     .filter(
-    //       ([key, parsed]) =>
-    //         !key.endsWith(".bak") &&
-    //         parsed.some(
-    //           (e) =>
-    //             e.contextId.reference.chapter === chapter &&
-    //             e.contextId.reference.verse === verse
-    //         )
-    //     )
-    // );
+    setTargetBible((prev) => {
+      let p = { ...prev };
+      p[chapter] = changeFileVerse;
+      return p;
+    });
+    let p2 = targetBible;
+    p2[chapter] = changeFileVerse;
+    for (let tool of ["translationWords", "translationNotes"]) {
+      if (toolName !== tool) {
+        let cat;
+        let batch = await fsGetRust(
+          projectName,
+          `book_projects/${tCoreName}/apps/translationCore/index/${tool}/${book}`,
+          "_local_/_local_",
+          false,
+          true
+        );
+        let isVerseSpan = verseHelpers.isVerseSpan(verse);
+        console.log(isVerseSpan, verse);
+        if (isVerseSpan) {
+          let { low, high } = verseHelpers.getVerseSpanRange(verse);
+          cat = Object.fromEntries(
+            Object.entries(batch)
+              .map(([key, val]) => [key, JSON.parse(val)])
+              .filter(
+                ([key, parsed]) =>
+                  !key.endsWith(".bak") &&
+                  parsed.some(
+                    (e) =>
+                      e.contextId.reference.chapter === parseInt(chapter) &&
+                      e.contextId.reference.verse >= parseInt(low) &&
+                      e.contextId.reference.verse <= parseInt(high)
+                  )
+              )
+          );
+          for (let [nameFile, values] of Object.entries(cat)) {
+            let newValues = values;
+            for (let i = 0; i < values.length; i++) {
+              if (
+                newValues[i].contextId.reference.chapter === chapter &&
+                newValues[i].contextId.reference.verse >= parseInt(low) &&
+                newValues[i].contextId.reference.verse <= parseInt(high)
+              ) {
+                newValues[i].verseEdits = true;
+              }
+            }
+            await fsWriteRust(
+              projectName,
+              `book_projects/${tCoreName}/apps/translationCore/index/translationWords/${book}/${nameFile}`,
+              newValues
+            );
+          }
+        } else {
+          cat = Object.fromEntries(
+            Object.entries(batch)
+              .map(([key, val]) => [key, JSON.parse(val)])
+              .filter(
+                ([key, parsed]) =>
+                  !key.endsWith(".bak") &&
+                  parsed.some(
+                    (e) =>
+                      e.contextId.reference.chapter === chapter &&
+                      e.contextId.reference.verse === parseInt(verse)
+                  )
+              )
+          );  
+          for (let [nameFile, values] of Object.entries(cat)) {
+            let newValues = values;
+            for (let i = 0; i < values.length; i++) {
+              if (
+                newValues[i].contextId.reference.chapter === chapter &&
+                newValues[i].contextId.reference.verse === parseInt(verse)
+              ) {
+                newValues[i].verseEdits = true;
+              }
+            }
+            await fsWriteRust(
+              projectName,
+              `book_projects/${tCoreName}/apps/translationCore/index/${tool}/${book}/${nameFile}`,
+              newValues
+            );
+          }
+        }
+      }
+    }
   };
 
-  
   const saveCheckingData = async (newState) => {
     const data = structuredClone(newState.currentCheck);
+    console.log("saveChecking data", data);
+
     let id = data.contextId.checkId;
     let index = data.contextId.groupId;
     if (toolName === "translationNotes") {
@@ -303,7 +356,6 @@ export const ToolWrapper = () => {
 
     // Find the object in the array
     let currentCheckIndex = json2.findIndex((e) => e.contextId.checkId === id);
-
     // If not found, create a new object
     if (currentCheckIndex === -1) {
       currentCheckIndex = json2.length;
@@ -334,18 +386,18 @@ export const ToolWrapper = () => {
       `book_projects/${tCoreName}/apps/translationCore/index/${toolName}/${book}/${index}.json`,
       json2
     );
-    for (let [e, val] of Object.entries(checkingData)) {
-      for (let k of Object.keys(val)) {
-        if (k === index) {
-          setCheckingData((prev) => {
-            let last = { ...prev };
-            last[e][k] = json2;
-            return last;
-          });
-          break;
-        }
-      }
-    }
+    // for (let [e, val] of Object.entries(checkingData)) {
+    //   for (let k of Object.keys(val)) {
+    //     if (k === index) {
+    //       setCheckingData((prev) => {
+    //         let last = { ...prev };
+    //         last[e][k] = json2;
+    //         return last;
+    //       });
+    //       break;
+    //     }
+    //   }
+    // }
   };
   useEffect(() => {
     if (toolName === "wordAlignment") {

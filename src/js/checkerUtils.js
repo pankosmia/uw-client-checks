@@ -510,7 +510,7 @@ export const getProgressChecker = async (
   for (let cat of Object.keys(filteredChecks)) {
     for (let context of Object.values(filteredChecks[cat]["groups"])) {
       for (let e of context) {
-        if (e.nothingToSelect || Boolean(e.selections) && !e.invalidated) {
+        if ((e.nothingToSelect || Boolean(e.selections))&& !Boolean(e.invalidated)) {
           isDone += 1;
         }
         if(e.invalidated){
@@ -520,7 +520,7 @@ export const getProgressChecker = async (
       }
     }
   }
-  return ({selection :(isDone / TotalCount) * 100, invalidated:isInvalidated});
+  return ({selection : TotalCount===0?0:(isDone / TotalCount) * 100, invalidated:isInvalidated});
 };
 
 export const getProgressAligment = async (repoName, nameArr, originBible) => {
