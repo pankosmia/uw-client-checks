@@ -1,7 +1,24 @@
 import { getJson, getText, postJson } from "pithekos-lib";
-import { EXIST_PATH, BASE_URL, IMPORTS_PATH, IMPORTS_PATH_BATCH } from "../common/constants";
+import {
+  EXIST_PATH,
+  BASE_URL,
+  IMPORTS_PATH,
+  IMPORTS_PATH_BATCH,
+  DELETE_PATH,
+} from "../common/constants";
 import { join } from "./creatProject";
 let treeCache = []; // cache tree data across calls
+
+export const deleteBookProject = async (repoName, tCoreNameProject) => {
+  let url =
+    DELETE_PATH.replace("%Project%", "_local_/_local_"+"/"+repoName) +
+
+    "book_projects" +
+    "/" +
+    tCoreNameProject;
+  let res = await postJson(url, JSON.stringify({}));
+  return res;
+};
 
 /**
  * GET /ingredient/raw/<intermediatePath>/<repo_path>?ipath=<ipath>
@@ -146,7 +163,7 @@ export async function fsExistsRust(
       treeCache = data;
     }
 
-    const found = treeCache.some((item) => item.includes(ipath));
+    const found = treeCache.some((item) => item.startsWith(ipath));
     return found;
   } catch (err) {
     console.error(`fsExistsRust(${repoPath}, ${ipath}) error:`, err);
@@ -175,7 +192,9 @@ function getUrlForGetBatchDocumentInProject(
       )
     );
   }
-  return BASE_URL + "/" + IMPORTS_PATH_BATCH.replace("%Project%", `${repoPath}`);
+  return (
+    BASE_URL + "/" + IMPORTS_PATH_BATCH.replace("%Project%", `${repoPath}`)
+  );
 }
 function getUrlForGetDocumentInProject(
   repoPath,
