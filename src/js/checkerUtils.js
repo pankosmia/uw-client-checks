@@ -131,12 +131,14 @@ export const getBookFromName = async (
     let newManifest = await fsGetRust(repoPath,nameArr+'/manifest.json',insidePath)
     json['manifest'] = {...json['manifest'],...newManifest}
   }
-
   json["manifest"]["language_id"] = json.manifest.language_code;
   if (LANG_CODE[json.manifest.language_code]) {
     json["manifest"]["language_name"] = LANG_CODE[json.manifest.language_code];
   } else {
     json["manifest"]["language_name"] = json.manifest.language_code;
+  }
+  if(json.manifest.script_direction === "?"){
+    json.manifest.script_direction = 'ltr'
   }
   json["manifest"]["direction"] = json.manifest.script_direction;
   json["manifest"]["resource_id"] = json.manifest.abbreviation;
@@ -147,13 +149,7 @@ export const getBookFromName = async (
   } else if (typeBible === "original_language") {
     json["manifest"]["description"] = "original_language";
   }
-  // json["manifest"] = {
-  //   language_id: "en",
-  //   language_name: "English",
-  //   direction: "ltr",
-  //   resource_id: "targetLanguage",
-  //   description: "Target Language",
-  // };
+
   return json;
 };
 
