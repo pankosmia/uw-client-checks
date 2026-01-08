@@ -18,6 +18,7 @@ import {
   AccordionDetails,
   Fab,
 } from "@mui/material";
+import ImportZipProject from "../js/components/ImportZipProject";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { convertToProjectFormat } from "../js/creatProject"; // <-- import your function
 import { getJson } from "pithekos-lib";
@@ -366,9 +367,9 @@ export default function SelectBook() {
             </TextField>
           </FormControl>
 
-          {/* {selectedBurrito && (
-            <CheckerSetting repoName={selectedBurrito.abbreviation} />
-          )} */}
+          {selectedBurrito && (
+            <ImportZipProject repoName={selectedBurrito.abbreviation} />
+          )}
         </Box>
       ) : (
         <Box

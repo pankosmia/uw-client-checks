@@ -6,14 +6,13 @@ import _ from "lodash";
 import * as Bible from "../common/BooksOfTheBible";
 import usfm, { toJSON } from "usfm-js";
 import wordaligner from "word-aligner";
-import { fsExistsRust, fsWriteRust, fsGetRust } from "./serverUtils";
+import { fsExistsRust, fsWriteRust, fsGetRust,updateIngredients} from "./serverUtils";
 import { USER_RESOURCES_PATH, T_NOTES_CATEGORIES } from "../common/constants";
 /**
  * @description Function that count occurrences of a substring in a string
  * @param {String} string - The string to search in
  * @param {String} subString - The sub string to search for
  * @return {Integer} - the count of the occurrences
- * @see http://stackoverflow.com/questions/4009756/how-to-count-string-occurrence-in-string/7924240#7924240
  * modified to fit our use cases, return zero for '' substring, and no use case for overlapping.
  */
 export const occurrences = (string, subString) => {
@@ -1204,4 +1203,5 @@ export const convertToProjectFormat = async (
     sourceProjectPath,
     selectedProjectFilename
   );
+  await updateIngredients(sourceProjectPath)
 };
