@@ -275,7 +275,7 @@ export const ToolWrapper = () => {
             let newValues = values;
             for (let i = 0; i < values.length; i++) {
               if (
-                newValues[i].contextId.reference.chapter === chapter &&
+                newValues[i].contextId.reference.chapter === parseInt(chapter) &&
                 newValues[i].contextId.reference.verse >= parseInt(low) &&
                 newValues[i].contextId.reference.verse <= parseInt(high)
               ) {
@@ -284,7 +284,7 @@ export const ToolWrapper = () => {
             }
             await fsWriteRust(
               projectName,
-              `book_projects/${tCoreName}/apps/translationCore/index/translationWords/${book}/${nameFile}`,
+              `book_projects/${tCoreName}/apps/translationCore/index/${tool}/${book}/${nameFile}`,
               newValues
             );
           }
