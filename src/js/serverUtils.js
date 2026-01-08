@@ -11,8 +11,7 @@ let treeCache = []; // cache tree data across calls
 
 export const deleteBookProject = async (repoName, tCoreNameProject) => {
   let url =
-    DELETE_PATH.replace("%Project%", "_local_/_local_"+"/"+repoName) +
-
+    DELETE_PATH.replace("%Project%", "_local_/_local_" + "/" + repoName) +
     "book_projects" +
     "/" +
     tCoreNameProject;
@@ -133,7 +132,10 @@ export async function fsWriteRust(
   intermediatePath = "_local_/_local_"
 ) {
   try {
-    let url = getUrlForGetDocumentInProject(repoPath, intermediatePath) + ipath;
+    let url =
+      getUrlForGetDocumentInProject(repoPath, intermediatePath) +
+      ipath +
+      "&no_bak=true";
     let res;
     const body = {
       payload: typeof data === "object" ? JSON.stringify(data, null, 2) : data,
@@ -145,6 +147,30 @@ export async function fsWriteRust(
     }
   } catch (err) {
     console.error(`fsWriteRust(${repoPath}, ${ipath} ${err}$) error:`, err);
+    throw err;
+  }
+}
+export async function updateIngredients(
+  repoPath,
+  intermediatePath = "_local_/_local_"
+) {
+  try {
+    let url =
+      BASE_URL +
+      "/burrito/metadata/remake-ingredients/" +
+      intermediatePath +
+      "/" +
+      repoPath;
+    let res;
+    const body = {
+      payload: typeof {} === "object" ? JSON.stringify({}, null, 2) : {},
+    };
+    res = await postJson(url, JSON.stringify(body));
+    if (!res.ok) {
+      throw new Error(`POST failed: ${res.status} ${res.statusText} ${res}`);
+    }
+  } catch (err) {
+    console.error(`updatade ingredients(${repoPath}, error:`, err);
     throw err;
   }
 }
