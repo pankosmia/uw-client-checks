@@ -19,6 +19,7 @@
     "pithekos-lib": "^0.11.20",
     "react": "^17.0.0 || ^18.0.0",
     "react-dom": "^17.0.0 || ^18.0.0",
+    "react-file-picker": "^0.0.6",
     "react-router-dom": "^6.27.0",
     "tc-checking-tool-rcl": "^0.9.122",
     "usfm-js": "^3.4.3",
