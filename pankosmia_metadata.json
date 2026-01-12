@@ -5,7 +5,7 @@
     "debug": false,
     "excludeFromMenu": true
   },
-  "minServerVersion": "0.12.11",
+  "minServerVersion": "0.12.12",
 
   "i18n": {
     "title": {
@@ -161,6 +161,10 @@
     "invalidate_checks": {
       "fr": "alignement invalide",
       "en": "invalidated checks"
+    },
+    "import_zip_project":{
+      "en":"Import project from translationCore",
+      "fr": "Importer un projet translationCore"
     }
   }
 }
