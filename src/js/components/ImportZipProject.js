@@ -17,7 +17,7 @@ import { deleteBookProject } from "../serverUtils";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useState, useContext } from "react";
 import { doI18n, i18nContext } from "pithekos-lib";
-const ImportZipProject = ({ repoName, tCoreNameProject, callBack }) => {
+const ImportZipProject = ({ repoName, nameBurito, callBack }) => {
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
 
   const { i18nRef } = useContext(i18nContext);
@@ -33,7 +33,7 @@ const ImportZipProject = ({ repoName, tCoreNameProject, callBack }) => {
       method: "POST",
       body: formData,
     });
-
+    callBack()
     if (!response.ok) {
       throw new Error("Upload failed");
     }
@@ -71,7 +71,7 @@ const ImportZipProject = ({ repoName, tCoreNameProject, callBack }) => {
           title={`${doI18n(
             "pages:uw-client-checks:import_zip_project",
             i18nRef.current
-          )}  : ${tCoreNameProject}`}
+          )}  : ${nameBurito}`}
           actions={
             <>
               <FilePicker
