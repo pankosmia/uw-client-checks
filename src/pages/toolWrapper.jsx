@@ -171,8 +171,10 @@ export const ToolWrapper = () => {
   const [contextId, setContextId] = useState({});
   const book = useMemo(() => tCoreName?.split("_")[2], [tCoreName]);
   const [toolSettings, _setToolSettings] = useState(null); // TODO: need to persist tools state, and read back state on startup
-
+  const [groupsData, setGroupsData] = useState({});
+  const [groupsIndex, setGroupsIndex] = useState({});
   const [alignmentTargetBible, setAlignementTargetBibles] = useState({});
+  console.log(alignmentTargetBible);
   const [biblesForAligner, setBiblesForAligner] = useState();
   useEffect(() => {
     setBiblesForAligner(verseHelpers.getBibleObject(bibles));
@@ -301,7 +303,7 @@ export const ToolWrapper = () => {
                       e.contextId.reference.verse === parseInt(verse)
                   )
               )
-          );  
+          );
           for (let [nameFile, values] of Object.entries(cat)) {
             let newValues = values;
             for (let i = 0; i < values.length; i++) {
@@ -643,14 +645,49 @@ export const ToolWrapper = () => {
   const showPopover = (PopoverTitle, wordDetails, positionCoord, rawData) => {
     window.prompt(`User clicked on ${JSON.stringify(rawData)}`);
   };
-  const { groupsData, groupsIndex } =
-    grouphelpers.initializeGroupDataForScripture(
-      book,
-      alignmentTargetBible,
-      toolName,
-      originBible,
-      translate
-    );
+  useEffect(() => {
+    async function setAlignmentData() {
+      if (
+        book &&
+        alignmentTargetBible &&
+        toolName &&
+        originBible &&
+        translate
+      ) {
+        const { groupsData, groupsIndex } =
+          grouphelpers.initializeGroupDataForScripture(
+            book,
+            alignmentTargetBible,
+            toolName,
+            originBible,
+            translate
+          );
+      
+      let invalidAlignmentChapter = await fsGetRust(
+        projectName,
+        `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid`
+      );
+      for (let c of invalidAlignmentChapter) {
+        let invVerse = await fsGetRust(
+          projectName,
+          `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid/${c}`,
+          "_local_/_local_",
+          false,
+          true
+        );
+        for(let v of Object.keys(invVerse)){
+          let index = groupsData[`chapter_${c}`].findIndex(e => e.contextId.reference.verse === v.split('.')[0])
+          groupsData[`chapter_${c}`][index]['invalid'] = true
+        }
+      }
+
+      setGroupsData(groupsData);
+      setGroupsIndex(groupsIndex);
+    }
+  }
+    setAlignmentData();
+  }, [book, alignmentTargetBible, toolName, originBible, translate]);
+
   const ready =
     Array.isArray(bibles) &&
     bibles.length === 3 &&
