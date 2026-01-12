@@ -31,7 +31,6 @@ export const ButtonDashBoard = ({
   const [invalidatedTw, setInvalidatedTw] = useState(0);
 
   const tools = ["translationWords", "translationNotes", "wordAlignment"];
-  console.log(progressWordAlignment);
   const bookCode = tCoreName.split("_")[2];
   const getInvalidatedCount = (tool) => {
     switch (tool) {
@@ -66,7 +65,6 @@ export const ButtonDashBoard = ({
         `book_projects/${tCoreName}`,
         bookCode
       ).then((e) => {
-        console.log(e)
         setProgressTranslationWords(e.selection || 0);
         setInvalidatedTw(e.invalidated);
       });

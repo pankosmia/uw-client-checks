@@ -51,7 +51,6 @@ export default function SelectBook() {
   const [initializing, setInitializing] = useState([]);
 
   const { optional_project } = useParams();
-  console.log(initializing);
   useEffect(() => {
     if (globalResourcesStatus && !allResourcesPresent) {
       setOpenResourcesDialog(true);

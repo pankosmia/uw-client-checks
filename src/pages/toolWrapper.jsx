@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useContext } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
 import { useParams, useLocation, json } from "react-router-dom";
 import { selectionsHelpers } from "word-aligner-lib";
+import { deleteBookProject, deleteIngredient } from "../js/serverUtils";
 import {
   changeTnCategories,
   getTnData,
@@ -174,7 +175,6 @@ export const ToolWrapper = () => {
   const [groupsData, setGroupsData] = useState({});
   const [groupsIndex, setGroupsIndex] = useState({});
   const [alignmentTargetBible, setAlignementTargetBibles] = useState({});
-  console.log(alignmentTargetBible);
   const [biblesForAligner, setBiblesForAligner] = useState();
   useEffect(() => {
     setBiblesForAligner(verseHelpers.getBibleObject(bibles));
@@ -256,7 +256,6 @@ export const ToolWrapper = () => {
           true
         );
         let isVerseSpan = verseHelpers.isVerseSpan(verse);
-        console.log(isVerseSpan, verse);
         if (isVerseSpan) {
           let { low, high } = verseHelpers.getVerseSpanRange(verse);
           cat = Object.fromEntries(
@@ -273,6 +272,7 @@ export const ToolWrapper = () => {
                   )
               )
           );
+
           for (let [nameFile, values] of Object.entries(cat)) {
             let newValues = values;
             for (let i = 0; i < values.length; i++) {
@@ -320,14 +320,19 @@ export const ToolWrapper = () => {
               newValues
             );
           }
+          
         }
+        await fsWriteRust(
+            projectName,
+            `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid/${chapter}/${verse}.json`,
+            { timestamp: new Date().toISOString() }
+          );
       }
     }
   };
 
   const saveCheckingData = async (newState) => {
     const data = structuredClone(newState.currentCheck);
-    console.log("saveChecking data", data);
 
     let id = data.contextId.checkId;
     let index = data.contextId.groupId;
@@ -641,6 +646,11 @@ export const ToolWrapper = () => {
       `book_projects/${tCoreName}/apps/translationCore/alignmentData/${book}/${results.contextId.reference.chapter}.json`,
       alignment
     );
+    await deleteIngredient(
+      projectName,
+      `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid/${results.contextId.reference.chapter}/${results.contextId.reference.verse}.json`,
+      true
+    );
   }
   const showPopover = (PopoverTitle, wordDetails, positionCoord, rawData) => {
     window.prompt(`User clicked on ${JSON.stringify(rawData)}`);
@@ -662,29 +672,36 @@ export const ToolWrapper = () => {
             originBible,
             translate
           );
-      
-      let invalidAlignmentChapter = await fsGetRust(
-        projectName,
-        `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid`
-      );
-      for (let c of invalidAlignmentChapter) {
-        let invVerse = await fsGetRust(
-          projectName,
-          `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid/${c}`,
-          "_local_/_local_",
-          false,
-          true
-        );
-        for(let v of Object.keys(invVerse)){
-          let index = groupsData[`chapter_${c}`].findIndex(e => e.contextId.reference.verse === v.split('.')[0])
-          groupsData[`chapter_${c}`][index]['invalid'] = true
-        }
-      }
 
-      setGroupsData(groupsData);
-      setGroupsIndex(groupsIndex);
+        let invalidAlignmentChapter = await fsGetRust(
+          projectName,
+          `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid`
+        );
+        for (let c of invalidAlignmentChapter) {
+          let invVerse = await fsGetRust(
+            projectName,
+            `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid/${c}`,
+            "_local_/_local_",
+            false,
+            true
+          );
+          for (let v of Object.keys(invVerse)) {
+            if (groupsData[`chapter_${c}`]) {
+              let index = groupsData[`chapter_${c}`].findIndex(
+                (e) => e.contextId.reference.verse === v.split(".")[0]
+                && !v.endsWith(".bak")
+              );
+              if (index >= 0) {
+                groupsData[`chapter_${c}`][index]["invalid"] = true;
+              }
+            }
+          }
+        }
+
+        setGroupsData(groupsData);
+        setGroupsIndex(groupsIndex);
+      }
     }
-  }
     setAlignmentData();
   }, [book, alignmentTargetBible, toolName, originBible, translate]);
 

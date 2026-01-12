@@ -70,7 +70,6 @@ const CheckerSetting = ({
       setFirstPass(false);
     } else {
       if (!openResourcesDialog) {
-        console.log("ici");
         callBack?.();
       }
     }
@@ -119,7 +118,6 @@ const CheckerSetting = ({
         "translationNotes",
         lecixonName
       );
-      console.log(categoriesTN);
       json["translationNotes"] = {};
       for (let [k, v] of Object.entries(categoriesTN)) {
         if (!json["translationNotes"][k]) {

@@ -79,7 +79,6 @@ const ImportZipProject = ({ repoName, tCoreNameProject, callBack }) => {
                 onChange={async (fileObject) => {
                   try {
                     const result = await uploadZip(fileObject);
-                    console.log("Import OK:", result);
 
                     setOpenResourcesDialog(false);
                     callBack?.(); // refresh si besoin
