@@ -85,7 +85,7 @@ export const getBookFromName = async (
   book,
   typeBible,
   insidePath = "_local_/_local_",
-  getManifestFromBookProject=null
+  getManifestFromBookProject = null
 ) => {
   let json = {};
   let isBookUsfmOnly = await fsExistsRust(
@@ -127,9 +127,13 @@ export const getBookFromName = async (
     )
   ).json;
 
-  if(getManifestFromBookProject){
-    let newManifest = await fsGetRust(repoPath,nameArr+'/manifest.json',insidePath)
-    json['manifest'] = {...json['manifest'],...newManifest}
+  if (getManifestFromBookProject) {
+    let newManifest = await fsGetRust(
+      repoPath,
+      nameArr + "/manifest.json",
+      insidePath
+    );
+    json["manifest"] = { ...json["manifest"], ...newManifest };
   }
   json["manifest"]["language_id"] = json.manifest.language_code;
   if (LANG_CODE[json.manifest.language_code]) {
@@ -137,8 +141,8 @@ export const getBookFromName = async (
   } else {
     json["manifest"]["language_name"] = json.manifest.language_code;
   }
-  if(json.manifest.script_direction === "?"){
-    json.manifest.script_direction = 'ltr'
+  if (json.manifest.script_direction === "?") {
+    json.manifest.script_direction = "ltr";
   }
   json["manifest"]["direction"] = json.manifest.script_direction;
   json["manifest"]["resource_id"] = json.manifest.abbreviation;
@@ -194,12 +198,20 @@ export const getglTwData = async (
     other: { articles: {}, index: [] },
   };
   const things = ["kt", "names", "other"];
+  // let responce_batch_md = await fsGetRust(
+  //   repoNameResources,
+  //   join(`payload`),
+  //   "git.door43.org/uW",
+  //   false,
+  //   true
+  // );
   for (const t of things) {
     const folder = await fsGetRust(
       repoNameResources,
       join(`payload`, t),
       "git.door43.org/uW"
     );
+
     for (const e of folder) {
       if (!e.includes("headers")) {
         let p = await fsGetRust(
@@ -487,7 +499,6 @@ export const getProgressChecker = async (
   book,
   lexiconNameForProgress = null
 ) => {
-
   let checks = await getCheckingData(repoName, nameArr, book, toolName);
   if (lexiconNameForProgress) {
     checks = await removeNotServiceTNCategories(
@@ -500,23 +511,29 @@ export const getProgressChecker = async (
     Object.entries(checks).filter(([key]) => selectedCategories.includes(key))
   );
   let isDone = 0;
-  let isInvalidated = 0
+  let isInvalidated = 0;
   let TotalCount = 0;
 
   for (let cat of Object.keys(filteredChecks)) {
     for (let context of Object.values(filteredChecks[cat]["groups"])) {
       for (let e of context) {
-        if ((e.nothingToSelect || Boolean(e.selections))&& !Boolean(e.invalidated)) {
+        if (
+          (e.nothingToSelect || Boolean(e.selections)) &&
+          !Boolean(e.invalidated)
+        ) {
           isDone += 1;
         }
-        if(e.invalidated){
-          isInvalidated += 1
+        if (e.invalidated) {
+          isInvalidated += 1;
         }
         TotalCount += 1;
       }
     }
   }
-  return ({selection : TotalCount===0?0:(isDone / TotalCount) * 100, invalidated:isInvalidated});
+  return {
+    selection: TotalCount === 0 ? 0 : (isDone / TotalCount) * 100,
+    invalidated: isInvalidated,
+  };
 };
 
 export const getProgressAligment = async (repoName, nameArr, originBible) => {
@@ -565,7 +582,7 @@ export const getProgressAligment = async (repoName, nameArr, originBible) => {
             targetWords,
             verseAlignments
           );
-         
+
           totalNumber += 1;
           if (alignmentComplete) {
             number += 1;
