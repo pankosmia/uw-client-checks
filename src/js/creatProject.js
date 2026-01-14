@@ -915,13 +915,15 @@ const generateHelperForTool = async (
   typeOfTools
 ) => {
   let book = getBookFromProjectFileName(selectedProjectFilename);
-  let tsv = parseTsv(
+
+  const tsv = parseTsv(
     await fsGetRust(
       helperFolderName,
       `${book.toUpperCase()}.tsv`,
       "git.door43.org/uW"
     )
   );
+
   const emptyJson = {
     comments: false,
     reminders: false,
@@ -940,18 +942,24 @@ const generateHelperForTool = async (
       occurrence: 1,
     },
   };
-  let categories = {};
+
+  const filesToWrite = {}; // { [filePath]: json[] }
+  const categories = {};   // { [category]: string[] }
+
   for (let i = 1; i < tsv.length; i++) {
     let category = "";
+
     if (typeOfTools === "translationNotes") {
-      if (tsv[i][3] === "") {
-        continue;
-      }
-      category = findCategoriesForTn(tsv[i][3].split("/").slice(-1)[0].trim());
+      if (tsv[i][3] === "") continue;
+      category = findCategoriesForTn(
+        tsv[i][3].split("/").slice(-1)[0].trim()
+      );
     } else {
       category = tsv[i][5].split("/")[2].trim();
     }
-    let newJson = { ...emptyJson };
+
+    let newJson = structuredClone(emptyJson);
+
     newJson.contextId.reference = {
       bookId: book,
       chapter: parseInt(tsv[i][0].split(":")[0]),
@@ -961,13 +969,17 @@ const generateHelperForTool = async (
     newJson.contextId.checkId = tsv[i][1];
 
     let url = "";
+    let categoryKey = "";
+
     if (typeOfTools === "translationNotes") {
       newJson.contextId.groupId = tsv[i][3].split("/").slice(-1)[0];
       newJson.contextId.quote = creatWordList(tsv[i][4]);
       newJson.contextId.occurrence = parseInt(tsv[i][5]);
-
       newJson.contextId.quoteString = tsv[i][4];
       newJson.contextId.occurrenceNote = tsv[i][6];
+
+      categoryKey = newJson.contextId.groupId;
+
       url = join(
         selectedProjectFilename,
         "apps",
@@ -975,7 +987,7 @@ const generateHelperForTool = async (
         "index",
         typeOfTools,
         book,
-        `${tsv[i][3].split("/").slice(-1)[0].trim()}.json`
+        `${categoryKey}.json`
       );
     } else {
       newJson.contextId.quoteString = tsv[i][3];
@@ -983,6 +995,8 @@ const generateHelperForTool = async (
       newJson.contextId.quote = tsv[i][3];
       newJson.contextId.occurrence = parseInt(tsv[i][4]);
 
+      categoryKey = tsv[i][5].split("/")[3].trim();
+
       url = join(
         selectedProjectFilename,
         "apps",
@@ -990,39 +1004,30 @@ const generateHelperForTool = async (
         "index",
         typeOfTools,
         book,
-        `${tsv[i][5].split("/")[3].trim()}.json`
+        `${categoryKey}.json`
       );
     }
 
-    let exist = await fsExistsRust(
-      sourceProjectPath,
-      url,
-      "_local_/_local_",
-      true
-    );
+    // 🔥 Accumulate JSON per file
+    if (!filesToWrite[url]) {
+      filesToWrite[url] = [];
+    }
+    filesToWrite[url].push(newJson);
 
-    if (exist) {
-      let alreadyHereJsonFile = await fsGetRust(sourceProjectPath, url);
-      alreadyHereJsonFile.push(newJson);
-      await fsWriteRust(sourceProjectPath, url, alreadyHereJsonFile);
-    } else {
-      await fsWriteRust(sourceProjectPath, url, [newJson]);
+    // 🔥 Accumulate categories
+    if (!categories[category]) {
+      categories[category] = [];
     }
-    if (categories[category]) {
-      if (typeOfTools === "translationNotes") {
-        categories[category].push(`${tsv[i][3].split("/").slice(-1)[0].trim()}`);
-      } else {
-        categories[category].push(`${tsv[i][5].split("/")[3].trim()}`);
-      }
-    } else {
-      if (typeOfTools === "translationNotes") {
-        categories[category] = [`${tsv[i][3].split("/").slice(-1)[0].trim()}`];
-      } else {
-        categories[category] = [`${tsv[i][5].split("/")[3].trim()}`];
-      }
-    }
+    categories[category].push(categoryKey);
   }
-  for (let c of Object.keys(categories)) {
+
+  // ✅ Write each JSON file ONCE
+  for (const [filePath, jsonArray] of Object.entries(filesToWrite)) {
+    await fsWriteRust(sourceProjectPath, filePath, jsonArray);
+  }
+
+  // ✅ Write category index files
+  for (const category of Object.keys(categories)) {
     await fsWriteRust(
       sourceProjectPath,
       join(
@@ -1033,9 +1038,9 @@ const generateHelperForTool = async (
         typeOfTools,
         book,
         "categoryIndex",
-        `${c}.json`
+        `${category}.json`
       ),
-      categories[c]
+      categories[category]
     );
   }
 };
@@ -1192,11 +1197,6 @@ export const convertToProjectFormat = async (
     selectedProjectFilename,
     parsedUsfm
   );
-  // await moveUsfmFileFromSourceToImports(
-  //   sourceProjectPath,
-  //   manifest,
-  //   selectedProjectFilename
-  // );
   await generateTargetLanguageBibleFromUsfm(
     parsedUsfm,
     manifest,
