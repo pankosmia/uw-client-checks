@@ -29,6 +29,8 @@ export const ButtonDashBoard = ({
   const [invalidatedTn, setInvalidatedTn] = useState(0);
   const [progressWordAlignment, setProgressWordAlignment] = useState(null);
   const [invalidatedTw, setInvalidatedTw] = useState(0);
+  const [numberCategoriesTn,setNumberCategoriesTn] = useState(0)
+  const [numberCategoriesTw,setNumberCategoriesTw] = useState(0)
 
   const tools = ["translationWords", "translationNotes", "wordAlignment"];
   const bookCode = tCoreName.split("_")[2];

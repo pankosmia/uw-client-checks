@@ -367,7 +367,7 @@ export default function SelectBook() {
           </FormControl>
 
           {selectedBurrito && (
-            <ImportZipProject repoName={selectedBurrito.abbreviation} />
+            <ImportZipProject repoName={selectedBurrito.abbreviation} nameBurito={selectedBurrito.name} callBack={() => fetchData()}/>
           )}
         </Box>
       ) : (

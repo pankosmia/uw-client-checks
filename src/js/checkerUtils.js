@@ -510,6 +510,7 @@ export const getProgressChecker = async (
   const filteredChecks = Object.fromEntries(
     Object.entries(checks).filter(([key]) => selectedCategories.includes(key))
   );
+  console.log(checks)
   let isDone = 0;
   let isInvalidated = 0;
   let TotalCount = 0;
