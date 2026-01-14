@@ -71,7 +71,7 @@ const ImportZipProject = ({ repoName, tCoreNameProject, callBack }) => {
           title={`${doI18n(
             "pages:uw-client-checks:import_zip_project",
             i18nRef.current
-          )}  : ${tCoreNameProject}`}
+          )}  : ${repoName}`}
           actions={
             <>
               <FilePicker
