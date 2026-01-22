@@ -13,10 +13,10 @@ import {
   Box,
   Tabs,
   Tab,
-  Fab,
   Typography,
   CircularProgress,
   Divider,
+  Button,
 } from "@mui/material";
 
 import ArrowBack from "@mui/icons-material/ArrowBack";
@@ -88,7 +88,7 @@ function addObjectPropertyToManifest(propertyName, value) {
 function saveToolSettings(
   moduleNamespace,
   settingsPropertyName,
-  toolSettingsData
+  toolSettingsData,
 ) {
   return;
 }
@@ -110,7 +110,7 @@ const editedTargetVerse =
     closeAlert,
     showIgnorableAlert,
     updateTargetVerse,
-    toolApi
+    toolApi,
   ) =>
   (dispatch, getState) => {
     // const state = getState();
@@ -133,7 +133,7 @@ const editedTargetVerse =
 const translate = (key) => {
   const translation = TranslationUtils.lookupTranslationForKey(
     translations,
-    key
+    key,
   );
   if (typeof translation === String) {
     if (translation.includes("translate")) {
@@ -157,7 +157,7 @@ export const ToolWrapper = () => {
   const tools = ["translationWords", "translationNotes", "wordAlignment"];
   const [loadingTool, setLoadingTool] = useState(false);
   const [toolName, setToolName] = useState(
-    location.state?.toolName ?? "translationWords"
+    location.state?.toolName ?? "translationWords",
   );
 
   const [targetBible, setTargetBible] = useState();
@@ -187,15 +187,15 @@ export const ToolWrapper = () => {
     chapter,
     verse,
     newVerseText,
-    targetVerseObjects
+    targetVerseObjects,
   ) => {
     let changeFileVerse = await fsGetRust(
       projectName,
-      `book_projects/${tCoreName}/${book}/${parseInt(chapter)}.json`
+      `book_projects/${tCoreName}/${book}/${parseInt(chapter)}.json`,
     );
     let changeFileAlignment = await fsGetRust(
       projectName,
-      `book_projects/${tCoreName}/apps/translationCore/alignmentData/${book}/${chapter}.json`
+      `book_projects/${tCoreName}/apps/translationCore/alignmentData/${book}/${chapter}.json`,
     );
     let p = changeFileVerse[verse];
     let x = changeFileAlignment[verse];
@@ -205,7 +205,7 @@ export const ToolWrapper = () => {
       targetVerseObjects2,
       typeof targetVerseObjects === typeof {}
         ? newVerseText
-        : targetVerseObjects
+        : targetVerseObjects,
     );
 
     if (Object.keys(alignmentTargetBible).length > 0) {
@@ -229,14 +229,14 @@ export const ToolWrapper = () => {
     await fsWriteRust(
       projectName,
       `book_projects/${tCoreName}/${book}/${parseInt(chapter)}.json`,
-      changeFileVerse
+      changeFileVerse,
     );
     await fsWriteRust(
       projectName,
       `book_projects/${tCoreName}/apps/translationCore/alignmentData/${book}/${parseInt(
-        chapter
+        chapter,
       )}.json`,
-      changeFileAlignment
+      changeFileAlignment,
     );
     setTargetBible((prev) => {
       let p = { ...prev };
@@ -253,7 +253,7 @@ export const ToolWrapper = () => {
           `book_projects/${tCoreName}/apps/translationCore/index/${tool}/${book}`,
           "_local_/_local_",
           false,
-          true
+          true,
         );
         let isVerseSpan = verseHelpers.isVerseSpan(verse);
         if (isVerseSpan) {
@@ -268,16 +268,17 @@ export const ToolWrapper = () => {
                     (e) =>
                       e.contextId.reference.chapter === parseInt(chapter) &&
                       e.contextId.reference.verse >= parseInt(low) &&
-                      e.contextId.reference.verse <= parseInt(high)
-                  )
-              )
+                      e.contextId.reference.verse <= parseInt(high),
+                  ),
+              ),
           );
 
           for (let [nameFile, values] of Object.entries(cat)) {
             let newValues = values;
             for (let i = 0; i < values.length; i++) {
               if (
-                newValues[i].contextId.reference.chapter === parseInt(chapter) &&
+                newValues[i].contextId.reference.chapter ===
+                  parseInt(chapter) &&
                 newValues[i].contextId.reference.verse >= parseInt(low) &&
                 newValues[i].contextId.reference.verse <= parseInt(high)
               ) {
@@ -287,7 +288,7 @@ export const ToolWrapper = () => {
             await fsWriteRust(
               projectName,
               `book_projects/${tCoreName}/apps/translationCore/index/${tool}/${book}/${nameFile}`,
-              newValues
+              newValues,
             );
           }
         } else {
@@ -300,9 +301,9 @@ export const ToolWrapper = () => {
                   parsed.some(
                     (e) =>
                       e.contextId.reference.chapter === chapter &&
-                      e.contextId.reference.verse === parseInt(verse)
-                  )
-              )
+                      e.contextId.reference.verse === parseInt(verse),
+                  ),
+              ),
           );
           for (let [nameFile, values] of Object.entries(cat)) {
             let newValues = values;
@@ -317,16 +318,15 @@ export const ToolWrapper = () => {
             await fsWriteRust(
               projectName,
               `book_projects/${tCoreName}/apps/translationCore/index/${tool}/${book}/${nameFile}`,
-              newValues
+              newValues,
             );
           }
-          
         }
         await fsWriteRust(
-            projectName,
-            `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid/${chapter}/${verse}.json`,
-            { timestamp: new Date().toISOString() }
-          );
+          projectName,
+          `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid/${chapter}/${verse}.json`,
+          { timestamp: new Date().toISOString() },
+        );
       }
     }
   };
@@ -340,7 +340,7 @@ export const ToolWrapper = () => {
       let categories = await fsGetRust(
         "en_ta",
         "translate/toc.yaml",
-        "git.door43.org/uW"
+        "git.door43.org/uW",
       );
       let dataYaml = yaml.load(categories);
       const linkTitleMap = buildLinkTitleMap(dataYaml.sections);
@@ -353,7 +353,7 @@ export const ToolWrapper = () => {
 
     let json2 = await fsGetRust(
       projectName,
-      `book_projects/${tCoreName}/apps/translationCore/index/${toolName}/${book}/${index}.json`
+      `book_projects/${tCoreName}/apps/translationCore/index/${toolName}/${book}/${index}.json`,
     );
 
     // Ensure it's an array with at least 1 item
@@ -391,7 +391,7 @@ export const ToolWrapper = () => {
     await fsWriteRust(
       projectName,
       `book_projects/${tCoreName}/apps/translationCore/index/${toolName}/${book}/${index}.json`,
-      json2
+      json2,
     );
     // for (let [e, val] of Object.entries(checkingData)) {
     //   for (let k of Object.keys(val)) {
@@ -419,8 +419,8 @@ export const ToolWrapper = () => {
               alignBible[c][v]["verseObjects"] = usfmVerseToJson(
                 addAlignmentsToTargetVerseUsingMerge(
                   targetBible[c][v],
-                  rest[c][v]
-                )
+                  rest[c][v],
+                ),
               );
             }
           }
@@ -447,7 +447,7 @@ export const ToolWrapper = () => {
             book,
             "target_language",
             "_local_/_local_",
-            true
+            true,
           ),
           isOldTestament(book)
             ? getBookFromName(
@@ -455,21 +455,21 @@ export const ToolWrapper = () => {
                 "",
                 book,
                 "original_language",
-                "git.door43.org/uW"
+                "git.door43.org/uW",
               )
             : getBookFromName(
                 "grc_ugnt",
                 "",
                 book,
                 "original_language",
-                "git.door43.org/uW"
+                "git.door43.org/uW",
               ),
           getBookFromName(
             "en_ult",
             "",
             book,
             "gateway_language",
-            "git.door43.org/uW"
+            "git.door43.org/uW",
           ),
           getLexiconData(isOldTestament(book) ? "en_uhl" : "en_ugl"),
         ]);
@@ -493,8 +493,8 @@ export const ToolWrapper = () => {
           projectName,
           `book_projects/${tCoreName}`,
           book,
-          "target_language"
-        )
+          "target_language",
+        ),
       );
       let toolData;
       if (toolName === "translationWords") {
@@ -502,7 +502,7 @@ export const ToolWrapper = () => {
           toolData = await getglTwData(
             "en_tw",
             projectName,
-            `book_projects/${tCoreName}`
+            `book_projects/${tCoreName}`,
           );
           setDataTW(toolData);
         }
@@ -513,7 +513,7 @@ export const ToolWrapper = () => {
             "en_ta",
             "git.door43.org/uW",
             toolData,
-            false
+            false,
           );
 
           setDataTn(toolData);
@@ -524,19 +524,19 @@ export const ToolWrapper = () => {
           projectName,
           `book_projects/${tCoreName}`,
           book,
-          toolName
+          toolName,
         );
         if (toolName === "translationNotes") {
           checkingRes = await removeNotServiceTNCategories(
             "en_ta",
             "git.door43.org/uW",
-            checkingRes
+            checkingRes,
           );
 
           checkingRes = await changeTnCategories(
             "en_ta",
             "git.door43.org/uW",
-            checkingRes
+            checkingRes,
           );
         }
 
@@ -622,7 +622,7 @@ export const ToolWrapper = () => {
     delete newVerseAlignment["alignment"];
     let alignment = await fsGetRust(
       projectName,
-      `book_projects/${tCoreName}/apps/translationCore/alignmentData/${book}/${results.contextId.reference.chapter}.json`
+      `book_projects/${tCoreName}/apps/translationCore/alignmentData/${book}/${results.contextId.reference.chapter}.json`,
     );
     setAlignementTargetBibles((prev) => {
       const chapter = results.contextId.reference.chapter;
@@ -644,12 +644,12 @@ export const ToolWrapper = () => {
     await fsWriteRust(
       projectName,
       `book_projects/${tCoreName}/apps/translationCore/alignmentData/${book}/${results.contextId.reference.chapter}.json`,
-      alignment
+      alignment,
     );
     await deleteIngredient(
       projectName,
       `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid/${results.contextId.reference.chapter}/${results.contextId.reference.verse}.json`,
-      true
+      true,
     );
   }
   const showPopover = (PopoverTitle, wordDetails, positionCoord, rawData) => {
@@ -670,12 +670,12 @@ export const ToolWrapper = () => {
             alignmentTargetBible,
             toolName,
             originBible,
-            translate
+            translate,
           );
 
         let invalidAlignmentChapter = await fsGetRust(
           projectName,
-          `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid`
+          `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid`,
         );
         for (let c of invalidAlignmentChapter) {
           let invVerse = await fsGetRust(
@@ -683,13 +683,14 @@ export const ToolWrapper = () => {
             `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid/${c}`,
             "_local_/_local_",
             false,
-            true
+            true,
           );
           for (let v of Object.keys(invVerse)) {
             if (groupsData[`chapter_${c}`]) {
               let index = groupsData[`chapter_${c}`].findIndex(
-                (e) => e.contextId.reference.verse === v.split(".")[0]
-                && !v.endsWith(".bak")
+                (e) =>
+                  e.contextId.reference.verse === v.split(".")[0] &&
+                  !v.endsWith(".bak"),
               );
               if (index >= 0) {
                 groupsData[`chapter_${c}`][index]["invalid"] = true;
@@ -717,8 +718,8 @@ export const ToolWrapper = () => {
     (toolName === "translationWords"
       ? dataTw != null
       : toolName === "translationNotes"
-      ? dataTn != null
-      : true) &&
+        ? dataTn != null
+        : true) &&
     contextId != null &&
     lexicon != null &&
     saveCheckingData != null &&
@@ -732,27 +733,26 @@ export const ToolWrapper = () => {
           display: "flex",
           alignItems: "center",
           px: 2,
+          height: "48px",
           marginTop: "4px",
         }}
       >
         {/* LEFT: Back button */}
-        <Fab
-          variant="extended"
+        <Button
           color="primary"
           size="small"
+          sx={{ marginX: 1 }}
           aria-label={doI18n(
             "pages:uw-client-checks:book_projects",
-            i18nRef.current
+            i18nRef.current,
           )}
-          onClick={() =>
-            (window.location.href = `/clients/main/#/${projectName}`)
-          }
+          onClick={() => (window.location.href = `/clients/uw-client-checks#`)}
         >
           <ArrowBack sx={{ mr: 1 }} />
           <Typography variant="body2">
             {doI18n("pages:uw-client-checks:back", i18nRef.current)}
           </Typography>
-        </Fab>
+        </Button>
         {/* CENTER: Tabs */}
         <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <Tabs
@@ -770,7 +770,7 @@ export const ToolWrapper = () => {
 
         {/* RIGHT spacer to keep tabs centered */}
         <Box sx={{ width: 140 }}>
-          <Typography variant="h4" fontWeight="bold">
+          <Typography variant="h5" fontWeight="bold">
             {isOldTestament(book)
               ? BIBLE_BOOKS["oldTestament"][book]
               : BIBLE_BOOKS["newTestament"][book]}

@@ -1,4 +1,8 @@
-import { getBookFromName, getProgressChecker } from "../checkerUtils";
+import {
+  getBookFromName,
+  getProgressChecker,
+  getSelectedChecksCategories,
+} from "../checkerUtils";
 import { useEffect, useState } from "react";
 import {
   LinearProgress,
@@ -6,13 +10,14 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
-import {Tooltip} from "@mui/material";
+import { Tooltip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getProgressAligment } from "../checkerUtils";
 import { isOldTestament } from "../creatProject";
 import InvalidatedIcon from "../ui_tool_kit/InvalidatedIcon";
 import { doI18n, i18nContext } from "pithekos-lib";
 import { useContext } from "react";
+
 export const ButtonDashBoard = ({
   projectName,
   tCoreName,
@@ -26,14 +31,85 @@ export const ButtonDashBoard = ({
     useState(null);
   const [progressTranslationNotes, setProgressTranslationNotes] =
     useState(null);
-  const [invalidatedTn, setInvalidatedTn] = useState(0);
   const [progressWordAlignment, setProgressWordAlignment] = useState(null);
+
+  const [invalidatedTn, setInvalidatedTn] = useState(0);
   const [invalidatedTw, setInvalidatedTw] = useState(0);
-  const [numberCategoriesTn,setNumberCategoriesTn] = useState(0)
-  const [numberCategoriesTw,setNumberCategoriesTw] = useState(0)
+  const [invalidatedAlignment, setInvalidatedAlignment] = useState(0);
+
+  const [numberCategoriesTn, setNumberCategoriesTn] = useState([]);
+  const [numberCategoriesTw, setNumberCategoriesTw] = useState([]);
+
+  async function getCategories() {
+    let categories = await getSelectedChecksCategories(
+      projectName,
+      "book_projects/" + tCoreName,
+    );
+    if (categories) {
+      let maxtn = 0;
+      let maxtw = 0;
+      let numbertn = 0;
+      let numbertw = 0;
+      for (let [values, entries] of Object.entries(
+        categories["translationWords"],
+      )) {
+        if (entries) {
+          numbertw += 1;
+        }
+        maxtw += 1;
+      }
+      for (let [values, entries] of Object.entries(
+        categories["translationNotes"],
+      )) {
+        for (let [v2, e2] of Object.entries(entries)) {
+          if (e2) {
+            numbertn += 1;
+          }
+          maxtn += 1;
+        }
+      }
+
+      setNumberCategoriesTn([numbertn, maxtn]);
+      setNumberCategoriesTw([numbertw, maxtw]);
+    }
+  }
 
   const tools = ["translationWords", "translationNotes", "wordAlignment"];
   const bookCode = tCoreName.split("_")[2];
+
+  const getNumberCategories = (tool) => {
+    switch (tool) {
+      case "translationNotes":
+        if (numberCategoriesTn.length > 0) {
+          return (
+            doI18n("pages:uw-client-checks:categories", i18nRef.current) +
+            " " +
+            numberCategoriesTn[0] +
+            "/" +
+            numberCategoriesTn[1]
+          );
+        } else {
+          return "";
+        }
+      case "translationWords":
+        if (numberCategoriesTw.length > 0) {
+          return (
+            doI18n("pages:uw-client-checks:categories", i18nRef.current) +
+            " " +
+            numberCategoriesTw[0] +
+            "/" +
+            numberCategoriesTw[1]
+          );
+        } else {
+          return "";
+        }
+      case "wordAlignment":
+        return "";
+      default:
+        return 0;
+    }
+  };
+
   const getInvalidatedCount = (tool) => {
     switch (tool) {
       case "translationNotes":
@@ -41,7 +117,7 @@ export const ButtonDashBoard = ({
       case "translationWords":
         return invalidatedTw;
       case "wordAlignment":
-        return 0;
+        return invalidatedAlignment;
       default:
         return 0;
     }
@@ -54,7 +130,7 @@ export const ButtonDashBoard = ({
         projectName,
         `book_projects/${tCoreName}`,
         bookCode,
-        lexiconNameForProgress
+        lexiconNameForProgress,
       ).then((e) => {
         setProgressTranslationNotes(e.selection || 0);
         setInvalidatedTn(e.invalidated);
@@ -65,7 +141,7 @@ export const ButtonDashBoard = ({
         ["names", "kt", "other"],
         projectName,
         `book_projects/${tCoreName}`,
-        bookCode
+        bookCode,
       ).then((e) => {
         setProgressTranslationWords(e.selection || 0);
         setInvalidatedTw(e.invalidated);
@@ -76,23 +152,26 @@ export const ButtonDashBoard = ({
             "",
             tCoreName.split("_")[2],
             "original_language",
-            "git.door43.org/uW"
+            "git.door43.org/uW",
           ).then((book) =>
-            getProgressAligment(projectName, tCoreName, book).then((r) =>
-              setProgressWordAlignment(r)
-            )
+            getProgressAligment(projectName, tCoreName, book).then((r) => {
+              setProgressWordAlignment(r.selection || 0);
+              setInvalidatedAlignment(r.invalidated);
+            }),
           )
         : getBookFromName(
             "grc_ugnt",
             "",
             tCoreName.split("_")[2],
             "original_language",
-            "git.door43.org/uW"
+            "git.door43.org/uW",
           ).then((book) =>
-            getProgressAligment(projectName, tCoreName, book).then((r) =>
-              setProgressWordAlignment(r)
-            )
+            getProgressAligment(projectName, tCoreName, book).then((r) => {
+              setProgressWordAlignment(r.selection || 0);
+              setInvalidatedAlignment(r.invalidated);
+            }),
           );
+      getCategories();
     }
   }, [projectName, tCoreName, bookCode, openedBooks]);
 
@@ -165,12 +244,12 @@ export const ButtonDashBoard = ({
             }}
           >
             <Typography fontWeight={600}>{tool}</Typography>
-
+            <Typography>{getNumberCategories(tool)}</Typography>
             {getInvalidatedCount(tool) > 0 && (
               <Tooltip
                 title={doI18n(
                   "pages:uw-client-checks:invalidate_checks",
-                  i18nRef.current
+                  i18nRef.current,
                 )}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>

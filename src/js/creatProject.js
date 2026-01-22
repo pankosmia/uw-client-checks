@@ -978,7 +978,7 @@ const generateHelperForTool = async (
       newJson.contextId.quoteString = tsv[i][4];
       newJson.contextId.occurrenceNote = tsv[i][6];
 
-      categoryKey = newJson.contextId.groupId;
+      categoryKey = newJson.contextId.groupId.replace(/\s+/g, "").trim();;
 
       url = join(
         selectedProjectFilename,
@@ -995,8 +995,8 @@ const generateHelperForTool = async (
       newJson.contextId.quote = tsv[i][3];
       newJson.contextId.occurrence = parseInt(tsv[i][4]);
 
-      categoryKey = tsv[i][5].split("/")[3].trim();
-
+      categoryKey = tsv[i][5].split("/")[3].replace(/\s+/g, "").trim();
+      
       url = join(
         selectedProjectFilename,
         "apps",
@@ -1008,13 +1008,11 @@ const generateHelperForTool = async (
       );
     }
 
-    // 🔥 Accumulate JSON per file
     if (!filesToWrite[url]) {
       filesToWrite[url] = [];
     }
     filesToWrite[url].push(newJson);
 
-    // 🔥 Accumulate categories
     if (!categories[category]) {
       categories[category] = [];
     }

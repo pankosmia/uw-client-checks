@@ -1,10 +1,18 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
-import { doI18n, i18nContext } from "pithekos-lib";
+import {
+  doI18n,
+  i18nContext,
+  currentProjectContext,
+  netContext,
+  debugContext,
+} from "pithekos-lib";
 import AddIcon from "@mui/icons-material/Add";
 import CircularProgress from "@mui/material/CircularProgress";
 import DeleteDialogueButton from "../js/components/DeleteDialogueButton";
+import ArrowBack from "@mui/icons-material/ArrowBack";
 import CheckerSetting from "../js/components/CheckerSetting";
+import LZString from "lz-string";
 import {
   Box,
   Button,
@@ -27,8 +35,12 @@ import { fsGetRust, fsWriteRust } from "../js/serverUtils";
 import { isOldTestament } from "../js/creatProject";
 import ButtonDashBoard from "../js/components/ButtonDashBoard";
 import AppDialog from "../js/components/AppDialog";
-
+import { InternetSwitch } from "pankosmia-rcl";
 export default function SelectBook() {
+  const { enabledRef } = useContext(netContext);
+  const { debugRef } = useContext(debugContext);
+  const { currentProjectRef } = useContext(currentProjectContext);
+
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const { i18nRef } = useContext(i18nContext);
   const [inDirectory, setInDirectory] = useState([]);
@@ -50,7 +62,6 @@ export default function SelectBook() {
 
   const [initializing, setInitializing] = useState([]);
 
-  const { optional_project } = useParams();
   useEffect(() => {
     if (globalResourcesStatus && !allResourcesPresent) {
       setOpenResourcesDialog(true);
@@ -59,7 +70,7 @@ export default function SelectBook() {
 
   useEffect(() => {
     async function fetchSummaries() {
-      if (optional_project) {
+      if (currentProjectRef.current) {
         try {
           const response = await getJson("/burrito/metadata/summaries");
           if (!response.ok) throw new Error(`HTTP error ${response.status}`);
@@ -74,7 +85,12 @@ export default function SelectBook() {
           const scriptures = burritoArray.find(
             (item) =>
               item?.flavor === "x-tcore" &&
-              item?.abbreviation === optional_project
+              item?.path ===
+                currentProjectRef.current.source +
+                  "/" +
+                  currentProjectRef.current.organization +
+                  "/" +
+                  currentProjectRef.current.project,
           );
           setSelectedBurrito(scriptures);
         } catch (err) {
@@ -84,7 +100,7 @@ export default function SelectBook() {
       }
     }
     fetchSummaries();
-  }, []);
+  }, [currentProjectRef.current]);
   useEffect(() => {
     async function runGlobalCheck() {
       const status = await checkRequiredResources();
@@ -105,12 +121,23 @@ export default function SelectBook() {
     "git.door43.org/uW/en_ta",
     "git.door43.org/uW/en_uhl",
   ];
-
-  const handleSelectBurrito = (event) => {
-    const name = event.target.value;
-    const burrito = burritos.find((b) => b.name === name);
-    setSelectedBurrito(burrito);
-  };
+  const compressed = LZString.compressToEncodedURIComponent(
+    JSON.stringify({
+      "git.door43.org": {
+        uW: [
+          "en_tn",
+          "en_tw",
+          "en_ugl",
+          "grc_ugnt",
+          "hbo_uhb",
+          "en_ust",
+          "en_ult",
+          "en_ta",
+          "en_uhl",
+        ],
+      },
+    }),
+  );
 
   useEffect(() => {
     async function fetchSummaries() {
@@ -126,7 +153,7 @@ export default function SelectBook() {
 
         // Filter only scripture burritos
         const scriptures = burritoArray.filter(
-          (item) => item?.flavor === "x-tcore"
+          (item) => item?.flavor === "x-tcore",
         );
         if (scriptures.length < 1) {
           setBurritos(null);
@@ -163,7 +190,7 @@ export default function SelectBook() {
       .find(
         ([, manifest]) =>
           manifest.abbreviation.toUpperCase() === AbrName.toUpperCase() ||
-          manifest.abbreviation.toLowerCase() === AbrName.toLowerCase()
+          manifest.abbreviation.toLowerCase() === AbrName.toLowerCase(),
       );
 
     if (!entry) return null;
@@ -173,18 +200,21 @@ export default function SelectBook() {
 
   async function fetchData() {
     try {
-      const url = `/burrito/paths/_local_/_local_/${selectedBurrito.abbreviation}`;
-      const res = await getJson(url);
-      const data = await res.json;
-      const ipath = "book_projects";
-      const children = data
-        .filter((item) => item.startsWith(ipath + "/"))
-        .map((item) => item.replace(ipath + "/", ""));
-      setTree(children);
+      if (selectedBurrito) {
+        const url = `/burrito/paths/_local_/_local_/${selectedBurrito.abbreviation}`;
+        const res = await getJson(url);
+        const data = await res.json;
+        const ipath = "book_projects";
+        const children = data
+          .filter((item) => item.startsWith(ipath + "/"))
+          .map((item) => item.replace(ipath + "/", ""));
+        setTree(children);
+      }
     } catch (err) {
       console.error(err);
     }
   }
+
   useEffect(() => {
     if (selectedBurrito) {
       fetchData();
@@ -195,7 +225,7 @@ export default function SelectBook() {
     bookCode,
     manifestPath,
     currentProject,
-    projectExemple
+    projectExemple,
   ) => {
     try {
       let nameProject = manifestPath.split("/")[2];
@@ -209,7 +239,7 @@ export default function SelectBook() {
       await fsWriteRust(
         currentProject,
         `book_projects/${name}/${bookCode.toLowerCase()}.usfm`,
-        usfm
+        usfm,
       );
       fetchData();
       setOpenModal(false);
@@ -222,19 +252,19 @@ export default function SelectBook() {
   }
   const handleTryConvert = async (
     sourceProjectPath,
-    selectedProjectFilename
+    selectedProjectFilename,
   ) => {
     try {
       await convertToProjectFormat(
         sourceProjectPath,
-        "book_projects/" + selectedProjectFilename + "/"
+        "book_projects/" + selectedProjectFilename + "/",
       );
       fetchData();
       setInitializing((prev) =>
         prev.filter(
           ([p2, t2]) =>
-            !(p2 === sourceProjectPath && t2 === selectedProjectFilename)
-        )
+            !(p2 === sourceProjectPath && t2 === selectedProjectFilename),
+        ),
       );
     } catch (error) {
       alert("Conversion failed — see console for details.");
@@ -258,7 +288,7 @@ export default function SelectBook() {
         await getJson(BASE_URL + "/burrito/metadata/summaries")
       ).json;
       const projectManifest = Object.values(manifestsObj).find(
-        (e) => e.abbreviation === name.split("_")[0].toUpperCase()
+        (e) => e.abbreviation === name.split("_")[0].toUpperCase(),
       );
 
       for (let book of projectManifest.book_codes) {
@@ -283,19 +313,19 @@ export default function SelectBook() {
             errors[book].push(
               `${e} ${doI18n(
                 "pages:uw-client-checks:required_ressources_check",
-                i18nRef.current
-              )}`
+                i18nRef.current,
+              )}`,
             );
           } else {
             if (!manifestsObj[e].book_codes.includes(book)) {
               errors[book].push(
                 `${e} ${doI18n(
                   "pages:uw-client-checks:doesnt_have",
-                  i18nRef.current
+                  i18nRef.current,
                 )} ${book} ${doI18n(
                   "pages:uw-client-checks:scope",
-                  i18nRef.current
-                )}`
+                  i18nRef.current,
+                )}`,
               );
             }
           }
@@ -308,7 +338,7 @@ export default function SelectBook() {
       checkResourcesForBookCode(selectedBurrito.abbreviation).then(
         (responceError) => {
           setErrorsData(responceError);
-        }
+        },
       );
     }
   }, [selectedBurrito]);
@@ -327,12 +357,65 @@ export default function SelectBook() {
           language: splitname[0],
           hasManifest: find_manifest(rep),
         };
-      })
+      }),
     );
   }, [inDirectory, selectedBurrito]);
 
   return (
-    <Box sx={{}}>
+    <Box
+      sx={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          px: 2,
+          height: "48px",
+          marginTop: "4px",
+          flexShrink: 0,
+        }}
+      >
+        {/* LEFT: Back button */}
+        <Button
+          color="primary"
+          size="small"
+          sx={{ marginX: 1 }}
+          aria-label={doI18n(
+            "pages:uw-client-checks:book_projects",
+            i18nRef.current,
+          )}
+          onClick={() => (window.location.href = `/clients/main/`)}
+        >
+          <ArrowBack sx={{ mr: 1 }} />
+          <Typography variant="body2">
+            {doI18n("pages:uw-client-checks:back", i18nRef.current)}
+          </Typography>
+        </Button>
+        <Box>
+          <Button
+            sx={{ marginX: 1 }}
+            variant="outlined"
+            aria-label={doI18n("pages:content:fab_import", i18nRef.current)}
+            onClick={(event) => setOpenModal(event.currentTarget)}
+          >
+            <AddIcon sx={{ mr: 1 }} />
+            <Typography variant="body2">
+              {doI18n("pages:uw-client-checks:add_book", i18nRef.current)}
+            </Typography>
+          </Button>
+        </Box>
+        {selectedBurrito && (
+          <ImportZipProject
+            repoName={selectedBurrito.abbreviation}
+            nameBurito={selectedBurrito.name}
+            callBack={() => fetchData()}
+          />
+        )}
+      </Box>
       {burritos ? (
         <Box
           sx={{
@@ -345,7 +428,7 @@ export default function SelectBook() {
             py: 1,
           }}
         >
-          <FormControl disabled={!allResourcesPresent} sx={{ minWidth: 320 }}>
+          {/* <FormControl disabled={!allResourcesPresent} sx={{ minWidth: 320 }}>
             <TextField
               required
               disabled={!allResourcesPresent}
@@ -364,11 +447,7 @@ export default function SelectBook() {
                 </MenuItem>
               ))}
             </TextField>
-          </FormControl>
-
-          {selectedBurrito && (
-            <ImportZipProject repoName={selectedBurrito.abbreviation} nameBurito={selectedBurrito.name} callBack={() => fetchData()}/>
-          )}
+          </FormControl> */}
         </Box>
       ) : (
         <Box
@@ -384,7 +463,7 @@ export default function SelectBook() {
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
             {doI18n(
               "pages:uw-client-checks:no_tCoreProject_found",
-              i18nRef.current
+              i18nRef.current,
             )}
           </Typography>
 
@@ -396,64 +475,35 @@ export default function SelectBook() {
           >
             {doI18n(
               "pages:uw-client-checks:creat_tCore_project",
-              i18nRef.current
+              i18nRef.current,
             )}
           </Button>
         </Box>
       )}
-      <Divider
-        sx={{
-          my: 3,
-          borderColor: "divider",
-        }}
-      />
       {selectedBurrito ? (
-        <Box sx={{ px: 2 }}>
+        <Box sx={{display: "contents" }}>
           <Box
             sx={{
               mb: 2,
+              px: 2
             }}
           >
-            <Fab
-              variant="extended"
-              color="primary"
-              size="small"
-              aria-label={doI18n("pages:content:fab_import", i18nRef.current)}
-              onClick={(event) => setOpenModal(event.currentTarget)}
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                padding: "0px",
-
-                width: "160px",
-                height: "40px",
-
-                backgroundColor: "#014263",
-                boxShadow:
-                  "0px 1px 18px rgba(0, 0, 0, 0.12), " +
-                  "0px 6px 10px rgba(0, 0, 0, 0.14), " +
-                  "0px 3px 5px -1px rgba(0, 0, 0, 0.2)",
-
-                borderRadius: "100px",
-
-                flex: "none",
-                order: 3,
-                flexGrow: 0,
-
-                // optional: prevent MUI default hover color override
-              }}
-            >
-              <AddIcon sx={{ mr: 1 }} />
-              <Typography variant="body2">
-                {doI18n("pages:uw-client-checks:add_book", i18nRef.current)}
-              </Typography>
-            </Fab>
             <Typography variant="h6" fontWeight={600}>
-              {doI18n("pages:uw-client-checks:book", i18nRef.current)}
+              {selectedBurrito.name}
+              {/* {doI18n("pages:uw-client-checks:book", i18nRef.current)} */}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              px:2,
+              flexGrow: 1, // ⬅️ take remaining space
+              minHeight: 0, // ⬅️ REQUIRED for flex scrolling
+              overflowY: "auto",
+            }}
+          >
             {books.map((book) => (
               <Accordion
                 expanded={openedBooks.has(book.bookCode)}
@@ -497,14 +547,14 @@ export default function SelectBook() {
                         <Typography color="success.main" fontWeight={600}>
                           {doI18n(
                             `pages:uw-client-checks:ready`,
-                            i18nRef.current
+                            i18nRef.current,
                           )}
                         </Typography>
                       ) : (
                         <Typography color="warning.main" fontWeight={600}>
                           {doI18n(
                             `pages:uw-client-checks:need_initalisation`,
-                            i18nRef.current
+                            i18nRef.current,
                           )}
                         </Typography>
                       )}
@@ -536,7 +586,7 @@ export default function SelectBook() {
                           color="warning"
                           disabled={initializing.some(
                             ([p2, t2]) =>
-                              p2 === book.projectName && t2 === book.tCoreName
+                              p2 === book.projectName && t2 === book.tCoreName,
                           )}
                           onClick={async () => {
                             if (errorsData[book.bookCode]?.length > 0) {
@@ -549,20 +599,20 @@ export default function SelectBook() {
                               ]);
                               await handleTryConvert(
                                 book.projectName,
-                                book.tCoreName
+                                book.tCoreName,
                               );
                             }
                           }}
                         >
                           {initializing.some(
                             ([p2, t2]) =>
-                              p2 === book.projectName && t2 === book.tCoreName
+                              p2 === book.projectName && t2 === book.tCoreName,
                           ) ? (
                             <CircularProgress size={18} color="inherit" />
                           ) : (
                             doI18n(
                               "pages:uw-client-checks:to_initialised",
-                              i18nRef.current
+                              i18nRef.current,
                             )
                           )}
                         </Button>
@@ -577,35 +627,38 @@ export default function SelectBook() {
                       }}
                     >
                       <Box sx={{ gap: 1, display: "flex" }}>
-                         {book.hasManifest ?
-                        <CheckerSetting
-                          repoName={selectedBurrito.abbreviation}
-                          tCoreNameProject={book.tCoreName}
-                          callBack={() => {
-                            setOpenedBooks((prev) => {
-                              const next = new Set(prev);
+                        {book.hasManifest ? (
+                          <CheckerSetting
+                            repoName={selectedBurrito.abbreviation}
+                            tCoreNameProject={book.tCoreName}
+                            callBack={() => {
+                              setOpenedBooks((prev) => {
+                                const next = new Set(prev);
 
-                              if (next.has(book.bookCode)) {
-                                next.delete(book.bookCode); // close → remove
-                              } else {
-                                next.add(book.bookCode); // open → add
-                              }
+                                if (next.has(book.bookCode)) {
+                                  next.delete(book.bookCode); // close → remove
+                                } else {
+                                  next.add(book.bookCode); // open → add
+                                }
 
-                              return next;
-                            });
-                            setOpenedBooks((prev) => {
-                              const next = new Set(prev);
+                                return next;
+                              });
+                              setOpenedBooks((prev) => {
+                                const next = new Set(prev);
 
-                              if (next.has(book.bookCode)) {
-                                next.delete(book.bookCode); // close → remove
-                              } else {
-                                next.add(book.bookCode); // open → add
-                              }
+                                if (next.has(book.bookCode)) {
+                                  next.delete(book.bookCode); // close → remove
+                                } else {
+                                  next.add(book.bookCode); // open → add
+                                }
 
-                              return next;
-                            });
-                          }}
-                        />:<></>}
+                                return next;
+                              });
+                            }}
+                          />
+                        ) : (
+                          <></>
+                        )}
                         <DeleteDialogueButton
                           repoName={selectedBurrito.abbreviation}
                           tCoreNameProject={book.tCoreName}
@@ -620,22 +673,8 @@ export default function SelectBook() {
           </Box>
         </Box>
       ) : (
-        <Box sx={{ px: 2 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-            }}
-          >
-            <Typography variant="h6" fontWeight={600}>
-              {doI18n("pages:uw-client-checks:books", i18nRef.current)}
-            </Typography>
-          </Box>
-        </Box>
+       <></>
       )}
-
       <AppDialog
         open={openModal}
         onClose={handleCloseModal}
@@ -666,7 +705,7 @@ export default function SelectBook() {
                       handleAddBook(
                         code,
                         manifestPath[0],
-                        selectedBurrito.abbreviation
+                        selectedBurrito.abbreviation,
                       );
                     }
                   }}
@@ -686,7 +725,7 @@ export default function SelectBook() {
         maxWidth="md"
         title={doI18n(
           "pages:uw-client-checks:required_ressources_check",
-          i18nRef.current
+          i18nRef.current,
         )}
         actions={
           <>
@@ -701,7 +740,7 @@ export default function SelectBook() {
                 setOpenCheckModal(false);
                 await handleTryConvert(
                   pendingConvert.sourceProjectPath,
-                  pendingConvert.selectedProjectFilename
+                  pendingConvert.selectedProjectFilename,
                 );
               }}
             >
@@ -734,7 +773,7 @@ export default function SelectBook() {
           <Typography>
             {doI18n(
               "pages:uw-client-checks:checking_ressources",
-              i18nRef.current
+              i18nRef.current,
             )}
           </Typography>
         )}
@@ -764,15 +803,28 @@ export default function SelectBook() {
         maxWidth="md"
         title={doI18n(
           "pages:uw-client-checks:required_ressources_check",
-          i18nRef.current
+          i18nRef.current,
         )}
         actions={
-          <Button
-            variant="contained"
-            onClick={() => (window.location.href = "/clients/content")}
-          >
-            {doI18n("pages:uw-client-checks:manage_content", i18nRef.current)}
-          </Button>
+          <>
+            <Button
+              disabled={!enabledRef.current}
+              variant="contained"
+              onClick={() =>
+                (window.location.href = `/clients/download#/subList?data=${compressed}`)
+              }
+            >
+              {doI18n("pages:uw-client-checks:go_to_download", i18nRef.current)}
+            </Button>
+
+            <Button
+              disabled={enabledRef.current}
+              variant="contained"
+              onClick={() => (window.location.href = `/clients/content`)}
+            >
+              {doI18n("pages:uw-client-checks:manage_content", i18nRef.current)}
+            </Button>
+          </>
         }
       >
         <Typography sx={{ mb: 2 }}>
@@ -793,12 +845,19 @@ export default function SelectBook() {
                 }}
               >
                 <Typography>{r.path}</Typography>
-                {/* <Typography color="error" fontWeight={600}>
-                  {doI18n("pages:uw-client-checks:missing", i18nRef.current)}
-                </Typography> */}
               </Box>
             ))}
         </Box>
+
+        <Typography sx={{ mt: 2, mb: 1 }}>
+          You can download or sideLoad these resources
+        </Typography>
+
+        <InternetSwitch
+          i18n={i18nRef.current}
+          netEnabled={enabledRef.current}
+          debug={debugRef.current}
+        />
       </AppDialog>
     </Box>
   );

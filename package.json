@@ -2,7 +2,7 @@
   "name": "uw-client-checks",
   "version": "0.0.9",
   "private": true,
-  "homepage": "/clients/main",
+  "homepage": "/clients/uw-client-checks",
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -15,6 +15,8 @@
     "bible-reference-range": "^1.1.1",
     "eslint-config-react-app": "^7.0.1",
     "js-yaml": "^4.1.1",
+    "lz-string": "^1.5.0",
+    "pankosmia-rcl": "^0.1.6",
     "path-browserify": "^1.0.1",
     "pithekos-lib": "^0.11.20",
     "react": "^17.0.0 || ^18.0.0",

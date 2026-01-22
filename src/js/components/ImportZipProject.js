@@ -12,6 +12,7 @@ import {
   AccordionDetails,
   AccordionSummary,
 } from "@mui/material";
+import { DriveFolderUpload } from "@mui/icons-material";
 import { FilePicker } from "react-file-picker";
 import { deleteBookProject } from "../serverUtils";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -33,7 +34,7 @@ const ImportZipProject = ({ repoName, nameBurito, callBack }) => {
       method: "POST",
       body: formData,
     });
-    callBack()
+    callBack();
     if (!response.ok) {
       throw new Error("Upload failed");
     }
@@ -43,23 +44,15 @@ const ImportZipProject = ({ repoName, nameBurito, callBack }) => {
   return (
     <>
       <Button
+        variant="outlined"
         sx={{
-          height: 36,
-          opacity: 1,
-          pt: 1.5, // padding-top: 6px
-          pr: 2, // padding-right: 16px
-          pb: 1.5, // padding-bottom: 6px
-          pl: 2, // padding-left: 16px
           marginX: 1,
-          borderRadius: 1, // or your theme's borderRadius value
-          borderWidth: 1,
-          borderStyle: "solid",
-          transform: "rotate(0deg)",
-          whiteSpace: "nowrap", // ✅ key
         }}
         onClick={() => setOpenResourcesDialog(true)}
       >
-        <Typography>
+        <DriveFolderUpload sx={{ mr: 1 }} />
+
+        <Typography variant="body2">
           {doI18n("pages:uw-client-checks:import_zip_project", i18nRef.current)}
         </Typography>
       </Button>
@@ -70,7 +63,7 @@ const ImportZipProject = ({ repoName, nameBurito, callBack }) => {
           maxWidth="md"
           title={`${doI18n(
             "pages:uw-client-checks:import_zip_project",
-            i18nRef.current
+            i18nRef.current,
           )}  : ${nameBurito}`}
           actions={
             <>
@@ -105,7 +98,7 @@ const ImportZipProject = ({ repoName, nameBurito, callBack }) => {
                 >
                   {doI18n(
                     "pages:uw-client-checks:import_zip_project",
-                    i18nRef.current
+                    i18nRef.current,
                   )}
                 </Button>
               </FilePicker>

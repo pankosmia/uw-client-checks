@@ -17,7 +17,7 @@ import { addAlignmentsToTargetVerseUsingMerge } from "../wordAligner/utils/align
 export const changeDataFromtopBottomToNgramSourceNgram = (
   alignments,
   targetVerse2,
-  originVerse
+  originVerse,
 ) => {
   const targetVerse = usfmVerseToJson(targetVerse2);
   const targetTokens = getWordListFromVerseObjects(targetVerse);
@@ -36,7 +36,7 @@ export const changeDataFromtopBottomToNgramSourceNgram = (
                 topWord.word === (item.word || item.text) &&
                 topWord.occurrence === item.occurrence
               );
-            } //Tricky: we want to allow automatic conversion between string and integer because occurrence could be either
+            }, //Tricky: we want to allow automatic conversion between string and integer because occurrence could be either
           );
           const newSource = {
             ...topWord,
@@ -62,7 +62,7 @@ export const changeDataFromtopBottomToNgramSourceNgram = (
           (item) =>
             word === item.text &&
             // eslint-disable-next-line eqeqeq
-            bottomWord.occurrence == item.occurrence
+            bottomWord.occurrence == item.occurrence,
         );
 
         const newTarget = {
@@ -85,19 +85,19 @@ export const getBookFromName = async (
   book,
   typeBible,
   insidePath = "_local_/_local_",
-  getManifestFromBookProject = null
+  getManifestFromBookProject = null,
 ) => {
   let json = {};
   let isBookUsfmOnly = await fsExistsRust(
     repoPath,
     `${nameArr}/${book}/1.json`,
-    insidePath
+    insidePath,
   );
   if (!isBookUsfmOnly) {
     let usfmBook = await fsGetRust(
       repoPath,
       `${book.toUpperCase()}.usfm`,
-      insidePath
+      insidePath,
     );
     json = toJSON(usfmBook).chapters;
     fixOccurrences(json);
@@ -105,7 +105,7 @@ export const getBookFromName = async (
     const all_part = await fsGetRust(
       repoPath,
       `${nameArr}/${book}`,
-      insidePath
+      insidePath,
     );
 
     for (const e of all_part) {
@@ -113,7 +113,7 @@ export const getBookFromName = async (
         json[e.split(".")[0]] = await fsGetRust(
           repoPath,
           `${nameArr}/${book}/${e}`,
-          insidePath
+          insidePath,
         );
       }
     }
@@ -123,7 +123,7 @@ export const getBookFromName = async (
     await fsGetManifest(
       insidePath.split("/")[0],
       insidePath.split("/")[1],
-      repoPath
+      repoPath,
     )
   ).json;
 
@@ -131,7 +131,7 @@ export const getBookFromName = async (
     let newManifest = await fsGetRust(
       repoPath,
       nameArr + "/manifest.json",
-      insidePath
+      insidePath,
     );
     json["manifest"] = { ...json["manifest"], ...newManifest };
   }
@@ -160,13 +160,13 @@ export const getBookFromName = async (
 export const getTnData = async (
   repoNameResources,
   repoNameProject,
-  tCoreNameProject
+  tCoreNameProject,
 ) => {
   let json = {};
   const categories = await fsGetRust(
     repoNameResources,
     "",
-    "git.door43.org/uW"
+    "git.door43.org/uW",
   );
   for (let c of categories) {
     if (!(c.split(".").length > 1)) {
@@ -177,7 +177,7 @@ export const getTnData = async (
           let markD = await fsGetRust(
             repoNameResources,
             join(c, d, "01.md"),
-            "git.door43.org/uW"
+            "git.door43.org/uW",
           );
           json[c][d] = markD;
         }
@@ -190,7 +190,7 @@ export const getTnData = async (
 export const getglTwData = async (
   repoNameResources,
   repoNameProject,
-  tCoreNameProject
+  tCoreNameProject,
 ) => {
   const json = {
     kt: { articles: {}, index: [] },
@@ -209,7 +209,7 @@ export const getglTwData = async (
     const folder = await fsGetRust(
       repoNameResources,
       join(`payload`, t),
-      "git.door43.org/uW"
+      "git.door43.org/uW",
     );
 
     for (const e of folder) {
@@ -217,7 +217,7 @@ export const getglTwData = async (
         let p = await fsGetRust(
           repoNameResources,
           join(`payload`, t, `${e}`),
-          "git.door43.org/uW"
+          "git.door43.org/uW",
         );
         json[t]["articles"][e.split(".")[0]] = p;
         json[t]["index"].push({
@@ -230,7 +230,7 @@ export const getglTwData = async (
   json["manifest"] = await fsGetManifest(
     "git.door43.org",
     "uW",
-    repoNameResources
+    repoNameResources,
   ).json;
   return json;
 };
@@ -280,12 +280,12 @@ export const changeTnCategories = async (
   repoName,
   originFolder,
   data,
-  group = true
+  group = true,
 ) => {
   let categories = await fsGetRust(
     repoName,
     "translate/toc.yaml",
-    originFolder
+    originFolder,
   );
   let dataYaml = yaml.load(categories);
   // build { "figs-abstractnouns": "Abstract Nouns", ... }
@@ -297,12 +297,12 @@ export const changeTnCategories = async (
 export async function removeNotServiceTNCategories(
   repoName,
   originFolder,
-  data
+  data,
 ) {
   let categories = await fsGetRust(
     repoName,
     "translate/toc.yaml",
-    originFolder
+    originFolder,
   );
   let dataYaml = yaml.load(categories);
   // build { "figs-abstractnouns": "Abstract Nouns", ... }
@@ -318,6 +318,22 @@ export async function removeNotServiceTNCategories(
   }
   return json;
 }
+export async function getSelectedChecksCategories(repoName, nameArr) {
+  let objectCategories;
+  let existLocalSetting = await fsExistsRust(
+    repoName,
+    `${nameArr}/checker_setting.json`,
+  );
+  if (existLocalSetting) {
+    objectCategories = await fsGetRust(
+      repoName,
+      `${nameArr}/checker_setting.json`,
+    );
+  }
+  console.log(repoName, nameArr);
+  return objectCategories;
+}
+
 export const getCheckingData = async (repoName, nameArr, book, tool) => {
   let path = `${nameArr}/apps/translationCore/index/${tool}/${book}`;
   const json = {};
@@ -326,18 +342,18 @@ export const getCheckingData = async (repoName, nameArr, book, tool) => {
     path,
     "_local_/_local_",
     false,
-    true
+    true,
   );
   let categories;
   let objectCategories;
   let existLocalSetting = await fsExistsRust(
     repoName,
-    `${nameArr}/checker_setting.json`
+    `${nameArr}/checker_setting.json`,
   );
   if (existLocalSetting) {
     objectCategories = await fsGetRust(
       repoName,
-      `${nameArr}/checker_setting.json`
+      `${nameArr}/checker_setting.json`,
     );
   } else {
     let existSetting = await fsExistsRust(repoName, `checker_setting.json`);
@@ -352,7 +368,7 @@ export const getCheckingData = async (repoName, nameArr, book, tool) => {
           json[ocKeys] = { groups: {} };
           const folder = await fsGetRust(
             repoName,
-            path + "/categoryIndex/" + ocKeys + ".json"
+            path + "/categoryIndex/" + ocKeys + ".json",
           );
           for (const e of folder) {
             if (!e.includes("headers")) {
@@ -365,7 +381,7 @@ export const getCheckingData = async (repoName, nameArr, book, tool) => {
         for (let [oc2Keys, ocValues2] of Object.entries(ocValues)) {
           if (ocValues2 && checkingData[oc2Keys + ".json"]) {
             json[ocKeys]["groups"][oc2Keys] = JSON.parse(
-              checkingData[oc2Keys + ".json"]
+              checkingData[oc2Keys + ".json"],
             );
           }
         }
@@ -375,7 +391,7 @@ export const getCheckingData = async (repoName, nameArr, book, tool) => {
     categories = await fsGetRust(
       repoName,
       path + "/categoryIndex",
-      "_local_/_local_"
+      "_local_/_local_",
     );
     for (let t of categories) {
       json[t.split(".")[0]] = { groups: {} };
@@ -383,7 +399,7 @@ export const getCheckingData = async (repoName, nameArr, book, tool) => {
       for (const e of folder) {
         if (!e.includes("headers")) {
           json[t.split(".")[0]]["groups"][e] = JSON.parse(
-            checkingData[e + ".json"]
+            checkingData[e + ".json"],
           );
         }
       }
@@ -398,7 +414,7 @@ export const getAllCheckingCategories = async (
   nameArr,
   book,
   tool,
-  lecixonName = null
+  lecixonName = null,
 ) => {
   let path = `${nameArr}/apps/translationCore/index/${tool}/${book}`;
   const json = {};
@@ -407,7 +423,7 @@ export const getAllCheckingCategories = async (
   categories = await fsGetRust(
     repoName,
     path + "/categoryIndex",
-    "_local_/_local_"
+    "_local_/_local_",
   );
   if (tool === "translationWords") {
     return tool;
@@ -417,7 +433,7 @@ export const getAllCheckingCategories = async (
     let categories = await fsGetRust(
       lecixonName,
       "translate/toc.yaml",
-      "git.door43.org/uW"
+      "git.door43.org/uW",
     );
     let dataYaml = yaml.load(categories);
     // build { "figs-abstractnouns": "Abstract Nouns", ... }
@@ -446,7 +462,7 @@ export const loadAlignment = async (reposName, nameArr) => {
     "apps",
     "translationCore",
     "alignmentData",
-    book
+    book,
   );
   let chapter = await fsGetRust(reposName, url);
   let json = {};
@@ -456,38 +472,19 @@ export const loadAlignment = async (reposName, nameArr) => {
   return json;
 };
 export const getLexiconData = async (repoName) => {
-  let suffixe = "";
-  if (repoName.includes("uhl")) {
-    suffixe = "content/";
-  }
-  let exist = await fsExistsRust(
-    repoName,
-    suffixe + "all.json",
-    "git.door43.org/uW"
-  );
-  if (exist) {
-    let lexicon = await fsGetRust(
-      repoName,
-      suffixe + "all.json",
-      "git.door43.org/uW"
-    );
-    return lexicon;
-  }
-  if (suffixe === "content/") {
-    suffixe = "content";
-  }
   const arb = repoName.split("_")[1];
   let json = { [arb]: {} };
-
-  const list = await fsGetRust(repoName, suffixe, "git.door43.org/uW");
-  for (let e of list) {
-    if (suffixe === "content") {
-      suffixe = "content/";
-    }
-    let res = await fsGetRust(repoName, suffixe + e, "git.door43.org/uW");
-    json[arb][e.split(".")[0]] = res;
+  let lexiconData = await fsGetRust(
+    repoName,
+    "content",
+    "git.door43.org/uW",
+    false,
+    true,
+  );
+  for (let [k, v] of Object.entries(lexiconData)) {
+    json[arb][k.split(".")[0]] = JSON.parse(v);
   }
-  fsWriteRust(repoName, suffixe + "all.json", json, "git.door43.org/uW");
+  console.log(json)
   return json;
 };
 
@@ -497,20 +494,20 @@ export const getProgressChecker = async (
   repoName,
   nameArr,
   book,
-  lexiconNameForProgress = null
+  lexiconNameForProgress = null,
 ) => {
   let checks = await getCheckingData(repoName, nameArr, book, toolName);
   if (lexiconNameForProgress) {
     checks = await removeNotServiceTNCategories(
       lexiconNameForProgress,
       "git.door43.org/uW",
-      checks
+      checks,
     );
   }
   const filteredChecks = Object.fromEntries(
-    Object.entries(checks).filter(([key]) => selectedCategories.includes(key))
+    Object.entries(checks).filter(([key]) => selectedCategories.includes(key)),
   );
-  console.log(checks)
+  console.log(checks);
   let isDone = 0;
   let isInvalidated = 0;
   let TotalCount = 0;
@@ -542,8 +539,28 @@ export const getProgressAligment = async (repoName, nameArr, originBible) => {
   let targetBible = await getBookFromName(
     repoName,
     `book_projects/${nameArr}`,
-    nameArr.split("_")[2]
+    nameArr.split("_")[2],
   );
+  let invalidated_number = 0;
+  let chapter = await fsGetRust(
+    repoName,
+    "book_projects/" +
+      nameArr +
+      "/apps/translationCore/tools/wordAlignment/invalid",
+  );
+  for (let c of chapter) {
+    let verses = await fsGetRust(
+      repoName,
+      "book_projects/" +
+        nameArr +
+        `/apps/translationCore/tools/wordAlignment/invalid/${c}`,
+      "_local_/_local_",
+      false,
+      true,
+    );
+    console.log(verses);
+    invalidated_number += Object.entries(verses).length;
+  }
   if (targetBible) {
     let rest = await loadAlignment(repoName, nameArr);
     for (let c of Object.keys(rest)) {
@@ -551,7 +568,7 @@ export const getProgressAligment = async (repoName, nameArr, originBible) => {
       for (let v of Object.keys(rest[c])) {
         alignBible[c][v] = {};
         alignBible[c][v]["verseObjects"] = usfmVerseToJson(
-          addAlignmentsToTargetVerseUsingMerge(targetBible[c][v], rest[c][v])
+          addAlignmentsToTargetVerseUsingMerge(targetBible[c][v], rest[c][v]),
         );
       }
     }
@@ -565,23 +582,23 @@ export const getProgressAligment = async (repoName, nameArr, originBible) => {
         const targetVerseUSFM = groupDataHelpers.getVerseUSFM(
           alignBible,
           chapter,
-          verse
+          verse,
         );
         const sourceVerseUSFM = groupDataHelpers.getVerseUSFM(
           originBible,
           chapter,
-          verse
+          verse,
         );
 
         if (targetVerseUSFM && sourceVerseUSFM) {
           const { targetWords, verseAlignments } = parseUsfmToWordAlignerData(
             targetVerseUSFM,
-            sourceVerseUSFM
+            sourceVerseUSFM,
           );
 
           const alignmentComplete = areAlgnmentsComplete(
             targetWords,
-            verseAlignments
+            verseAlignments,
           );
 
           totalNumber += 1;
@@ -592,5 +609,8 @@ export const getProgressAligment = async (repoName, nameArr, originBible) => {
       }
     }
   }
-  return (number / totalNumber) * 100;
+  return {
+    selection: totalNumber === 0 ? 0 : (number / totalNumber) * 100,
+    invalidated: invalidated_number,
+  };
 };
