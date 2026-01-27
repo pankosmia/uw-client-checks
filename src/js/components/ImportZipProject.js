@@ -1,23 +1,14 @@
-import AppDialog from "./AppDialog";
 import {
-  FormControl,
-  TextField,
   Button,
   Typography,
-  Checkbox,
-  FormGroup,
-  FormControlLabel,
-  Box,
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
+  DialogContent,
 } from "@mui/material";
 import { DriveFolderUpload } from "@mui/icons-material";
 import { FilePicker } from "react-file-picker";
-import { deleteBookProject } from "../serverUtils";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useState, useContext } from "react";
-import { doI18n, i18nContext } from "pithekos-lib";
+import { doI18n } from "pithekos-lib";
+import { i18nContext, PanDialog, PanDialogActions } from "pankosmia-rcl";
+
 const ImportZipProject = ({ repoName, nameBurito, callBack }) => {
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
 
@@ -57,69 +48,60 @@ const ImportZipProject = ({ repoName, nameBurito, callBack }) => {
         </Typography>
       </Button>
       {openResourcesDialog && (
-        <AppDialog
-          open={openResourcesDialog}
-          onClose={() => setOpenResourcesDialog(false)}
-          maxWidth="md"
-          title={`${doI18n(
+        <PanDialog
+          isOpen={openResourcesDialog}
+          closeFn={() => setOpenResourcesDialog(false)}
+          size="md"
+          titleLabel={`${doI18n(
             "pages:uw-client-checks:import_zip_project",
             i18nRef.current,
           )}  : ${nameBurito}`}
-          actions={
-            <>
-              <FilePicker
-                extensions={["zip"]}
-                onChange={async (fileObject) => {
-                  try {
-                    const result = await uploadZip(fileObject);
-
-                    setOpenResourcesDialog(false);
-                    callBack?.(); // refresh si besoin
-                  } catch (err) {
-                    console.error("Import failed", err);
-                  }
-                }}
-                onError={(errMsg) => {
-                  console.error(errMsg);
-                }}
-              >
-                <Button
-                  sx={{
-                    height: 36,
-                    pt: 1.5,
-                    pr: 2,
-                    pb: 1.5,
-                    pl: 2,
-                    borderRadius: 1,
-                    borderWidth: 1,
-                    borderStyle: "solid",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {doI18n(
-                    "pages:uw-client-checks:import_zip_project",
-                    i18nRef.current,
-                  )}
-                </Button>
-              </FilePicker>
-              <Button
-                variant="contained"
-                onClick={() => setOpenResourcesDialog(false)}
-              >
-                {doI18n("pages:uw-client-checks:cancel", i18nRef.current)}
-              </Button>
-            </>
-          }
         >
-          {/* <Box display="flex" flexDirection="column" gap={3}> */}
-          {/* <Typography>
-              {doI18n(
-                "pages:uw-client-checks:delete_book_project_texte",
-                i18nRef.current
-              )}
-            </Typography> */}
-          {/* </Box> */}
-        </AppDialog>
+          <DialogContent>
+            <FilePicker
+              extensions={["zip"]}
+              onChange={async (fileObject) => {
+                try {
+                  const result = await uploadZip(fileObject);
+                  setOpenResourcesDialog(false);
+                  callBack?.(); // refresh si besoin
+                } catch (err) {
+                  console.error("Import failed", err);
+                }
+              }}
+              onError={(errMsg) => {
+                console.error(errMsg);
+              }}
+            >
+              <Button
+                sx={{
+                  height: 36,
+                  pt: 1.5,
+                  pr: 2,
+                  pb: 1.5,
+                  pl: 2,
+                  borderRadius: 1,
+                  borderWidth: 1,
+                  borderStyle: "solid",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {doI18n(
+                  "pages:uw-client-checks:import_zip_project",
+                  i18nRef.current,
+                )}
+              </Button>
+            </FilePicker>
+          </DialogContent>
+          <PanDialogActions
+            closeFn={() => setOpenResourcesDialog(false)}
+            closeLabel={doI18n(
+              "pages:uw-client-checks:cancel",
+              i18nRef.current,
+            )}
+            onlyCloseButton={true}
+          />
+        </PanDialog>
       )}
     </>
   );

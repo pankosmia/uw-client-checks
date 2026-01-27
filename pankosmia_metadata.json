@@ -171,17 +171,33 @@
       "fr": "alignement invalide",
       "en": "invalidated checks"
     },
-    "import_zip_project":{
-      "en":"Import book",
+    "import_zip_project": {
+      "en": "Import book",
       "fr": "Importer livre"
     },
-    "go_to_download":{
-      "en":"Go download",
-      "fr":"Vers telechargement"
+    "go_to_download": {
+      "en": "Download",
+      "fr": "Telechargement"
     },
-    "categories":{
-      "en":"Categories",
-      "fr":"Catégories"
+    "categories": {
+      "en": "Categories",
+      "fr": "Catégories"
+    },
+    "tCore_resources": {
+      "en": "TranslationCore resources",
+      "fr": "TranslationCore resources"
+    },
+    "yes": {
+      "en": "Yes",
+      "fr": "Oui"
+    },
+    "internet_question": {
+      "en": "Are you sure you want to connect to the internet?",
+      "fr": "Êtes-vous sûr de vouloir vous connecter à Internet ?"
+    },
+    "missing_resources": {
+      "en": "You can download or sideload these resources",
+      "fr": "Vous pouvez télécharger ou téléverser ces ressources"
     }
   }
 }

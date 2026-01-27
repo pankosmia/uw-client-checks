@@ -15,7 +15,8 @@ import { useNavigate } from "react-router-dom";
 import { getProgressAligment } from "../checkerUtils";
 import { isOldTestament } from "../creatProject";
 import InvalidatedIcon from "../ui_tool_kit/InvalidatedIcon";
-import { doI18n, i18nContext } from "pithekos-lib";
+import { doI18n } from "pithekos-lib";
+import {i18nContext} from "pankosmia-rcl"
 import { useContext } from "react";
 
 export const ButtonDashBoard = ({

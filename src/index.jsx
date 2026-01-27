@@ -5,9 +5,8 @@ import { Box } from "@mui/system";
 // import ToolsManagementContainer from "./pages/ToolsManagementContainer";
 // import ReduxStateViewer from "./pages/ReduxStateViewer";
 import { useEffect } from "react";
-import SpaContainer from "pithekos-lib/dist/components/SpaContainer";
+import {SpaContainer,Header} from "pankosmia-rcl"
 import "./index.css";
-import { Header } from "pithekos-lib";
 import SelectBook from "./pages/SelectBook";
 import { useTheme } from "@mui/material/styles";
 

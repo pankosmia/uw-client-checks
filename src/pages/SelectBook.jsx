@@ -1,30 +1,26 @@
-import { useParams } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
+import { doI18n } from "pithekos-lib";
 import {
-  doI18n,
   i18nContext,
   currentProjectContext,
-  netContext,
-  debugContext,
-} from "pithekos-lib";
+  PanDialog,
+  PanDialogActions,
+} from "pankosmia-rcl";
+
 import AddIcon from "@mui/icons-material/Add";
 import CircularProgress from "@mui/material/CircularProgress";
 import DeleteDialogueButton from "../js/components/DeleteDialogueButton";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import CheckerSetting from "../js/components/CheckerSetting";
-import LZString from "lz-string";
 import {
   Box,
   Button,
   Typography,
-  FormControl,
-  TextField,
-  MenuItem,
   Divider,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Fab,
+  DialogContent,
 } from "@mui/material";
 import ImportZipProject from "../js/components/ImportZipProject";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -34,11 +30,8 @@ import { BASE_URL } from "../common/constants";
 import { fsGetRust, fsWriteRust } from "../js/serverUtils";
 import { isOldTestament } from "../js/creatProject";
 import ButtonDashBoard from "../js/components/ButtonDashBoard";
-import AppDialog from "../js/components/AppDialog";
-import { InternetSwitch } from "pankosmia-rcl";
+import DownloadRessources from "../js/components/DownloadRessources";
 export default function SelectBook() {
-  const { enabledRef } = useContext(netContext);
-  const { debugRef } = useContext(debugContext);
   const { currentProjectRef } = useContext(currentProjectContext);
 
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
@@ -48,9 +41,7 @@ export default function SelectBook() {
   const [books, setBooks] = useState([]);
   const [openModal, setOpenModal] = useState(false);
   const [manifestPath, setManifestPath] = useState("");
-  const [openCheckModal, setOpenCheckModal] = useState(false);
   const [resourcesStatus, setResourcesStatus] = useState(null);
-  const [pendingConvert, setPendingConvert] = useState(null);
   const [errorsData, setErrorsData] = useState([]);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [currentErrors, setCurrentErrors] = useState([]);
@@ -59,14 +50,9 @@ export default function SelectBook() {
   const [allResourcesPresent, setAllResourcesPresent] = useState(false);
   const [selectedBurrito, setSelectedBurrito] = useState();
   const [openedBooks, setOpenedBooks] = useState(new Set());
-
+  const [downloadRessourcesDialogueOpen, setDownloadRessourcesDialogueOpen] =
+    useState(false);
   const [initializing, setInitializing] = useState([]);
-
-  useEffect(() => {
-    if (globalResourcesStatus && !allResourcesPresent) {
-      setOpenResourcesDialog(true);
-    }
-  }, [globalResourcesStatus, allResourcesPresent]);
 
   useEffect(() => {
     async function fetchSummaries() {
@@ -101,15 +87,25 @@ export default function SelectBook() {
     }
     fetchSummaries();
   }, [currentProjectRef.current]);
-  useEffect(() => {
-    async function runGlobalCheck() {
-      const status = await checkRequiredResources();
-      setGlobalResourcesStatus(status);
-      setAllResourcesPresent(status.every((r) => r.exists));
-    }
 
-    runGlobalCheck();
-  }, []);
+  async function runGlobalCheck() {
+    const status = await checkRequiredResources();
+    setGlobalResourcesStatus(status);
+    setAllResourcesPresent(status.every((r) => r.exists));
+  }
+
+  useEffect(() => {
+    if (!openResourcesDialog) {
+      runGlobalCheck();
+    }
+  }, [openResourcesDialog]);
+
+  useEffect(() => {
+    if (globalResourcesStatus && !allResourcesPresent) {
+      setOpenResourcesDialog(true);
+    }
+  }, [globalResourcesStatus, allResourcesPresent]);
+
   const REQUIRED_RESOURCES = [
     "git.door43.org/uW/en_tn",
     "git.door43.org/uW/en_tw",
@@ -121,23 +117,6 @@ export default function SelectBook() {
     "git.door43.org/uW/en_ta",
     "git.door43.org/uW/en_uhl",
   ];
-  const compressed = LZString.compressToEncodedURIComponent(
-    JSON.stringify({
-      "git.door43.org": {
-        uW: [
-          "en_tn",
-          "en_tw",
-          "en_ugl",
-          "grc_ugnt",
-          "hbo_uhb",
-          "en_ust",
-          "en_ult",
-          "en_ta",
-          "en_uhl",
-        ],
-      },
-    }),
-  );
 
   useEffect(() => {
     async function fetchSummaries() {
@@ -428,26 +407,6 @@ export default function SelectBook() {
             py: 1,
           }}
         >
-          {/* <FormControl disabled={!allResourcesPresent} sx={{ minWidth: 320 }}>
-            <TextField
-              required
-              disabled={!allResourcesPresent}
-              id="burrito-select-label"
-              select
-              value={selectedBurrito?.name || ""}
-              onChange={handleSelectBurrito}
-              label={doI18n(
-                "pages:uw-client-checks:choose_document",
-                i18nRef.current
-              )}
-            >
-              {burritos.map((burrito) => (
-                <MenuItem key={burrito.name} value={burrito.name}>
-                  {burrito.name}
-                </MenuItem>
-              ))}
-            </TextField>
-          </FormControl> */}
         </Box>
       ) : (
         <Box
@@ -481,11 +440,11 @@ export default function SelectBook() {
         </Box>
       )}
       {selectedBurrito ? (
-        <Box sx={{display: "contents" }}>
+        <Box sx={{ display: "contents" }}>
           <Box
             sx={{
               mb: 2,
-              px: 2
+              px: 2,
             }}
           >
             <Typography variant="h6" fontWeight={600}>
@@ -498,7 +457,7 @@ export default function SelectBook() {
               display: "flex",
               flexDirection: "column",
               gap: 2,
-              px:2,
+              px: 2,
               flexGrow: 1, // ⬅️ take remaining space
               minHeight: 0, // ⬅️ REQUIRED for flex scrolling
               overflowY: "auto",
@@ -673,192 +632,147 @@ export default function SelectBook() {
           </Box>
         </Box>
       ) : (
-       <></>
+        <></>
       )}
-      <AppDialog
-        open={openModal}
-        onClose={handleCloseModal}
-        title={doI18n("pages:uw-client-checks:add_book_tCore", i18nRef.current)}
-        actions={
-          <Button variant="contained" onClick={handleCloseModal}>
-            {doI18n("pages:uw-client-checks:close", i18nRef.current)}
-          </Button>
-        }
-      >
-        {manifestPath ? (
-          <Box>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
-              {manifestPath[1].book_codes.map((code) => (
-                <Button
-                  key={code}
-                  disabled={inDirectory
-                    .map((e) => e.split("_")[2].toUpperCase())
-                    .includes(code)}
-                  variant="contained"
-                  size="small"
-                  color={errorsData[code]?.length > 0 ? "warning" : "primary"}
-                  onClick={() => {
-                    if (errorsData[code]?.length > 0) {
-                      setCurrentErrors(errorsData[code]);
-                      setErrorModalOpen(true);
-                    } else {
-                      handleAddBook(
-                        code,
-                        manifestPath[0],
-                        selectedBurrito.abbreviation,
-                      );
-                    }
-                  }}
-                >
-                  {code}
-                </Button>
-              ))}
-            </Box>
-          </Box>
-        ) : (
-          doI18n("pages:uw-client-checks:no_manifest_found", i18nRef.current)
+      <PanDialog
+        isOpen={openModal}
+        closeFn={handleCloseModal}
+        titleLabel={doI18n(
+          "pages:uw-client-checks:add_book_tCore",
+          i18nRef.current,
         )}
-      </AppDialog>
-      <AppDialog
-        open={openCheckModal}
-        onClose={() => setOpenCheckModal(false)}
-        maxWidth="md"
-        title={doI18n(
+      >
+        <DialogContent>
+          {manifestPath ? (
+            <Box>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
+                {manifestPath[1].book_codes.map((code) => (
+                  <Button
+                    key={code}
+                    disabled={inDirectory
+                      .map((e) => e.split("_")[2].toUpperCase())
+                      .includes(code)}
+                    variant="contained"
+                    size="small"
+                    color={errorsData[code]?.length > 0 ? "warning" : "primary"}
+                    onClick={() => {
+                      if (errorsData[code]?.length > 0) {
+                        setCurrentErrors(errorsData[code]);
+                        setErrorModalOpen(true);
+                      } else {
+                        handleAddBook(
+                          code,
+                          manifestPath[0],
+                          selectedBurrito.abbreviation,
+                        );
+                      }
+                    }}
+                  >
+                    {code}
+                  </Button>
+                ))}
+              </Box>
+            </Box>
+          ) : (
+            doI18n("pages:uw-client-checks:no_manifest_found", i18nRef.current)
+          )}
+        </DialogContent>
+        <PanDialogActions
+          onlyCloseButton={true}
+          closeFn={handleCloseModal}
+          closeLabel={doI18n("pages:uw-client-checks:close", i18nRef.current)}
+        />
+      </PanDialog>
+      <PanDialog
+        isOpen={errorModalOpen}
+        closeFn={() => setErrorModalOpen(false)}
+        size="xs"
+        titleLabel={doI18n(
+          "pages:uw-client-checks:book_errors",
+          i18nRef.current,
+        )}
+      >
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            {currentErrors.map((err, idx) => (
+              <Typography key={idx} sx={{ mb: 1 }}>
+                - {err}
+              </Typography>
+            ))}
+          </Box>
+        </DialogContent>
+        <PanDialogActions
+          onlyCloseButton={true}
+          closeFn={() => setErrorModalOpen(false)}
+          closeLabel={doI18n("pages:uw-client-checks:close", i18nRef.current)}
+        />
+      </PanDialog>
+      <PanDialog
+        isOpen={openResourcesDialog}
+        closeFn={() => (window.location.href = "/clients/content")}
+        size="md"
+        titleLabel={doI18n(
           "pages:uw-client-checks:required_ressources_check",
           i18nRef.current,
         )}
-        actions={
-          <>
-            <Button onClick={() => setOpenCheckModal(false)}>
-              {doI18n("pages:uw-client-checks:cancel", i18nRef.current)}
-            </Button>
-
-            <Button
-              variant="contained"
-              disabled={resourcesStatus?.some((r) => !r.exists)}
-              onClick={async () => {
-                setOpenCheckModal(false);
-                await handleTryConvert(
-                  pendingConvert.sourceProjectPath,
-                  pendingConvert.selectedProjectFilename,
-                );
-              }}
-            >
-              {doI18n("pages:uw-client-checks:to_initialised", i18nRef.current)}
-            </Button>
-          </>
-        }
+        actions={<></>}
       >
-        {resourcesStatus ? (
-          <Box sx={{ mt: 2 }}>
-            {resourcesStatus.map((r) => (
-              <Box
-                key={r.path}
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  mb: 1,
-                }}
-              >
-                <Typography>{r.path}</Typography>
-                <Typography color={r.exists ? "success.main" : "error"}>
-                  {r.exists
-                    ? doI18n("pages:uw-client-checks:present", i18nRef.current)
-                    : doI18n("pages:uw-client-checks:missing", i18nRef.current)}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        ) : (
-          <Typography>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
             {doI18n(
-              "pages:uw-client-checks:checking_ressources",
+              "pages:uw-client-checks:ressource_required",
               i18nRef.current,
             )}
           </Typography>
-        )}
-      </AppDialog>
-      <AppDialog
-        open={errorModalOpen}
-        onClose={() => setErrorModalOpen(false)}
-        maxWidth="xs"
-        title={doI18n("pages:uw-client-checks:book_errors", i18nRef.current)}
-        actions={
-          <Button variant="contained" onClick={() => setErrorModalOpen(false)}>
-            {doI18n("pages:uw-client-checks:close", i18nRef.current)}
-          </Button>
-        }
-      >
-        <Box sx={{ mt: 2 }}>
-          {currentErrors.map((err, idx) => (
-            <Typography key={idx} sx={{ mb: 1 }}>
-              - {err}
-            </Typography>
-          ))}
-        </Box>
-      </AppDialog>
-      <AppDialog
-        open={openResourcesDialog}
-        onClose={() => (window.location.href = "/clients/content")}
-        maxWidth="md"
-        title={doI18n(
-          "pages:uw-client-checks:required_ressources_check",
-          i18nRef.current,
-        )}
-        actions={
-          <>
-            <Button
-              disabled={!enabledRef.current}
-              variant="contained"
-              onClick={() =>
-                (window.location.href = `/clients/download#/subList?data=${compressed}`)
-              }
-            >
-              {doI18n("pages:uw-client-checks:go_to_download", i18nRef.current)}
-            </Button>
 
-            <Button
-              disabled={enabledRef.current}
-              variant="contained"
-              onClick={() => (window.location.href = `/clients/content`)}
-            >
-              {doI18n("pages:uw-client-checks:manage_content", i18nRef.current)}
-            </Button>
-          </>
-        }
-      >
-        <Typography sx={{ mb: 2 }}>
-          {doI18n("pages:uw-client-checks:ressource_required", i18nRef.current)}
-        </Typography>
+          <Box>
+            {globalResourcesStatus
+              ?.filter((r) => !r.exists)
+              .map((r) => (
+                <Box
+                  key={r.path}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 1,
+                    px: 1,
+                  }}
+                >
+                  <Typography>{r.path}</Typography>
+                </Box>
+              ))}
+          </Box>
 
-        <Box>
-          {globalResourcesStatus
-            ?.filter((r) => !r.exists)
-            .map((r) => (
-              <Box
-                key={r.path}
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  mb: 1,
-                  px: 1,
-                }}
-              >
-                <Typography>{r.path}</Typography>
-              </Box>
-            ))}
-        </Box>
-
-        <Typography sx={{ mt: 2, mb: 1 }}>
-          You can download or sideLoad these resources
-        </Typography>
-
-        <InternetSwitch
-          i18n={i18nRef.current}
-          netEnabled={enabledRef.current}
-          debug={debugRef.current}
+          <Typography sx={{ mt: 2, mb: 1 }}>
+            {doI18n(
+            "pages:uw-client-checks:missing_resources",
+            i18nRef.current,
+          )}
+          </Typography>
+        </DialogContent>
+        <PanDialogActions
+          closeFn={() => (window.location.href = `/clients/main`)}
+          closeLabel={doI18n(
+            "pages:uw-client-checks:manage_content",
+            i18nRef.current,
+          )}
+          isDisabled={resourcesStatus?.some((r) => !r.exists)}
+          actionFn={() => {
+            setDownloadRessourcesDialogueOpen(true);
+            setOpenResourcesDialog(false);
+          }}
+          closeOnAction={false}
+          actionLabel={doI18n(
+            "pages:uw-client-checks:go_to_download",
+            i18nRef.current,
+          )}
         />
-      </AppDialog>
+      </PanDialog>
+      <DownloadRessources
+        setOpenResourcesDialog={setOpenResourcesDialog}
+        downloadRessourcesDialogueOpen={downloadRessourcesDialogueOpen}
+        setDownloadRessourcesDialogueOpen={setDownloadRessourcesDialogueOpen}
+      />
     </Box>
   );
 }

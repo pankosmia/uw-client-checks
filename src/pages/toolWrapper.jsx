@@ -23,7 +23,8 @@ import ArrowBack from "@mui/icons-material/ArrowBack";
 import yaml from "js-yaml";
 import { buildLinkTitleMap } from "../js/checkerUtils";
 import { fixOccurrences, fsGetRust, fsWriteRust } from "../js/serverUtils";
-import { doI18n, i18nContext } from "pithekos-lib";
+import { doI18n } from "pithekos-lib";
+import {i18nContext} from "pankosmia-rcl"
 import { loadAlignment } from "../js/checkerUtils";
 import { usfmVerseToJson } from "../wordAligner/utils/usfmHelpers";
 import { updateAlignmentsToTargetVerse } from "../wordAligner/utils/alignmentHelpers";
@@ -283,6 +284,16 @@ export const ToolWrapper = () => {
                 newValues[i].contextId.reference.verse <= parseInt(high)
               ) {
                 newValues[i].verseEdits = true;
+                if (newValues[i].selections) {
+                  let { selectionsChanged } =
+                    selectionsHelpers.validateVerseSelections(
+                      changeFileVerse[verse],
+                      newValues[i].selections,
+                    );
+                  if (selectionsChanged) {
+                    newValues[i].invalidated = true;
+                  }
+                }
               }
             }
             await fsWriteRust(
@@ -313,6 +324,16 @@ export const ToolWrapper = () => {
                 newValues[i].contextId.reference.verse === parseInt(verse)
               ) {
                 newValues[i].verseEdits = true;
+                if (newValues[i].selections) {
+                  let { selectionsChanged } =
+                    selectionsHelpers.validateVerseSelections(
+                      changeFileVerse[verse],
+                      newValues[i].selections,
+                    );
+                  if (selectionsChanged) {
+                    newValues[i].invalidated = true;
+                  }
+                }
               }
             }
             await fsWriteRust(
