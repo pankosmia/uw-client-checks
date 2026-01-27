@@ -44,7 +44,7 @@ const ImportZipProject = ({ repoName, nameBurito, callBack }) => {
         <DriveFolderUpload sx={{ mr: 1 }} />
 
         <Typography variant="body2">
-          {doI18n("pages:uw-client-checks:import_zip_project", i18nRef.current)}
+          {doI18n("pages:uw-client-checks:import_book", i18nRef.current)}
         </Typography>
       </Button>
       {openResourcesDialog && (
@@ -87,7 +87,7 @@ const ImportZipProject = ({ repoName, nameBurito, callBack }) => {
                 }}
               >
                 {doI18n(
-                  "pages:uw-client-checks:import_zip_project",
+                  "pages:uw-client-checks:import_book",
                   i18nRef.current,
                 )}
               </Button>

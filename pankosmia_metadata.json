@@ -175,6 +175,10 @@
       "en": "Import book project from TranslationCore to your project",
       "fr": "Importer un project de livre de TranslationCore dans votre project"
     },
+    "import_book": {
+      "en": "Import book",
+      "fr": "Importer livre"
+    },
     "go_to_download": {
       "en": "Download",
       "fr": "Telechargement"
