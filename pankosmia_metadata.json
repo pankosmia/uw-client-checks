@@ -172,8 +172,8 @@
       "en": "invalidated checks"
     },
     "import_zip_project": {
-      "en": "Import book",
-      "fr": "Importer livre"
+      "en": "Import book project from TranslationCore to your project",
+      "fr": "Importer un project de livre de TranslationCore dans votre project"
     },
     "go_to_download": {
       "en": "Download",
