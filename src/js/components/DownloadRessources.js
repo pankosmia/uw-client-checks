@@ -66,7 +66,7 @@ const DownloadRessources = ({
         isOpen={internetDialogOpen}
         closeFn={handleCloseDialog}
         fullWidth={true}
-        size="md"
+        size="sm"
       >
         <DialogContent>
           <Typography>
@@ -93,10 +93,10 @@ const DownloadRessources = ({
           "pages:uw-client-checks:tCore_resources",
           i18nRef.current,
         )}
-        isOpen={downloadRessourcesDialogueOpen}
+        isOpen={downloadRessourcesDialogueOpen && enabledRef.current}
         closeFn={handleCloseDialog}
         fullWidth={true}
-        size="md"
+        size="lg"
       >
         <DialogContent>
           {enabledRef.current && <PanDownload sources={ListTc4} />}

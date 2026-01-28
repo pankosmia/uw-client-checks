@@ -42,7 +42,7 @@ const DeleteDialogueButton = ({ repoName, tCoreNameProject, callBack }) => {
           titleLabel={`${doI18n(
             "pages:uw-client-checks:delete_book_project",
             i18nRef.current,
-          )}  : ${tCoreNameProject}`}
+          )}  - ${tCoreNameProject.split('_')[2].toUpperCase()}`}
         >
           <DialogContent>
             <Box display="flex" flexDirection="column" gap={3}>

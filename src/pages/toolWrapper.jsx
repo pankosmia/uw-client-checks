@@ -763,10 +763,6 @@ export const ToolWrapper = () => {
           color="primary"
           size="small"
           sx={{ marginX: 1 }}
-          aria-label={doI18n(
-            "pages:uw-client-checks:book_projects",
-            i18nRef.current,
-          )}
           onClick={() => (window.location.href = `/clients/uw-client-checks#`)}
         >
           <ArrowBack sx={{ mr: 1 }} />

@@ -222,12 +222,10 @@ const CheckerSetting = ({
         onClick={() => setOpenResourcesDialog(true)}
       >
         <Typography>
-          {tCoreNameProject
-            ? doI18n(
-                "pages:uw-client-checks:checks_settings_book",
-                i18nRef.current,
-              )
-            : doI18n("pages:uw-client-checks:checks_settings", i18nRef.current)}
+          {doI18n(
+            "pages:uw-client-checks:checks_settings_book",
+            i18nRef.current,
+          )}
         </Typography>
       </Button>
       {openResourcesDialog && (
@@ -240,17 +238,10 @@ const CheckerSetting = ({
           }}
           size="md"
           fullWidth={true}
-          titleLabel={
-            tCoreNameProject
-              ? doI18n(
-                  "pages:uw-client-checks:checks_settings_book",
-                  i18nRef.current,
-                )
-              : doI18n(
-                  "pages:uw-client-checks:checks_settings",
-                  i18nRef.current,
-                )
-          }
+          titleLabel={`${doI18n(
+            "pages:uw-client-checks:checks_settings_book",
+            i18nRef.current,
+          )} - ${tCoreNameProject.split('_')[2].toUpperCase()}`}
         >
           <DialogContent>
             {tools

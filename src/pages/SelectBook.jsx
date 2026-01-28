@@ -301,10 +301,7 @@ export default function SelectBook() {
                 `${e} ${doI18n(
                   "pages:uw-client-checks:doesnt_have",
                   i18nRef.current,
-                )} ${book} ${doI18n(
-                  "pages:uw-client-checks:scope",
-                  i18nRef.current,
-                )}`,
+                )} ${book}`,
               );
             }
           }
@@ -503,12 +500,13 @@ export default function SelectBook() {
 
                     <Box>
                       {book.hasManifest ? (
-                        <Typography color="success.main" fontWeight={600}>
-                          {doI18n(
-                            `pages:uw-client-checks:ready`,
-                            i18nRef.current,
-                          )}
-                        </Typography>
+                        <></>
+                        // <Typography color="success.main" fontWeight={600}>
+                        //   {doI18n(
+                        //     `pages:uw-client-checks:ready`,
+                        //     i18nRef.current,
+                        //   )}
+                        // </Typography>
                       ) : (
                         <Typography color="warning.main" fontWeight={600}>
                           {doI18n(
@@ -709,8 +707,8 @@ export default function SelectBook() {
       </PanDialog>
       <PanDialog
         isOpen={openResourcesDialog}
-        closeFn={() => (window.location.href = "/clients/content")}
-        size="md"
+        closeFn={() => (window.location.href = "/clients/main")}
+        size="sm"
         titleLabel={doI18n(
           "pages:uw-client-checks:required_ressources_check",
           i18nRef.current,
@@ -743,17 +741,17 @@ export default function SelectBook() {
               ))}
           </Box>
 
-          <Typography sx={{ mt: 2, mb: 1 }}>
+          {/* <Typography sx={{ mt: 2, mb: 1 }}>
             {doI18n(
             "pages:uw-client-checks:missing_resources",
             i18nRef.current,
           )}
-          </Typography>
+          </Typography> */}
         </DialogContent>
         <PanDialogActions
           closeFn={() => (window.location.href = `/clients/main`)}
           closeLabel={doI18n(
-            "pages:uw-client-checks:manage_content",
+            "pages:uw-client-checks:back",
             i18nRef.current,
           )}
           isDisabled={resourcesStatus?.some((r) => !r.exists)}
