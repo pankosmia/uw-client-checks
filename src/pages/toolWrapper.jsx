@@ -161,22 +161,22 @@ export const ToolWrapper = () => {
     location.state?.toolName ?? "translationWords",
   );
 
-  const [targetBible, setTargetBible] = useState();
+  const [targetBible, setTargetBible] = useState(null);
   const [bibles, setBibles] = useState([]);
-  const [originBible, setOriginBible] = useState();
-  const [dataTw, setDataTW] = useState();
-  const [dataTn, setDataTn] = useState();
-  const [checkingData, setCheckingData] = useState();
-  const [ultBible, setUltBible] = useState();
+  const [originBible, setOriginBible] = useState(null);
+  const [dataTw, setDataTW] = useState(null);
+  const [dataTn, setDataTn] = useState(null);
+  const [checkingData, setCheckingData] = useState(null);
+  const [ultBible, setUltBible] = useState(null);
   const { projectName, tCoreName } = useParams();
-  const [lexicon, setLexicon] = useState();
+  const [lexicon, setLexicon] = useState(null);
   const [contextId, setContextId] = useState({});
   const book = useMemo(() => tCoreName?.split("_")[2], [tCoreName]);
   const [toolSettings, _setToolSettings] = useState(null); // TODO: need to persist tools state, and read back state on startup
   const [groupsData, setGroupsData] = useState({});
   const [groupsIndex, setGroupsIndex] = useState({});
   const [alignmentTargetBible, setAlignementTargetBibles] = useState({});
-  const [biblesForAligner, setBiblesForAligner] = useState();
+  const [biblesForAligner, setBiblesForAligner] = useState(null);
   useEffect(() => {
     setBiblesForAligner(verseHelpers.getBibleObject(bibles));
   }, [bibles]);

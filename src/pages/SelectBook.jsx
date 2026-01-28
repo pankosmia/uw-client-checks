@@ -317,7 +317,7 @@ export default function SelectBook() {
         },
       );
     }
-  }, [selectedBurrito]);
+  }, [selectedBurrito,downloadRessourcesDialogueOpen]);
 
   const handleCloseModal = () => setOpenModal(false);
 
