@@ -5,6 +5,7 @@ import {
   IMPORTS_PATH,
   IMPORTS_PATH_BATCH,
   DELETE_PATH,
+  DELETE_INGREDIENT_PATH,
 } from "../common/constants";
 import { join } from "./creatProject";
 let treeCache = []; // cache tree data across calls
@@ -18,7 +19,22 @@ export const deleteBookProject = async (repoName, tCoreNameProject) => {
   let res = await postJson(url, JSON.stringify({}));
   return res;
 };
-
+export const deleteIngredient = async (
+  repoName,
+  tCoreNameProject,
+  no_bak = true
+) => {
+  let url =
+    DELETE_INGREDIENT_PATH.replace(
+      "%Project%",
+      "_local_/_local_" + "/" + repoName
+    ) + tCoreNameProject;
+  if (no_bak) {
+    url += "&no_bak=true";
+  }
+  let res = await postJson(url, JSON.stringify({}));
+  return res;
+};
 /**
  * GET /ingredient/raw/<intermediatePath>/<repo_path>?ipath=<ipath>
  * Simulates fs.readFile or fs.readJson
