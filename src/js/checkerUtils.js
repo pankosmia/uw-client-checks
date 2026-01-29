@@ -210,15 +210,13 @@ export const getglTwData = async (
       repoNameResources,
       join(`payload`, t),
       "git.door43.org/uW",
+      false,
+      true
     );
 
-    for (const e of folder) {
+    for (const e of Object.keys(folder)) {
       if (!e.includes("headers")) {
-        let p = await fsGetRust(
-          repoNameResources,
-          join(`payload`, t, `${e}`),
-          "git.door43.org/uW",
-        );
+        let p = folder[e]
         json[t]["articles"][e.split(".")[0]] = p;
         json[t]["index"].push({
           id: e.split(".")[0],
