@@ -24,7 +24,7 @@ import yaml from "js-yaml";
 import { buildLinkTitleMap } from "../js/checkerUtils";
 import { fixOccurrences, fsGetRust, fsWriteRust } from "../js/serverUtils";
 import { doI18n } from "pithekos-lib";
-import {i18nContext} from "pankosmia-rcl"
+import { i18nContext } from "pankosmia-rcl";
 import { loadAlignment } from "../js/checkerUtils";
 import { usfmVerseToJson } from "../wordAligner/utils/usfmHelpers";
 import { updateAlignmentsToTargetVerse } from "../wordAligner/utils/alignmentHelpers";
@@ -522,7 +522,7 @@ export const ToolWrapper = () => {
         if (!dataTw) {
           toolData = await getglTwData(
             "en_tw",
-            projectName,
+            book,
             `book_projects/${tCoreName}`,
           );
           setDataTW(toolData);
@@ -746,7 +746,7 @@ export const ToolWrapper = () => {
     saveCheckingData != null &&
     toolSettings != null &&
     !loadingTool;
-
+  console.log(dataTw);
   return (
     <div style={{ height: "calc(100vh - 100px)" }}>
       <Box

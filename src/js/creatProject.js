@@ -1158,7 +1158,7 @@ export const moveUsfmFileFromSourceToImports = async (
 };
 
 export const join = (...args) => args.join("/").replace(/\/+/g, "/");
-const parseTsv = (tsv) => {
+export const parseTsv = (tsv) => {
   return tsv
     .split("\n")
     .filter((e) => e.trim() !== "")
