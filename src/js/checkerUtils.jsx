@@ -14,6 +14,7 @@ import { usfmVerseToJson } from "../wordAligner/utils/usfmHelpers";
 import { getWordListFromVerseObjects } from "../wordAligner/utils/alignmentHelpers";
 import { getOriginalLanguageListForVerseData } from "../wordAligner/utils/migrateOriginalLanguageHelpers";
 import { addAlignmentsToTargetVerseUsingMerge } from "../wordAligner/utils/alignmentHelpers";
+import { parseTsv } from "./creatProject";
 export const changeDataFromtopBottomToNgramSourceNgram = (
   alignments,
   targetVerse2,
@@ -187,50 +188,86 @@ export const getTnData = async (
   return json;
 };
 
+const initJsonStructure = () => ({
+  kt: { articles: {}, index: [] },
+  names: { articles: {}, index: [] },
+  other: { articles: {}, index: [] },
+});
+
 export const getglTwData = async (
   repoNameResources,
-  repoNameProject,
+  BookCode,
   tCoreNameProject,
 ) => {
-  const json = {
-    kt: { articles: {}, index: [] },
-    names: { articles: {}, index: [] },
-    other: { articles: {}, index: [] },
-  };
-  const things = ["kt", "names", "other"];
-  // let responce_batch_md = await fsGetRust(
-  //   repoNameResources,
-  //   join(`payload`),
-  //   "git.door43.org/uW",
-  //   false,
-  //   true
-  // );
-  for (const t of things) {
+  const json = initJsonStructure();
+  const categories = ["kt", "names", "other"];
+
+  // 1. Fetch folder content for each category
+  for (const category of categories) {
     const folder = await fsGetRust(
       repoNameResources,
-      join(`payload`, t),
+      join("payload", category),
       "git.door43.org/uW",
       false,
-      true
+      true,
     );
 
-    for (const e of Object.keys(folder)) {
-      if (!e.includes("headers")) {
-        let p = folder[e]
-        json[t]["articles"][e.split(".")[0]] = p;
-        json[t]["index"].push({
-          id: e.split(".")[0],
-          name: p.split("\n")[0].replace(/^#\s*/, "").trim(),
+    for (const filename of Object.keys(folder)) {
+      if (!filename.includes("headers")) {
+        const content = folder[filename];
+        const articleId = filename.split(".")[0];
+
+        json[category].articles[articleId] = content;
+        json[category].index.push({
+          id: articleId,
+          name: content.split("\n")[0].replace(/^#\s*/, "").trim(),
         });
       }
     }
   }
-  json["manifest"] = await fsGetManifest(
-    "git.door43.org",
-    "uW",
+
+  // 2. Fetch manifest
+  // json.manifest = (
+  //   await fsGetManifest("git.door43.org", "uW", repoNameResources)
+  // ).json;
+
+  // 3. Fetch TSV and filter relevant articles
+  const tsvRaw = await fsGetRust(
     repoNameResources,
-  ).json;
-  return json;
+    `${BookCode.toUpperCase()}.tsv`,
+    "git.door43.org/uW",
+  );
+  const tsvData = parseTsv(tsvRaw);
+
+  const filteredJson = initJsonStructure();
+
+  for (const row of tsvData.slice(1)) {
+    const [, , , , , path] = row; // Assuming row[5] contains the path
+    const pathParts = path.split("/");
+    const category = pathParts[2];
+        console.log(json,category,pathParts[3])
+
+    const articleId = pathParts[3].replace(/\r/g, "");
+    
+    if (json[category]?.articles[articleId]) {
+          console.log(category,articleId,(json[category]), !! (json[category]?.articles[articleId]),!!filteredJson[category].articles[articleId])
+      if (!filteredJson[category].articles[articleId]) {
+        filteredJson[category].articles[articleId] =
+          json[category].articles[articleId].replace(/\r/g, "");
+        // Add only relevant index
+        console.log(filteredJson)
+        filteredJson[category].index.push({
+          id: articleId,
+          name: json[category].articles[articleId]
+            .split("\n")[0]
+            .replace(/^#\s*/, "")
+            .trim(),
+        });
+      }
+    }
+  }
+
+  return { ...filteredJson, manifest: json.manifest };
 };
 
 const renameCategories = (tnData, linkTitleMap, group = true) => {
@@ -482,7 +519,7 @@ export const getLexiconData = async (repoName) => {
   for (let [k, v] of Object.entries(lexiconData)) {
     json[arb][k.split(".")[0]] = JSON.parse(v);
   }
-  console.log(json)
+  console.log(json);
   return json;
 };
 

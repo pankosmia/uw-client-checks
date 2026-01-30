@@ -972,7 +972,7 @@ const generateHelperForTool = async (
     let categoryKey = "";
 
     if (typeOfTools === "translationNotes") {
-      newJson.contextId.groupId = tsv[i][3].split("/").slice(-1)[0];
+      newJson.contextId.groupId = tsv[i][3].split("/").slice(-1)[0].replace(/\r/g, "");
       newJson.contextId.quote = creatWordList(tsv[i][4]);
       newJson.contextId.occurrence = parseInt(tsv[i][5]);
       newJson.contextId.quoteString = tsv[i][4];
@@ -991,7 +991,7 @@ const generateHelperForTool = async (
       );
     } else {
       newJson.contextId.quoteString = tsv[i][3];
-      newJson.contextId.groupId = tsv[i][5].split("/").slice(-1)[0];
+      newJson.contextId.groupId = tsv[i][5].split("/").slice(-1)[0].replace(/\r/g, "");
       newJson.contextId.quote = tsv[i][3];
       newJson.contextId.occurrence = parseInt(tsv[i][4]);
 
@@ -1158,7 +1158,7 @@ export const moveUsfmFileFromSourceToImports = async (
 };
 
 export const join = (...args) => args.join("/").replace(/\/+/g, "/");
-const parseTsv = (tsv) => {
+export const parseTsv = (tsv) => {
   return tsv
     .split("\n")
     .filter((e) => e.trim() !== "")
