@@ -227,9 +227,9 @@ export const getglTwData = async (
   }
 
   // 2. Fetch manifest
-  json.manifest = (
-    await fsGetManifest("git.door43.org", "uW", repoNameResources)
-  ).json;
+  // json.manifest = (
+  //   await fsGetManifest("git.door43.org", "uW", repoNameResources)
+  // ).json;
 
   // 3. Fetch TSV and filter relevant articles
   const tsvRaw = await fsGetRust(
@@ -241,18 +241,21 @@ export const getglTwData = async (
 
   const filteredJson = initJsonStructure();
 
-  for (const row of tsvData) {
+  for (const row of tsvData.slice(1)) {
     const [, , , , , path] = row; // Assuming row[5] contains the path
     const pathParts = path.split("/");
     const category = pathParts[2];
-    const articleId = pathParts[3];
+        console.log(json,category,pathParts[3])
 
+    const articleId = pathParts[3].replace(/\r/g, "");
+    
     if (json[category]?.articles[articleId]) {
+          console.log(category,articleId,(json[category]), !! (json[category]?.articles[articleId]),!!filteredJson[category].articles[articleId])
       if (!filteredJson[category].articles[articleId]) {
         filteredJson[category].articles[articleId] =
-          json[category].articles[articleId];
+          json[category].articles[articleId].replace(/\r/g, "");
         // Add only relevant index
-
+        console.log(filteredJson)
         filteredJson[category].index.push({
           id: articleId,
           name: json[category].articles[articleId]
