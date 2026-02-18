@@ -628,58 +628,63 @@ export default function SelectBook() {
                       }}
                     >
                       <Box sx={{ gap: 1, display: "flex" }}>
-                        <Button
-                          sx={{
-                            height: 36,
-                            opacity: 1,
-                            pt: 1.5, // padding-top: 6px
-                            pr: 2, // padding-right: 16px
-                            pb: 1.5, // padding-bottom: 6px
-                            pl: 2, // padding-left: 16px
-                            borderRadius: 1, // or your theme's borderRadius value
-                            borderWidth: 1,
-                            borderStyle: "solid",
-                            transform: "rotate(0deg)",
-                            whiteSpace: "nowrap",
-                          }}
-                          onClick={() =>
-                            getUsfmFromBible(book.projectName, book.tCoreName)
-                          }
-                        >
-                          {doI18n(
-                            "pages:uw-client-checks:export_usfm",
-                            i18nRef.current,
-                          )}
-                        </Button>
                         {book.hasManifest ? (
-                          <CheckerSetting
-                            repoName={selectedBurrito.abbreviation}
-                            tCoreNameProject={book.tCoreName}
-                            callBack={() => {
-                              setOpenedBooks((prev) => {
-                                const next = new Set(prev);
+                          <>
+                            <Button
+                              sx={{
+                                height: 36,
+                                opacity: 1,
+                                pt: 1.5, // padding-top: 6px
+                                pr: 2, // padding-right: 16px
+                                pb: 1.5, // padding-bottom: 6px
+                                pl: 2, // padding-left: 16px
+                                borderRadius: 1, // or your theme's borderRadius value
+                                borderWidth: 1,
+                                borderStyle: "solid",
+                                transform: "rotate(0deg)",
+                                whiteSpace: "nowrap",
+                              }}
+                              onClick={() =>
+                                getUsfmFromBible(
+                                  book.projectName,
+                                  book.tCoreName,
+                                )
+                              }
+                            >
+                              {doI18n(
+                                "pages:uw-client-checks:export_usfm",
+                                i18nRef.current,
+                              )}
+                            </Button>
+                            <CheckerSetting
+                              repoName={selectedBurrito.abbreviation}
+                              tCoreNameProject={book.tCoreName}
+                              callBack={() => {
+                                setOpenedBooks((prev) => {
+                                  const next = new Set(prev);
 
-                                if (next.has(book.bookCode)) {
-                                  next.delete(book.bookCode); // close → remove
-                                } else {
-                                  next.add(book.bookCode); // open → add
-                                }
+                                  if (next.has(book.bookCode)) {
+                                    next.delete(book.bookCode); // close → remove
+                                  } else {
+                                    next.add(book.bookCode); // open → add
+                                  }
 
-                                return next;
-                              });
-                              setOpenedBooks((prev) => {
-                                const next = new Set(prev);
+                                  return next;
+                                });
+                                setOpenedBooks((prev) => {
+                                  const next = new Set(prev);
 
-                                if (next.has(book.bookCode)) {
-                                  next.delete(book.bookCode); // close → remove
-                                } else {
-                                  next.add(book.bookCode); // open → add
-                                }
+                                  if (next.has(book.bookCode)) {
+                                    next.delete(book.bookCode); // close → remove
+                                  } else {
+                                    next.add(book.bookCode); // open → add
+                                  }
 
-                                return next;
-                              });
-                            }}
-                          />
+                                  return next;
+                                });
+                              }}
+                            />
+                          </>
                         ) : (
                           <></>
                         )}
