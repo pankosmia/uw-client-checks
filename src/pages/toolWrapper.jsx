@@ -343,15 +343,31 @@ export const ToolWrapper = () => {
             );
           }
         }
+        const date = safeDateString();
         await fsWriteRust(
           projectName,
           `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid/${chapter}/${verse}.json`,
-          { timestamp: new Date().toISOString() },
+          { timestamp: date },
+        );
+        await fsWriteRust(
+          projectName,
+          `book_projects/${tCoreName}/apps/translationCore/checkData/verseEdits/${book}/${chapter}/${verse}/${date}.json`,
+          { timestamp: date },
         );
       }
     }
   };
+  function safeDateString() {
+    const now = new Date();
 
+    const pad = (n) => n.toString().padStart(2, "0");
+
+    // Format: YYYY-MM-DD-HH-MM-SS
+    return (
+      `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
+      `-${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`
+    );
+  }
   const saveCheckingData = async (newState) => {
     const data = structuredClone(newState.currentCheck);
 
@@ -682,6 +698,30 @@ export const ToolWrapper = () => {
             translate,
           );
 
+        //edited
+        let EditAlignmentChapter = await fsGetRust(
+          projectName,
+          `book_projects/${tCoreName}/apps/translationCore/checkData/verseEdits/${book}`,
+        );
+        for (let c of EditAlignmentChapter) {
+          let editVerse = await fsGetRust(
+            projectName,
+            `book_projects/${tCoreName}/apps/translationCore/checkData/verseEdits/${book}/${c}`,
+          );
+          for (let v of editVerse) {
+            if (groupsData[`chapter_${c}`]) {
+              let index = groupsData[`chapter_${c}`].findIndex(
+                (e) => e.contextId.reference.verse === v,
+              );
+              if (index >= 0) {
+                groupsData[`chapter_${c}`][index]["edited"] = true;
+              }
+            }
+          }
+        }
+
+        console.log(EditAlignmentChapter);
+        //invalid
         let invalidAlignmentChapter = await fsGetRust(
           projectName,
           `book_projects/${tCoreName}/apps/translationCore/tools/wordAlignment/invalid`,
@@ -708,6 +748,7 @@ export const ToolWrapper = () => {
           }
         }
 
+        console.log(groupsData);
         setGroupsData(groupsData);
         setGroupsIndex(groupsIndex);
       }
