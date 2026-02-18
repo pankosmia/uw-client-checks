@@ -1,23 +1,21 @@
-import { defineConfig } from 'vite'
-import { nodePolyfills } from 'vite-plugin-node-polyfills'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
+import react from "@vitejs/plugin-react";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-      react()
-  ],
+  plugins: [react()],
   server: {
     port: 5174, // Unique port for new_project
     strictPort: true,
     host: true,
     cors: true,
-    origin: 'http://localhost:8000',
+    origin: "http://localhost:8000",
   },
   build: {
-    outDir: 'build',
+    outDir: "build",
     emptyOutDir: true,
-    
+    sourcemap: true,
   },
-  base: '/clients/uw-client-checks/'
-})
+  base: "/clients/uw-client-checks/",
+});

@@ -146,6 +146,9 @@
     "missing_resources": {
       "en": "You can download or sideload these resources",
       "fr": "Vous pouvez télécharger ou téléverser ces ressources"
+    },
+    "export_usfm": {
+      "en" : "export usfm"
     }
   }
 }

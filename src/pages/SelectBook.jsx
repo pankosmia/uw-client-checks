@@ -31,6 +31,51 @@ import { fsGetRust, fsWriteRust } from "../js/serverUtils";
 import { isOldTestament } from "../js/creatProject";
 import ButtonDashBoard from "../js/components/ButtonDashBoard";
 import DownloadRessources from "../js/components/DownloadRessources";
+import { addAlignmentsToTargetVerseUsingMerge } from "../wordAligner/utils/alignmentHelpers";
+import { loadAlignment } from "../js/checkerUtils";
+import { getBookFromName } from "../js/checkerUtils";
+import { verifyIsValidUsfmFile } from "../js/creatProject";
+import { usfmToJSON } from "usfm-js/lib/js/usfmToJson";
+import { usfmVerseToJson } from "../wordAligner/utils/usfmHelpers";
+import { jsonToUSFM } from "usfm-js/lib/js/jsonToUsfm";
+import { saveAs } from "file-saver";
+async function getUsfmFromBible(projectName, tCoreName) {
+  const usfmData = await verifyIsValidUsfmFile(
+    projectName,
+    `book_projects/${tCoreName}/`,
+  );
+  let jsonBook = usfmToJSON(usfmData);
+  let targetBible = await getBookFromName(
+    projectName,
+    `book_projects/${tCoreName}`,
+    tCoreName.split("_")[2],
+    "target_language",
+    "_local_/_local_",
+    true,
+  );
+  let rest = await loadAlignment(projectName, tCoreName);
+  for (let c of Object.keys(rest)) {
+    for (let v of Object.keys(rest[c])) {
+      jsonBook.chapters[c][v].verseObjects = usfmVerseToJson(
+        addAlignmentsToTargetVerseUsingMerge(targetBible[c][v], rest[c][v]),
+      );
+    }
+  }
+  let finalUsfm = jsonToUSFM(jsonBook);
+  //   let blob = new Blob([bookUsfmResponse.text], { type: "text/plain;charset=utf-8" });
+  // saveAs(blob, `${bookCode}.usfm`);
+  await fsWriteRust(
+    projectName,
+    `book_projects/${tCoreName}/${tCoreName.split("_")[2]}.usfm`,
+    finalUsfm,
+  );
+  let blob = new Blob([finalUsfm], {
+    type: "text/plain;charset=utf-8",
+  });
+  saveAs(blob, `${tCoreName.split("_")[2]}.usfm`);
+  return finalUsfm;
+}
+
 export default function SelectBook() {
   const { currentProjectRef } = useContext(currentProjectContext);
 
@@ -317,7 +362,7 @@ export default function SelectBook() {
         },
       );
     }
-  }, [selectedBurrito,downloadRessourcesDialogueOpen]);
+  }, [selectedBurrito, downloadRessourcesDialogueOpen]);
 
   const handleCloseModal = () => setOpenModal(false);
 
@@ -403,8 +448,7 @@ export default function SelectBook() {
             px: 2,
             py: 1,
           }}
-        >
-        </Box>
+        ></Box>
       ) : (
         <Box
           sx={{
@@ -501,13 +545,13 @@ export default function SelectBook() {
                     <Box>
                       {book.hasManifest ? (
                         <></>
+                      ) : (
                         // <Typography color="success.main" fontWeight={600}>
                         //   {doI18n(
                         //     `pages:uw-client-checks:ready`,
                         //     i18nRef.current,
                         //   )}
                         // </Typography>
-                      ) : (
                         <Typography color="warning.main" fontWeight={600}>
                           {doI18n(
                             `pages:uw-client-checks:need_initalisation`,
@@ -584,6 +628,29 @@ export default function SelectBook() {
                       }}
                     >
                       <Box sx={{ gap: 1, display: "flex" }}>
+                        <Button
+                          sx={{
+                            height: 36,
+                            opacity: 1,
+                            pt: 1.5, // padding-top: 6px
+                            pr: 2, // padding-right: 16px
+                            pb: 1.5, // padding-bottom: 6px
+                            pl: 2, // padding-left: 16px
+                            borderRadius: 1, // or your theme's borderRadius value
+                            borderWidth: 1,
+                            borderStyle: "solid",
+                            transform: "rotate(0deg)",
+                            whiteSpace: "nowrap",
+                          }}
+                          onClick={() =>
+                            getUsfmFromBible(book.projectName, book.tCoreName)
+                          }
+                        >
+                          {doI18n(
+                            "pages:uw-client-checks:export_usfm",
+                            i18nRef.current,
+                          )}
+                        </Button>
                         {book.hasManifest ? (
                           <CheckerSetting
                             repoName={selectedBurrito.abbreviation}
@@ -750,10 +817,7 @@ export default function SelectBook() {
         </DialogContent>
         <PanDialogActions
           closeFn={() => (window.location.href = `/clients/main`)}
-          closeLabel={doI18n(
-            "pages:uw-client-checks:back",
-            i18nRef.current,
-          )}
+          closeLabel={doI18n("pages:uw-client-checks:back", i18nRef.current)}
           isDisabled={resourcesStatus?.some((r) => !r.exists)}
           actionFn={() => {
             setDownloadRessourcesDialogueOpen(true);

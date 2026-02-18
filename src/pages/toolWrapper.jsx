@@ -56,7 +56,7 @@ import { tokenizeVerseObjects } from "../wordAligner/utils/verseObjects";
 import BIBLE_BOOKS from "../common/BooksOfTheBible";
 // Load sample data from fixtures
 // const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
-const translations = require("../uwSrc/locales/English-en_US.json");
+import translations from "../uwSrc/locales/English-en_US.json";
 
 // Configuration settings
 const showDocument = true; // set to false to disable showing ta or tw document
@@ -414,18 +414,6 @@ export const ToolWrapper = () => {
       `book_projects/${tCoreName}/apps/translationCore/index/${toolName}/${book}/${index}.json`,
       json2,
     );
-    // for (let [e, val] of Object.entries(checkingData)) {
-    //   for (let k of Object.keys(val)) {
-    //     if (k === index) {
-    //       setCheckingData((prev) => {
-    //         let last = { ...prev };
-    //         last[e][k] = json2;
-    //         return last;
-    //       });
-    //       break;
-    //     }
-    //   }
-    // }
   };
   useEffect(() => {
     if (toolName === "wordAlignment") {
