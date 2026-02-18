@@ -247,7 +247,7 @@ export const ToolWrapper = () => {
     let p2 = targetBible;
     p2[chapter] = changeFileVerse;
     for (let tool of ["translationWords", "translationNotes"]) {
-      if (toolName !== tool) {
+      if (true) {
         let cat;
         let batch = await fsGetRust(
           projectName,
