@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo, useContext } from "react";
 import { Checker, TranslationUtils } from "tc-checking-tool-rcl";
-import { useParams, useLocation, json } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { selectionsHelpers } from "word-aligner-lib";
-import { deleteBookProject, deleteIngredient } from "../js/serverUtils";
+import { deleteIngredient } from "../js/serverUtils";
 import {
   changeTnCategories,
   getTnData,
@@ -28,31 +28,22 @@ import { i18nContext } from "pankosmia-rcl";
 import { loadAlignment } from "../js/checkerUtils";
 import { usfmVerseToJson } from "../wordAligner/utils/usfmHelpers";
 import { updateAlignmentsToTargetVerse } from "../wordAligner/utils/alignmentHelpers";
-import { VerseObjectUtils } from "word-aligner";
-import { getWordListFromVerseObjects } from "../wordAligner/utils/alignmentHelpers";
+
 import wordaligner from "word-aligner";
-import { toUSFM } from "usfm-js";
 import {
   getBookFromName,
   getglTwData,
   getCheckingData,
   getLexiconData,
-  changeDataFromtopBottomToNgramSourceNgram,
 } from "../js/checkerUtils";
 import { verseHelpers } from "@gabrielaillet/word-aligner-rcl";
-import {
-  addAlignmentsToTargetVerseUsingMerge,
-  handleAddedWordsInNewText,
-  handleDeletedWords,
-} from "../wordAligner/utils/alignmentHelpers";
+import { addAlignmentsToTargetVerseUsingMerge } from "../wordAligner/utils/alignmentHelpers";
 
-import { addAlignmentsToVerseUSFM } from "../wordAligner/utils/alignmentHelpers";
 import { isOldTestament } from "../js/creatProject";
 import { WordAlignmentTool } from "@gabrielaillet/word-aligner-rcl";
 import { groupDataHelpers as grouphelpers } from "@gabrielaillet/word-aligner-rcl";
 import { groupDataHelpers } from "word-aligner-lib";
-import { toJSON } from "usfm-js";
-import { tokenizeVerseObjects } from "../wordAligner/utils/verseObjects";
+
 import BIBLE_BOOKS from "../common/BooksOfTheBible";
 // Load sample data from fixtures
 // const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
@@ -94,42 +85,6 @@ function saveToolSettings(
   return;
 }
 
-const editedTargetVerse =
-  (
-    chapterWithVerseEdit,
-    verseWithVerseEdit,
-    before,
-    after,
-    tags,
-    username,
-    gatewayLanguageCode,
-    gatewayLanguageQuote,
-    projectSaveLocation,
-    currentToolName,
-    translate,
-    showAlert,
-    closeAlert,
-    showIgnorableAlert,
-    updateTargetVerse,
-    toolApi,
-  ) =>
-  (dispatch, getState) => {
-    // const state = getState();
-    // const contextId = getContextId(state);
-    // const currentCheckContextId = contextId;
-    // const {
-    //   bookId, chapter: currentCheckChapter, verse: currentCheckVerse,
-    // } = currentCheckContextId.reference;
-    // const contextIdWithVerseEdit = {
-    //   ...currentCheckContextId,
-    //   reference: {
-    //     ...currentCheckContextId.reference,
-    //     chapter: chapterWithVerseEdit,
-    //     verse: verseWithVerseEdit,
-    //   },
-    // };
-  };
-
 // Translation helper function for UI strings
 const translate = (key) => {
   const translation = TranslationUtils.lookupTranslationForKey(
@@ -150,7 +105,6 @@ const saveSettings = (settings) => {};
 
 // Callback for when checking data changes
 
-const contextId_ = {};
 export const ToolWrapper = () => {
   const location = useLocation();
   const { i18nRef } = useContext(i18nContext);
