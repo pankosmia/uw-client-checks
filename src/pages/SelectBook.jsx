@@ -31,6 +31,8 @@ import { fsGetRust, fsWriteRust } from "../js/serverUtils";
 import { isOldTestament } from "../js/creatProject";
 import ButtonDashBoard from "../js/components/ButtonDashBoard";
 import DownloadRessources from "../js/components/DownloadRessources";
+
+
 export default function SelectBook() {
   const { currentProjectRef } = useContext(currentProjectContext);
 
@@ -317,7 +319,7 @@ export default function SelectBook() {
         },
       );
     }
-  }, [selectedBurrito,downloadRessourcesDialogueOpen]);
+  }, [selectedBurrito, downloadRessourcesDialogueOpen]);
 
   const handleCloseModal = () => setOpenModal(false);
 
@@ -403,8 +405,7 @@ export default function SelectBook() {
             px: 2,
             py: 1,
           }}
-        >
-        </Box>
+        ></Box>
       ) : (
         <Box
           sx={{
@@ -501,13 +502,13 @@ export default function SelectBook() {
                     <Box>
                       {book.hasManifest ? (
                         <></>
+                      ) : (
                         // <Typography color="success.main" fontWeight={600}>
                         //   {doI18n(
                         //     `pages:uw-client-checks:ready`,
                         //     i18nRef.current,
                         //   )}
                         // </Typography>
-                      ) : (
                         <Typography color="warning.main" fontWeight={600}>
                           {doI18n(
                             `pages:uw-client-checks:need_initalisation`,
@@ -585,34 +586,36 @@ export default function SelectBook() {
                     >
                       <Box sx={{ gap: 1, display: "flex" }}>
                         {book.hasManifest ? (
-                          <CheckerSetting
-                            repoName={selectedBurrito.abbreviation}
-                            tCoreNameProject={book.tCoreName}
-                            callBack={() => {
-                              setOpenedBooks((prev) => {
-                                const next = new Set(prev);
+                          <>                         
+                            <CheckerSetting
+                              repoName={selectedBurrito.abbreviation}
+                              tCoreNameProject={book.tCoreName}
+                              callBack={() => {
+                                setOpenedBooks((prev) => {
+                                  const next = new Set(prev);
 
-                                if (next.has(book.bookCode)) {
-                                  next.delete(book.bookCode); // close → remove
-                                } else {
-                                  next.add(book.bookCode); // open → add
-                                }
+                                  if (next.has(book.bookCode)) {
+                                    next.delete(book.bookCode); // close → remove
+                                  } else {
+                                    next.add(book.bookCode); // open → add
+                                  }
 
-                                return next;
-                              });
-                              setOpenedBooks((prev) => {
-                                const next = new Set(prev);
+                                  return next;
+                                });
+                                setOpenedBooks((prev) => {
+                                  const next = new Set(prev);
 
-                                if (next.has(book.bookCode)) {
-                                  next.delete(book.bookCode); // close → remove
-                                } else {
-                                  next.add(book.bookCode); // open → add
-                                }
+                                  if (next.has(book.bookCode)) {
+                                    next.delete(book.bookCode); // close → remove
+                                  } else {
+                                    next.add(book.bookCode); // open → add
+                                  }
 
-                                return next;
-                              });
-                            }}
-                          />
+                                  return next;
+                                });
+                              }}
+                            />
+                          </>
                         ) : (
                           <></>
                         )}
@@ -750,10 +753,7 @@ export default function SelectBook() {
         </DialogContent>
         <PanDialogActions
           closeFn={() => (window.location.href = `/clients/main`)}
-          closeLabel={doI18n(
-            "pages:uw-client-checks:back",
-            i18nRef.current,
-          )}
+          closeLabel={doI18n("pages:uw-client-checks:back", i18nRef.current)}
           isDisabled={resourcesStatus?.some((r) => !r.exists)}
           actionFn={() => {
             setDownloadRessourcesDialogueOpen(true);

@@ -10,6 +10,8 @@ import "./index.css";
 import SelectBook from "./pages/SelectBook";
 import { createTheme, ThemeProvider } from "@mui/material";
 import { getAndSetJson } from "pithekos-lib";
+import UsfmExport from "./pages/UsfmExport";
+
 function AppLayout() {
   const [themeSpec, setThemeSpec] = useState({
     palette: {
@@ -69,6 +71,10 @@ const router = createHashRouter([
         path: ":projectName/ToolWrapper/:tCoreName/*",
         element: <ToolWrapper />,
       },
+      {
+        path:":export/usfm",
+        element:<UsfmExport />
+      }
     ],
   },
 ]);
