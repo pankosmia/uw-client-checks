@@ -34,7 +34,6 @@ export default function AddBookModal({
   const [projectSummaries, setProjectSummaries] = useState({});
 
   const [_selectedResources, _setSelectedResources] = useState([]);
-  console.log(_selectedResources);
   const getProjectSummaries = async () => {
     const summariesResponse = await getJson(
       "/burrito/metadata/summaries",

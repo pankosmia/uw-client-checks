@@ -134,7 +134,6 @@ export const ToolWrapper = () => {
   const [biblesForAligner, setBiblesForAligner] = useState(null);
 
   const [selectedResources, setSelectedResources] = useState([]);
-  console.log(selectedResources);
   useEffect(() => {
     setBiblesForAligner(verseHelpers.getBibleObject(bibles));
   }, [bibles]);
@@ -593,7 +592,6 @@ export const ToolWrapper = () => {
               owner: "unfoldingWord",
             });
           }
-          console.log(summary);
         }
         setBibles(init);
       }
@@ -705,7 +703,6 @@ export const ToolWrapper = () => {
           }
         }
 
-        console.log(EditAlignmentChapter);
         //invalid
         let invalidAlignmentChapter = await fsGetRust(
           projectName,
