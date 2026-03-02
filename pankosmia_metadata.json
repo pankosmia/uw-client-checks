@@ -6,7 +6,7 @@
     "net": false,
     "debug": false
   },
-  "minServerVersion": "0.12.12",
+  "minServerVersion": "0.14.1",
   "endpoints": {
     "x-tcore": {
       "edit": {

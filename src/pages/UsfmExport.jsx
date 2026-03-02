@@ -31,7 +31,6 @@ async function getUsfmFromBible(projectName, repoPath, bookCode) {
     projectName,
     `book_projects/${tCoreName}/`,
   );
-  console.log(usfmData);
   let jsonBook = usfmToJSON(usfmData);
   let targetBible = await getBookFromName(
     projectName,
@@ -96,19 +95,16 @@ function UsfmExport() {
     setRepoName(paths[2]);
   };
   const getProjectSummary = async () => {
-    console.log(repoName, "book_projects", repoPath);
 
     let booksProjectsList = await fsGetRust(
       repoName,
       "book_projects",
       repoPath,
     );
-    console.log(booksProjectsList);
 
     const books = [
       ...new Set(booksProjectsList.map((e) => e.split("_")[2].toUpperCase())),
     ];
-    console.log(books);
     setBookNames(books);
   };
   useEffect(() => {

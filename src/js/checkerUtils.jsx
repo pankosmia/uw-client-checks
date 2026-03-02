@@ -362,7 +362,6 @@ export async function getSelectedChecksCategories(repoName, nameArr) {
       `${nameArr}/checker_setting.json`,
     );
   }
-  console.log(repoName, nameArr);
   return objectCategories;
 }
 
@@ -516,7 +515,6 @@ export const getLexiconData = async (repoName) => {
   for (let [k, v] of Object.entries(lexiconData)) {
     json[arb][k.split(".")[0]] = JSON.parse(v);
   }
-  console.log(json);
   return json;
 };
 
@@ -539,7 +537,6 @@ export const getProgressChecker = async (
   const filteredChecks = Object.fromEntries(
     Object.entries(checks).filter(([key]) => selectedCategories.includes(key)),
   );
-  console.log(checks);
   let isDone = 0;
   let isInvalidated = 0;
   let TotalCount = 0;
@@ -590,7 +587,6 @@ export const getProgressAligment = async (repoName, nameArr, originBible) => {
       false,
       true,
     );
-    console.log(verses);
     invalidated_number += Object.entries(verses).length;
   }
   if (targetBible) {
