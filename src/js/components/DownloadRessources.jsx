@@ -8,6 +8,7 @@ import {
   PanDownload,
   PanDialog,
   PanDialogActions,
+  debugContext,
 } from "pankosmia-rcl";
 
 const DownloadRessources = ({
@@ -17,6 +18,7 @@ const DownloadRessources = ({
 }) => {
   const { i18nRef } = useContext(i18nContext);
   const { enabledRef } = useContext(netContext);
+  const { debugRef } = useContext(debugContext);
 
   const [internetDialogOpen, setInternetDialogOpen] = useState(false);
 
@@ -39,6 +41,14 @@ const DownloadRessources = ({
     setDownloadRessourcesDialogueOpen(true);
     setInternetDialogOpen(false);
   };
+  async function DowloadBurrito(params, remoteRepoPath, postType) {
+    const fetchUrl =
+      postType === "clone"
+        ? `/git/clone-repo/${remoteRepoPath}`
+        : `/git/pull-repo/origin/${remoteRepoPath}`;
+
+    return await postEmptyJson(fetchUrl, debugRef.current);
+  }
 
   const ListTc4 = {
     "git.door43.org": {
@@ -56,6 +66,7 @@ const DownloadRessources = ({
     },
   };
 
+  let preSelected = {...ListTc4}["git.door43.org"]["uW"].map(e => "git.door43.org/uW/"+e)
   return (
     <Box>
       <PanDialog
@@ -99,7 +110,15 @@ const DownloadRessources = ({
         size="lg"
       >
         <DialogContent>
-          {enabledRef.current && <PanDownload sources={ListTc4} />}
+          {enabledRef.current && (
+            <PanDownload
+              downloadedType="burrito"
+              downloadFunction={DowloadBurrito}
+              sources={ListTc4}
+              sx={{ flex: 1 }}
+              preSelected={preSelected}
+            />
+          )}
         </DialogContent>
         <PanDialogActions
           onlyCloseButton={true}

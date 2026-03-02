@@ -23,7 +23,7 @@ import ArrowBack from "@mui/icons-material/ArrowBack";
 import yaml from "js-yaml";
 import { buildLinkTitleMap } from "../js/checkerUtils";
 import { fixOccurrences, fsGetRust, fsWriteRust } from "../js/serverUtils";
-import { doI18n } from "pithekos-lib";
+import { doI18n, getJson } from "pithekos-lib";
 import { i18nContext } from "pankosmia-rcl";
 import { loadAlignment } from "../js/checkerUtils";
 import { usfmVerseToJson } from "../wordAligner/utils/usfmHelpers";
@@ -48,6 +48,7 @@ import BIBLE_BOOKS from "../common/BooksOfTheBible";
 // Load sample data from fixtures
 // const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 import translations from "../uwSrc/locales/English-en_US.json";
+import AddBookModal from "../js/components/AddBookModal";
 
 // Configuration settings
 const showDocument = true; // set to false to disable showing ta or tw document
@@ -131,9 +132,13 @@ export const ToolWrapper = () => {
   const [groupsIndex, setGroupsIndex] = useState({});
   const [alignmentTargetBible, setAlignementTargetBibles] = useState({});
   const [biblesForAligner, setBiblesForAligner] = useState(null);
+
+  const [selectedResources, setSelectedResources] = useState([]);
+  console.log(selectedResources);
   useEffect(() => {
     setBiblesForAligner(verseHelpers.getBibleObject(bibles));
   }, [bibles]);
+
   const changedCurrentCheck = (newContext) => {
     setContextId(newContext);
   };
@@ -544,31 +549,57 @@ export const ToolWrapper = () => {
   // Build unified bibles list when dependencies update
   useEffect(() => {
     if (targetBible && originBible && ultBible) {
-      setBibles([
-        {
-          book: targetBible,
-          description: "target_language",
-          languageId: "targetLanguage",
-          bibleId: "targetBible",
-          owner: "unfoldingWord",
-        },
-        {
-          book: ultBible,
-          description: "gateway_language",
-          languageId: "en",
-          bibleId: "ult",
-          owner: "unfoldingWord",
-        },
-        {
-          book: originBible,
-          description: "original_language",
-          languageId: isOldTestament(book) ? "hbo" : "el-x-koine",
-          bibleId: isOldTestament(book) ? "uhb" : "ugnt",
-          owner: "unfoldingWord",
-        },
-      ]);
+      async function getBibles() {
+        let init = [
+          {
+            book: targetBible,
+            description: "target_language",
+            languageId: "targetLanguage",
+            bibleId: "targetBible",
+            owner: "unfoldingWord",
+          },
+          {
+            book: ultBible,
+            description: "gateway_language",
+            languageId: "en",
+            bibleId: "ult",
+            owner: "unfoldingWord",
+          },
+          {
+            book: originBible,
+            description: "original_language",
+            languageId: isOldTestament(book) ? "hbo" : "el-x-koine",
+            bibleId: isOldTestament(book) ? "uhb" : "ugnt",
+            owner: "unfoldingWord",
+          },
+        ];
+        for (let e of selectedResources) {
+          let paths = e.split("/");
+          let newBibleRessource = await getBookFromName(
+            paths[2],
+            "",
+            book,
+            "gateway_language",
+            paths[0] + "/" + paths[1],
+          );
+          let summary = await getJson(`/burrito/metadata/summary/${e}`);
+          if (summary.ok) {
+            summary = summary.json;
+            init.push({
+              book: newBibleRessource,
+              description: "gateway_language",
+              languageId: summary.language_code,
+              bibleId: summary.abbreviation,
+              owner: "unfoldingWord",
+            });
+          }
+          console.log(summary);
+        }
+        setBibles(init);
+      }
+      getBibles();
     }
-  }, [targetBible, originBible, ultBible]);
+  }, [targetBible, originBible, ultBible, selectedResources]);
 
   useEffect(() => {
     setLoadingTool(false);
@@ -712,7 +743,6 @@ export const ToolWrapper = () => {
 
   const ready =
     Array.isArray(bibles) &&
-    bibles.length === 3 &&
     targetBible != null &&
     originBible != null &&
     ultBible != null &&
@@ -729,23 +759,24 @@ export const ToolWrapper = () => {
     saveCheckingData != null &&
     toolSettings != null &&
     !loadingTool;
-  console.log(dataTw);
+
   return (
     <div style={{ height: "calc(100vh - 100px)" }}>
       <Box
         sx={{
-          display: "flex",
+          display: "grid",
+          gridTemplateColumns: "auto auto 1fr auto",
           alignItems: "center",
           px: 2,
           height: "48px",
-          marginTop: "4px",
+          mt: "4px",
+          columnGap: 2,
         }}
       >
         {/* LEFT: Back button */}
         <Button
           color="primary"
           size="small"
-          sx={{ marginX: 1 }}
           onClick={() => (window.location.href = `/clients/uw-client-checks#`)}
         >
           <ArrowBack sx={{ mr: 1 }} />
@@ -753,14 +784,21 @@ export const ToolWrapper = () => {
             {doI18n("pages:uw-client-checks:back", i18nRef.current)}
           </Typography>
         </Button>
+
+        {/* BOOK NAME (between back & tabs) */}
+        <Typography variant="h5" fontWeight="bold" noWrap>
+          {isOldTestament(book)
+            ? BIBLE_BOOKS.oldTestament[book]
+            : BIBLE_BOOKS.newTestament[book]}
+        </Typography>
+
         {/* CENTER: Tabs */}
-        <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
           <Tabs
             value={toolName}
             onChange={(event, newValue) => setToolName(newValue)}
             indicatorColor="primary"
             textColor="primary"
-            variant="standard"
           >
             {tools.map((tool) => (
               <Tab key={tool} value={tool} label={changeToolName(tool)} />
@@ -768,14 +806,12 @@ export const ToolWrapper = () => {
           </Tabs>
         </Box>
 
-        {/* RIGHT spacer to keep tabs centered */}
-        <Box sx={{ width: 140 }}>
-          <Typography variant="h5" fontWeight="bold">
-            {isOldTestament(book)
-              ? BIBLE_BOOKS["oldTestament"][book]
-              : BIBLE_BOOKS["newTestament"][book]}
-          </Typography>
-        </Box>
+        {/* RIGHT: Test / Add Book button */}
+        <AddBookModal
+          book={book}
+          selectedResources={selectedResources}
+          setSelectedResources={setSelectedResources}
+        />
       </Box>
       <Divider />
 
