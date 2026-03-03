@@ -80,7 +80,7 @@ export default function AddBookModal({
     {
       field: "name",
       headerName: doI18n(
-        "pages:core-local-workspace:row_name",
+        "pages:uw-client-checks:row_name",
         i18nRef.current,
       ),
       // minWidth: 110,
@@ -89,7 +89,7 @@ export default function AddBookModal({
     {
       field: "description",
       headerName: doI18n(
-        "pages:core-local-workspace:row_description",
+        "pages:uw-client-checks:row_description",
         i18nRef.current,
       ),
       // minWidth: 130,
@@ -98,7 +98,7 @@ export default function AddBookModal({
     {
       field: "source",
       headerName: doI18n(
-        "pages:core-local-workspace:row_source",
+        "pages:uw-client-checks:row_source",
         i18nRef.current,
       ),
       // minWidth: 110,
@@ -107,7 +107,7 @@ export default function AddBookModal({
     {
       field: "language",
       headerName: doI18n(
-        "pages:core-local-workspace:row_language",
+        "pages:uw-client-checks:row_language",
         i18nRef.current,
       ),
       // minWidth: 100,
@@ -181,7 +181,7 @@ export default function AddBookModal({
                 }}
               >
                 {doI18n(
-                  "pages:core-local-workspace:choose_resources_workspace",
+                  "pages:uw-client-checks:choose_resources_tCore",
                   i18nRef.current,
                 )}
               </Typography>
@@ -198,7 +198,7 @@ export default function AddBookModal({
                 }}
               >
                 <Typography variant="body2">
-                  {`${doI18n("pages:core-local-workspace:editing", i18nRef.current, debugRef.current)} ${currentProjectRef.current && currentProjectRef.current.project}`}
+                  {`${doI18n("pages:uw-client-checks:editing", i18nRef.current, debugRef.current)} ${currentProjectRef.current && currentProjectRef.current.project}`}
                 </Typography>
                 {/* <PlayArrowIcon /> */}
               </Fab>

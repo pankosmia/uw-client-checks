@@ -169,6 +169,45 @@
     },
     "export_usfm": {
       "en": "export usfm"
+    },
+    "row_name": {
+      "en": "Name",
+      "fr": "Nom",
+      "es": "Nombre",
+      "id": "Nama"
+    },
+    "row_description": {
+      "en": "Description",
+      "fr": "Description",
+      "es": "Descripción",
+      "id": "Deskripsi"
+    },
+    "row_source": {
+      "en": "Source",
+      "fr": "Source",
+      "es": "Fuente",
+      "id": "Sumber"
+    },
+    "row_type": {
+      "en": "Type",
+      "fr": "Type",
+      "es": "Tipo",
+      "id": "Jenis"
+    },
+    "row_language": {
+      "en": "Language",
+      "fr": "Langue",
+      "es": "Idioma",
+      "id": "Bahasa"
+    },
+    "choose_resources_tCore": {
+      "en": "Choose resources to display in the tCore alongside your documents.",
+      "fr": "Choisissez les ressources à afficher dans l'espace de travail à côté de vos documents."
+    },
+    "editing": {
+      "en": "Edit",
+      "fr": "Éditer",
+      "id": "Edit"
     }
   }
 }
