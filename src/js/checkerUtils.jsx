@@ -241,16 +241,16 @@ export const getglTwData = async (
 
   const filteredJson = initJsonStructure();
 
-  for (const row of tsvData) {
+  for (const row of tsvData.slice(1)) {
     const [, , , , , path] = row; // Assuming row[5] contains the path
     const pathParts = path.split("/");
     const category = pathParts[2];
-    const articleId = pathParts[3];
+    const articleId = pathParts[3].replace(/\r/g, "");
 
     if (json[category]?.articles[articleId]) {
       if (!filteredJson[category].articles[articleId]) {
         filteredJson[category].articles[articleId] =
-          json[category].articles[articleId];
+          json[category].articles[articleId].replace(/\r/g, "");
         // Add only relevant index
 
         filteredJson[category].index.push({
