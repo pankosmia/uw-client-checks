@@ -15,7 +15,7 @@
     "eslint-config-react-app": "^7.0.1",
     "file-saver": "^2.0.5",
     "js-yaml": "^4.1.1",
-    "pankosmia-rcl": "^0.1.33",
+    "pankosmia-rcl": "^0.1.36",
     "path-browserify": "^1.0.1",
     "pithekos-lib": "^0.11.20",
     "react": "^17.0.0 || ^18.0.0",
