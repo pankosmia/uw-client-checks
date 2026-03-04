@@ -112,7 +112,7 @@ const DownloadRessources = ({
         <DialogContent>
           {enabledRef.current && (
             <PanDownload
-              downloadedType="burrito"
+              downloadedType="org"
               downloadFunction={DowloadBurrito}
               sources={ListTc4}
               sx={{ flex: 1 }}
