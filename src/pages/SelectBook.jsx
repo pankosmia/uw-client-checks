@@ -22,7 +22,7 @@ import {
   AccordionDetails,
   DialogContent,
 } from "@mui/material";
-import ImportZipProject from "../js/components/ImportZipProject";
+import { ImportZipProject } from "../js/CreateBookProject/ImportZipProject/ImportZipProject";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { convertToProjectFormat } from "../js/creatProject"; // <-- import your function
 import { getJson } from "pithekos-lib";
@@ -31,13 +31,17 @@ import { fsGetRust, fsWriteRust } from "../js/serverUtils";
 import { isOldTestament } from "../js/creatProject";
 import ButtonDashBoard from "../js/components/ButtonDashBoard";
 import DownloadRessources from "../js/components/DownloadRessources";
-
+import LangueConfigModal from "../js/CreateBookProject/LangueConfigModal";
+import GraphiteTest from "../js/ui_tool_kit/GraphiteTest";
+import InitProjectModal from "../js/CreateBookProject/InitProjectModal";
+import RessourcesPicker from "../js/CreateBookProject/RessourcesPicker";
 
 export default function SelectBook() {
   const { currentProjectRef } = useContext(currentProjectContext);
 
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const { i18nRef } = useContext(i18nContext);
+
   const [inDirectory, setInDirectory] = useState([]);
   const [tree, setTree] = useState([]);
   const [books, setBooks] = useState([]);
@@ -338,7 +342,6 @@ export default function SelectBook() {
       }),
     );
   }, [inDirectory, selectedBurrito]);
-
   return (
     <Box
       sx={{
@@ -347,6 +350,13 @@ export default function SelectBook() {
         flexDirection: "column",
       }}
     >
+      <LangueConfigModal />
+      {selectedBurrito && (
+        <InitProjectModal
+          repoName={selectedBurrito.abbreviation}
+          nameBurito={selectedBurrito.name}
+        />
+      )}
       <Box
         sx={{
           display: "flex",
@@ -586,7 +596,7 @@ export default function SelectBook() {
                     >
                       <Box sx={{ gap: 1, display: "flex" }}>
                         {book.hasManifest ? (
-                          <>                         
+                          <>
                             <CheckerSetting
                               repoName={selectedBurrito.abbreviation}
                               tCoreNameProject={book.tCoreName}
@@ -644,7 +654,8 @@ export default function SelectBook() {
         )}
       >
         <DialogContent>
-          {manifestPath ? (
+          <RessourcesPicker/>
+          {/* {manifestPath ? (
             <Box>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
                 {manifestPath[1].book_codes.map((code) => (
@@ -676,7 +687,7 @@ export default function SelectBook() {
             </Box>
           ) : (
             doI18n("pages:uw-client-checks:no_manifest_found", i18nRef.current)
-          )}
+          )} */}
         </DialogContent>
         <PanDialogActions
           onlyCloseButton={true}

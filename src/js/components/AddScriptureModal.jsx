@@ -18,7 +18,7 @@ import {
 import { getJson } from "pithekos-lib";
 import LayoutIcon from "../ui_tool_kit/LayoutIcon";
 
-export default function AddBookModal({
+export default function AddScriptureModal({
   selectedResources,
   setSelectedResources,
   book

@@ -208,6 +208,14 @@
       "en": "Edit",
       "fr": "Éditer",
       "id": "Edit"
+    },
+    "change_branch":{
+      "en":"change branch to ",
+      "fr": "changement de branch"
+    },
+    "could_not_change_branch":{
+      "en":"could not change branch",
+      "fr":"Changement de branch annule"
     }
   }
 }

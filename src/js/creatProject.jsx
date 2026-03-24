@@ -915,12 +915,12 @@ const generateHelperForTool = async (
   typeOfTools
 ) => {
   let book = getBookFromProjectFileName(selectedProjectFilename);
-
+  let path = helperFolderName.split("/")
   const tsv = parseTsv(
     await fsGetRust(
-      helperFolderName,
+      path[2],
       `${book.toUpperCase()}.tsv`,
-      "git.door43.org/uW"
+      path[0]+"/"+path[1]
     )
   );
 
@@ -1178,13 +1178,13 @@ export const convertToProjectFormat = async (
     selectedProjectFilename
   );
   await generateHelperForTool(
-    "en_tw",
+    "git.door43.org/uW/en_tw",
     sourceProjectPath,
     selectedProjectFilename,
     "translationWords"
   );
   await generateHelperForTool(
-    "en_tn",
+    "git.door43.org/uW/en_tn",
     sourceProjectPath,
     selectedProjectFilename,
     "translationNotes"

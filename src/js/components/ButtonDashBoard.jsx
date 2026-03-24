@@ -16,17 +16,15 @@ import { getProgressAligment } from "../checkerUtils";
 import { isOldTestament } from "../creatProject";
 import InvalidatedIcon from "../ui_tool_kit/InvalidatedIcon";
 import { doI18n } from "pithekos-lib";
-import {i18nContext} from "pankosmia-rcl"
+import { i18nContext } from "pankosmia-rcl";
 import { useContext } from "react";
-
+import { fsGetRust } from "../serverUtils";
 export const ButtonDashBoard = ({
   projectName,
   tCoreName,
   openedBooks,
-  lexiconNameForProgress = "en_ta",
 }) => {
   const { i18nRef } = useContext(i18nContext);
-
   const navigate = useNavigate();
   const [progressTranslationWords, setProgressTranslationWords] =
     useState(null);
@@ -40,6 +38,19 @@ export const ButtonDashBoard = ({
 
   const [numberCategoriesTn, setNumberCategoriesTn] = useState([]);
   const [numberCategoriesTw, setNumberCategoriesTw] = useState([]);
+
+  const [ressourcesToFetch, setRessourcesToFetch] = useState(null);
+
+  useEffect(() => {
+    async function getRessources() {
+      let response = await fsGetRust(
+        projectName,
+        `book_projects/${tCoreName}/version_manager.json`,
+      );
+      setRessourcesToFetch(response);
+    }
+    getRessources();
+  }, []);
 
   async function getCategories() {
     let categories = await getSelectedChecksCategories(
@@ -124,6 +135,7 @@ export const ButtonDashBoard = ({
     }
   };
   useEffect(() => {
+    if(!ressourcesToFetch) return;
     if (openedBooks.has(bookCode.toUpperCase())) {
       getProgressChecker(
         "translationNotes",
@@ -131,7 +143,7 @@ export const ButtonDashBoard = ({
         projectName,
         `book_projects/${tCoreName}`,
         bookCode,
-        lexiconNameForProgress,
+        ressourcesToFetch["peripheral/x-peripheralArticles"],
       ).then((e) => {
         setProgressTranslationNotes(e.selection || 0);
         setInvalidatedTn(e.invalidated);
@@ -147,34 +159,21 @@ export const ButtonDashBoard = ({
         setProgressTranslationWords(e.selection || 0);
         setInvalidatedTw(e.invalidated);
       });
-      isOldTestament(tCoreName.split("_")[2])
-        ? getBookFromName(
-            "hbo_uhb",
+      getBookFromName(
+            ressourcesToFetch["scripture/textTranslation"][0].split('/')[2],
             "",
             tCoreName.split("_")[2],
             "original_language",
-            "git.door43.org/uW",
+            ressourcesToFetch["scripture/textTranslation"][0].split('/').slice(0,2).join('/'),
           ).then((book) =>
             getProgressAligment(projectName, tCoreName, book).then((r) => {
               setProgressWordAlignment(r.selection || 0);
               setInvalidatedAlignment(r.invalidated);
             }),
           )
-        : getBookFromName(
-            "grc_ugnt",
-            "",
-            tCoreName.split("_")[2],
-            "original_language",
-            "git.door43.org/uW",
-          ).then((book) =>
-            getProgressAligment(projectName, tCoreName, book).then((r) => {
-              setProgressWordAlignment(r.selection || 0);
-              setInvalidatedAlignment(r.invalidated);
-            }),
-          );
       getCategories();
     }
-  }, [projectName, tCoreName, bookCode, openedBooks]);
+  }, [projectName, tCoreName, bookCode, openedBooks,ressourcesToFetch]);
 
   const renderProgress = (progress) => {
     return progress === null ? (
