@@ -1,16 +1,8 @@
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-  Button,
-} from "@mui/material";
+import { FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
 import { useState, useEffect, useContext } from "react";
 import { i18nContext } from "pankosmia-rcl";
 import { doI18n, getJson } from "pithekos-lib";
 import BIBLE_BOOKS from "../../common/BooksOfTheBible";
-
 const ALL_BOOKS = [
   ...Object.entries(BIBLE_BOOKS.oldTestament).map(([code, name]) => ({
     code,
@@ -27,9 +19,12 @@ const ALL_BOOKS = [
 export default function RessourcesPicker({
   currentProjectRef,
   listPreSelected,
-  callBack,
+  setFinalVersionManager,
   book,
+  prefLanguage,
+  setBook,
 }) {
+
   const [values, setValues] = useState({
     "parascriptural/x-bcvarticles": ["", ""],
     "parascriptural/x-bcvnotes": ["", ""],
@@ -37,14 +32,19 @@ export default function RessourcesPicker({
     "peripheral/x-peripheralArticles": ["", ""],
     "scripture/textTranslation": ["", ""],
   });
-  console.log(values);
-  const prefLanguage = ["fr", "en"];
   const [options, setOptions] = useState({});
   const [selectedBook, setSelectedBook] = useState(book || "");
   const [summaries, setSummaries] = useState(null);
   const { i18nRef } = useContext(i18nContext);
   console.log(options);
-
+  useEffect(() => {
+    if (setBook) {
+      setBook(selectedBook);
+    }
+  }, [selectedBook]);
+  useEffect(() => {
+    setFinalVersionManager(values);
+  }, [values]);
   const handleChange = (field) => (event) => {
     const selectedPath = event.target.value;
 
@@ -112,7 +112,7 @@ export default function RessourcesPicker({
               ? filtered.filter((b) =>
                   ["grc", "hbo", "el-x-koine"].includes(b.language_code),
                 )
-              : filtered.filter((b) => prefLanguage.includes(b.language_code));
+              : filtered.filter((b) => prefLanguage?.includes(b.language_code));
 
           newOptions[t] = langFiltered;
 
@@ -199,12 +199,7 @@ export default function RessourcesPicker({
           </Box>
         );
       })}
-      <Button
-        disabled={!Object.values(values).every((e) => e[0] !== "")}
-        onClick={() => callBack(values)}
-      >
-        OK
-      </Button>
+     
     </Box>
   );
 }

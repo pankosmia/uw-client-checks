@@ -224,7 +224,7 @@ function UsfmExport() {
                   "pages:core-contenthandler_text_translation:no_books_selected",
                   i18nRef.current,
                 ),
-                { variant: "warning" },
+                { variant: "error" },
               );
             } else {
               for (let b of selectedBooks) {

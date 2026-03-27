@@ -11,7 +11,7 @@ import {
   debugContext,
 } from "pankosmia-rcl";
 
-export default function InternetDialog({callBack}) {
+export default function InternetDialog({ callBack }) {
   const { i18nRef } = useContext(i18nContext);
   const { enabledRef } = useContext(netContext);
   const { debugRef } = useContext(debugContext);
@@ -24,14 +24,18 @@ export default function InternetDialog({callBack}) {
   const handleCloseDialog = () => {
     if (enabledRef.current) {
       setInternetDialogOpen(false);
-      callBack();
+      if (callBack) {
+        callBack();
+      }
     }
   };
 
   const enableInternet = () => {
     postEmptyJson("/net/enable", true);
     setInternetDialogOpen(false);
-    callBack();
+    if (callBack) {
+      callBack();
+    }
   };
   return (
     <PanDialog

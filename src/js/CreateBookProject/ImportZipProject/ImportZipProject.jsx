@@ -4,7 +4,7 @@ import { FilePicker } from "react-file-picker";
 import { Button, DialogContent } from "@mui/material";
 import { useState, useContext, useEffect } from "react";
 import { doI18n, getJson } from "pithekos-lib";
-import { fsWriteRust } from "../../serverUtils";
+import { fsExistsRust, fsWriteRust } from "../../serverUtils";
 import {
   i18nContext,
   PanDownload,
@@ -15,9 +15,71 @@ import {
 import { fsGetRust } from "../../serverUtils";
 import InternetDialog from "../../components/InternetDialog";
 import RessourcesPicker from "../RessourcesPicker";
+import { enqueueSnackbar } from "notistack";
+async function checkIfBookProjectExist(repoName, tCoreNameProject, i18nRef) {
+  let bookProjects = await fsExistsRust(
+    repoName,
+    `book_projects/${tCoreNameProject}/manifest.json`,
+  );
+  console.log(bookProjects);
+  if (bookProjects) {
+    enqueueSnackbar(
+      `${doI18n(
+        "pages:core-contenthandler_text_translation:book_project_already_exist",
+        i18nRef.current,
+      )}`,
+      { variant: "error" },
+    );
+    throw new Error(
+      `${doI18n(
+        "pages:core-contenthandler_text_translation:zip_is_no_valid",
+        i18nRef.current,
+      )}`,
+    );
+    return true;
+  }
+  return false;
+}
 
-async function getZip(file, repoName) {
+function checkZipName(name, i18nRef) {
+  let response = (name.split("_").length = 6 && name.includes("book"));
+  if (response) {
+    enqueueSnackbar(
+      `${doI18n(
+        "pages:core-contenthandler_text_translation:zip_selected",
+        i18nRef.current,
+      )} : ${name}`,
+      { variant: "success" },
+    );
+  } else {
+    enqueueSnackbar(
+      `${doI18n(
+        "pages:core-contenthandler_text_translation:zip_is_no_valid",
+        i18nRef.current,
+      )}`,
+      { variant: "error" },
+    );
+    throw new Error(
+      `${doI18n(
+        "pages:core-contenthandler_text_translation:zip_is_no_valid",
+        i18nRef.current,
+      )}`,
+    );
+  }
+  return response;
+}
+
+async function getZip(file, repoName, i18nRef) {
+  let isValidZip = checkZipName(file.name, i18nRef);
+  if (!isValidZip) return null;
+
   const projectNameResponse = encodeURIComponent(file.name.split("-")[0]);
+  let already_exist = await checkIfBookProjectExist(
+    repoName,
+    projectNameResponse,
+    i18nRef,
+  );
+  if (already_exist) return null;
   const url = `/burrito/ingredient/zipped/_local_/_local_/${repoName}?ipath=book_projects/${projectNameResponse}`;
 
   const formData = new FormData();
@@ -60,15 +122,15 @@ const convertionTable = {
   tNotesOriginalLang: "scripture/textTranslation",
 };
 
-function write_version_manager(keysValue, repoName, projectName) {
-  fsWriteRust(
+export async function write_version_manager(keysValue, repoName, tCoreProjectName) {
+  await fsWriteRust(
     repoName,
-    `book_projects/${projectName}/version_manager.json`,
+    `book_projects/${tCoreProjectName}/version_manager.json`,
     keysValue,
   );
 }
 
-export function ImportZipProject({ repoName, nameBurrito }) {
+export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const { i18nRef } = useContext(i18nContext);
   const [step, setStep] = useState(0);
@@ -78,11 +140,12 @@ export function ImportZipProject({ repoName, nameBurrito }) {
   const [externalResources, setExternalResources] = useState({});
   const [keysValue, setKeysValue] = useState(null);
   const [projectName, setProjectName] = useState("");
-
-  function write_version(values) {
-    write_version_manager(values, repoName, projectName);
+  const [finalVersionManager, setFinalVersionManager] = useState({});
+  async function write_version(values) {
+    console.log(values);
+    await write_version_manager(values, repoName, projectName);
   }
-  function goNext() {
+  async function goNext() {
     if (step === 1) {
       if (listDependancy.length === 0) {
         setStep(4);
@@ -99,6 +162,11 @@ export function ImportZipProject({ repoName, nameBurrito }) {
     }
     if (step === 3) {
       setStep(4);
+    }
+    if (step === 4) {
+      await write_version(finalVersionManager);
+      setOpenResourcesDialog(false);
+      reloadProject();
     }
   }
   function makeList() {
@@ -128,13 +196,16 @@ export function ImportZipProject({ repoName, nameBurrito }) {
         extensions={["zip"]}
         onChange={async (fileObject) => {
           try {
-            setOpenResourcesDialog(true);
-            let [keysValue, projectNameResponse, externalResourcesType] =
-              await getZip(fileObject, repoName);
-            setKeysValue(keysValue);
-            setProjectName(projectNameResponse);
-            setExternalResources(externalResourcesType);
-            setStep(1);
+            let zipResponse = await getZip(fileObject, repoName, i18nRef);
+            if (zipResponse) {
+              let [keysValue, projectNameResponse, externalResourcesType] =
+                zipResponse;
+              setOpenResourcesDialog(true);
+              setKeysValue(keysValue);
+              setProjectName(projectNameResponse);
+              setExternalResources(externalResourcesType);
+              setStep(1);
+            }
           } catch (err) {
             console.error("Import failed", err);
           }
@@ -176,24 +247,22 @@ export function ImportZipProject({ repoName, nameBurrito }) {
                 listDependancy={listDependancy}
                 keysValue={keysValue}
                 setUsedRessources={setUsedRessources}
-                callBack={goNext}
               />
             )}
-            {step === 2 && <InternetDialog callBack={goNext} />}
+            {step === 2 && <InternetDialog callBack={goNext}/>}
             {step === 3 && (
               <ImportZipProjectInternet
                 projectName={projectName}
                 repoName={repoName}
                 keysValue={listDependancy}
                 setUsedRessources={setUsedRessources}
-                callBack={goNext}
               />
             )}
             {step === 4 && (
               <RessourcesPicker
                 listPreSelected={makeList()}
                 book={projectName.split("_")[2]}
-                callBack={write_version}
+                setFinalVersionManager={setFinalVersionManager}
               />
             )}
           </DialogContent>
@@ -203,7 +272,12 @@ export function ImportZipProject({ repoName, nameBurrito }) {
               "pages:uw-client-checks:cancel",
               i18nRef.current,
             )}
-            onlyCloseButton={true}
+            actionFn={() => {
+              goNext();
+            }}
+            closeOnAction={false}
+            actionLabel={step === 4 ? "finish" : "next"}
+            onlyCloseButton={false}
           />
         </PanDialog>
       )}

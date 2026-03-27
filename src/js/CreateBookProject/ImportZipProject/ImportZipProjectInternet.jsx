@@ -1,18 +1,16 @@
 import { useState, useContext, useEffect } from "react";
 import { doI18n, getJson, postJson } from "pithekos-lib";
 import { i18nContext, debugContext } from "pankosmia-rcl";
-import { fsGetRust, fsWriteRust } from "../../serverUtils";
 import { PanDownload } from "pankosmia-rcl";
 import { postEmptyJson } from "pithekos-lib";
 import { gitCheckout, gitCreatBranch } from "../../gitUtils";
 import { enqueueSnackbar } from "notistack";
-import { Button, CircularProgress, Tooltip } from "@mui/material";
+import { Button, CircularProgress } from "@mui/material";
 const ImportZipProjectInternet = ({
   projectName,
   repoName,
   keysValue,
   setUsedRessources,
-  callBack,
 }) => {
   const { debugRef } = useContext(debugContext);
   const { i18nRef } = useContext(i18nContext);
@@ -78,7 +76,7 @@ const ImportZipProjectInternet = ({
                   "pages:core-contenthandler_text_translation:could_not_fetch_sb",
                   i18nRef.current,
                 ),
-                { variant: "warning" },
+                { variant: "error" },
               );
               throw new Error(
                 doI18n(
@@ -100,7 +98,7 @@ const ImportZipProjectInternet = ({
                   "pages:core-contenthandler_text_translation:could_not_upload_sb_version",
                   i18nRef.current,
                 ),
-                { variant: "warning" },
+                { variant: "error" },
               );
               throw new Error(
                 doI18n(
@@ -134,7 +132,7 @@ const ImportZipProjectInternet = ({
                   "pages:core-contenthandler_text_translation:could_no_remake_zip_project",
                   i18nRef.current,
                 ),
-                { variant: "warning" },
+                { variant: "error" },
               );
               throw new Error(
                 doI18n(
@@ -245,13 +243,6 @@ const ImportZipProjectInternet = ({
 
     return response;
   }
-  useEffect(() => {
-    if (listDependancy) {
-      if (Object.keys(listDependancy).length > 0) {
-        callBack();
-      }
-    }
-  }, [listDependancy]);
 
   return (
     <>
@@ -265,15 +256,7 @@ const ImportZipProjectInternet = ({
       ) : (
         <CircularProgress />
       )}
-      {/* <Tooltip
-        title={
-          needDownload.every((v) => v === true)
-            ? `missing ressources you can go next but be carefull`
-            : "go next"
-        }
-      > */}
-      <Button onClick={callBack}>Next</Button>
-      {/* </Tooltip> */}
+
     </>
   );
 };

@@ -28,7 +28,13 @@ export async function gitCheckout(pathVersion, i18nRef) {
             i18nRef.current,
           )} : ${pathVersion[0]} ${pathVersion[1]}`,
 
-          { variant: "warning" },
+          { variant: "error" },
+        );
+        throw new Error(
+          `${doI18n(
+            "pages:core-contenthandler_text_translation:could_not_change_branch",
+            i18nRef.current,
+          )}`,
         );
       }
     }
@@ -53,7 +59,13 @@ export async function gitCreatBranch(pathVersion, i18nRef, debugRef) {
         "pages:core-contenthandler_text_translation:could_not_create_branch",
         i18nRef.current,
       )} : ${pathVersion[0]} ${pathVersion[1]}`,
-      { variant: "warning" },
+      { variant: "error" },
+    );
+    throw new Error(
+      `${doI18n(
+        "pages:core-contenthandler_text_translation:could_not_change_branch",
+        i18nRef.current,
+      )}`,
     );
   }
   return response;

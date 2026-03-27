@@ -10,7 +10,6 @@ export default function ImportZipProjectNoInternet({
   listDependancy,
   keysValue,
   setUsedRessources,
-  callBack,
 }) {
   const {i18nRef} = useContext(i18nContext)
   const [dependenciesDone, setDependaniesDone] = useState([]);
@@ -78,9 +77,6 @@ export default function ImportZipProjectNoInternet({
           {dependenciesDone[i] === false && <ArrowDownwardRounded />}
         </Box>
       ))}
-      <Button disable={!canGoNext} onClick={callBack}>
-        Next
-      </Button>
     </Box>
   );
 }
