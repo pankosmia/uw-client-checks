@@ -4,7 +4,12 @@ import { FilePicker } from "react-file-picker";
 import { Button, DialogContent } from "@mui/material";
 import { useState, useContext, useEffect } from "react";
 import { doI18n, getJson } from "pithekos-lib";
-import { fsExistsRust, fsWriteRust } from "../../serverUtils";
+import {
+  deleteBookProject,
+  deleteIngredient,
+  fsExistsRust,
+  fsWriteRust,
+} from "../../serverUtils";
 import {
   i18nContext,
   PanDownload,
@@ -149,7 +154,7 @@ export async function write_version_manager(
       keysValue,
     );
   }
-  return isOk
+  return isOk;
 }
 
 function checkIfMendatoryRessourcesArePresent(summary) {
@@ -170,7 +175,10 @@ function checkIfMendatoryRessourcesArePresent(summary) {
   }
   return neededRessources;
 }
-
+async function removeImportedProject(repoName, tCoreName) {
+  let response = await deleteBookProject(repoName, tCoreName);
+  return response;
+}
 function AddRessourcesToDepency(listDependancy, neededRessources) {
   let newDependancy = [...listDependancy];
   for (let [type, ressources] of Object.entries(neededRessources)) {
@@ -208,7 +216,7 @@ function AddRessourcesToDepency(listDependancy, neededRessources) {
   return newDependancy;
 }
 
-export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
+export function ImportZipProject({ repoName, reloadProject }) {
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const { i18nRef } = useContext(i18nContext);
   const [step, setStep] = useState(0);
@@ -326,7 +334,10 @@ export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
       {openResourcesDialog && (
         <PanDialog
           isOpen={openResourcesDialog}
-          closeFn={() => setOpenResourcesDialog(false)}
+          closeFn={() => {
+            removeImportedProject(repoName, projectName);
+            setOpenResourcesDialog(false);
+          }}
           size="md"
           titleLabel={`${doI18n(
             "pages:uw-client-checks:import_zip_project",
@@ -364,7 +375,10 @@ export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
             </DialogContent>
           )}
           <PanDialogActions
-            closeFn={() => setOpenResourcesDialog(false)}
+            closeFn={() => {
+              removeImportedProject(repoName, projectName);
+              setOpenResourcesDialog(false);
+            }}
             closeLabel={doI18n(
               "pages:uw-client-checks:cancel",
               i18nRef.current,
