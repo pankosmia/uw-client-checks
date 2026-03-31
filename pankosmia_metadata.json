@@ -209,13 +209,65 @@
       "fr": "Éditer",
       "id": "Edit"
     },
-    "change_branch":{
-      "en":"change branch to ",
-      "fr": "changement de branch"
+    "change_branch": {
+      "en": "Change branch to",
+      "fr": "Changement de branche vers"
     },
-    "could_not_change_branch":{
-      "en":"could not change branch",
-      "fr":"Changement de branch annule"
+    "could_not_change_branch": {
+      "en": "Could not change branch",
+      "fr": "Changement de branche annulé"
+    },
+    "book_project_already_exist": {
+      "en": "Book project already exists",
+      "fr": "Le projet de livre existe déjà"
+    },
+    "branche_created": {
+      "en": "Branch created",
+      "fr": "Branche créée"
+    },
+    "could_no_remake_zip_project": {
+      "en": "Could not remake zip project",
+      "fr": "N'a pas réussi à refaire le projet"
+    },
+    "could_not_create_branch": {
+      "en": "Could not create branch",
+      "fr": "N'a pas réussi à créer la branche"
+    },
+    "could_not_fetch_sb": {
+      "en": "Could not fetch Scripture Burrito",
+      "fr": "N'a pas réussi à récupérer le Scripture Burrito"
+    },
+    "could_not_upload_sb_version": {
+      "en": "Could not upload Scripture Burrito version",
+      "fr": "N'a pas pu envoyer la version du Scripture Burrito"
+    },
+    "export_as_usfm": {
+      "en": "Export as USFM",
+      "fr": "Exporter en USFM"
+    },
+    "export_label": {
+      "en": "Export",
+      "fr": "Exporter"
+    },
+    "missing_ressources": {
+      "en": "Missing resources",
+      "fr": "Ressources manquantes"
+    },
+    "no_books_selected": {
+      "en": "No book selected",
+      "fr": "Aucun livre sélectionné"
+    },
+    "pick_one_or_more_books_export": {
+      "en": "Pick one or more books to export",
+      "fr": "Choisir un ou plusieurs livres à exporter"
+    },
+    "zip_is_no_valid": {
+      "en": "Zip is not valid",
+      "fr": "Le zip n'est pas valide"
+    },
+    "zip_selected": {
+      "en": "Zip selected",
+      "fr": "Zip sélectionné"
     }
   }
 }
