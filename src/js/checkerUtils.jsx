@@ -159,27 +159,23 @@ export const getBookFromName = async (
 };
 
 export const getTnData = async (
-  repoNameResources,
+  pathVersion,
   repoNameProject,
   tCoreNameProject,
 ) => {
   let json = {};
-  const categories = await fsGetRust(
-    repoNameResources,
-    "",
-    "git.door43.org/uW",
-  );
+  let splitedPath = pathVersion[0].split("/");
+  let origin = splitedPath[0] + "/" + splitedPath[1];
+  let name = splitedPath[2];
+  let version = pathVersion[1];
+  const categories = await fsGetRust(name, "", origin);
   for (let c of categories) {
     if (!(c.split(".").length > 1)) {
       json[c] = {};
-      const datas = await fsGetRust(repoNameResources, c, "git.door43.org/uW");
+      const datas = await fsGetRust(name, c, origin);
       for (let d of datas) {
         if (!(d.split(".").length > 1)) {
-          let markD = await fsGetRust(
-            repoNameResources,
-            join(c, d, "01.md"),
-            "git.door43.org/uW",
-          );
+          let markD = await fsGetRust(name, join(c, d, "01.md"), origin);
           json[c][d] = markD;
         }
       }
@@ -194,20 +190,22 @@ const initJsonStructure = () => ({
   other: { articles: {}, index: [] },
 });
 
-export const getglTwData = async (
-  repoNameResources,
-  BookCode,
-  tCoreNameProject,
-) => {
+export const getglTwData = async (pathVersion, BookCode) => {
   const json = initJsonStructure();
   const categories = ["kt", "names", "other"];
+  let pathSplited = pathVersion[0].split("/");
+  let origin = pathSplited[0] + "/" + pathSplited[1];
+  let name = pathSplited[2];
+  let version = pathVersion[1];
+
+  //gitcheckout
 
   // 1. Fetch folder content for each category
   for (const category of categories) {
     const folder = await fsGetRust(
-      repoNameResources,
+      name,
       join("payload", category),
-      "git.door43.org/uW",
+      origin,
       false,
       true,
     );
@@ -228,15 +226,11 @@ export const getglTwData = async (
 
   // 2. Fetch manifest
   json.manifest = (
-    await fsGetManifest("git.door43.org", "uW", repoNameResources)
+    await fsGetManifest(pathSplited[0], pathSplited[1], name)
   ).json;
 
   // 3. Fetch TSV and filter relevant articles
-  const tsvRaw = await fsGetRust(
-    repoNameResources,
-    `${BookCode.toUpperCase()}.tsv`,
-    "git.door43.org/uW",
-  );
+  const tsvRaw = await fsGetRust(name, `${BookCode.toUpperCase()}.tsv`, origin);
   const tsvData = parseTsv(tsvRaw);
 
   const filteredJson = initJsonStructure();
@@ -245,12 +239,15 @@ export const getglTwData = async (
     const [, , , , , path] = row; // Assuming row[5] contains the path
     const pathParts = path.split("/");
     const category = pathParts[2];
-    const articleId = pathParts[3].replace(/\r/g, "");
-
+    let articleId = pathParts[3].replace(/\r/g, "");
+    articleId = articleId.includes(".md")
+      ? articleId.replace(".md", "")
+      : articleId;
     if (json[category]?.articles[articleId]) {
       if (!filteredJson[category].articles[articleId]) {
-        filteredJson[category].articles[articleId] =
-          json[category].articles[articleId].replace(/\r/g, "");
+        filteredJson[category].articles[articleId] = json[category].articles[
+          articleId
+        ].replace(/\r/g, "");
         // Add only relevant index
 
         filteredJson[category].index.push({
@@ -308,17 +305,11 @@ export const buildLinkTitleMap = (node, map = {}) => {
 
   return map;
 };
-export const changeTnCategories = async (
-  repoName,
-  originFolder,
-  data,
-  group = true,
-) => {
-  let categories = await fsGetRust(
-    repoName,
-    "translate/toc.yaml",
-    originFolder,
-  );
+export const changeTnCategories = async (pathVersion, data, group = true) => {
+  let splitedPath = pathVersion[0].split("/");
+  let origin = splitedPath[0] + "/" + splitedPath[1];
+  let name = splitedPath[2];
+  let categories = await fsGetRust(name, "translate/toc.yaml", origin);
   let dataYaml = yaml.load(categories);
   // build { "figs-abstractnouns": "Abstract Nouns", ... }
   const linkTitleMap = buildLinkTitleMap(dataYaml.sections);
@@ -326,16 +317,11 @@ export const changeTnCategories = async (
   return renamed;
 };
 
-export async function removeNotServiceTNCategories(
-  repoName,
-  originFolder,
-  data,
-) {
-  let categories = await fsGetRust(
-    repoName,
-    "translate/toc.yaml",
-    originFolder,
-  );
+export async function removeNotServiceTNCategories(pathVersion, data) {
+  let splitedPath = pathVersion[0].split("/");
+  let origin = splitedPath[0] + "/" + splitedPath[1];
+  let name = splitedPath[2];
+  let categories = await fsGetRust(name, "translate/toc.yaml", origin);
   let dataYaml = yaml.load(categories);
   // build { "figs-abstractnouns": "Abstract Nouns", ... }
   const linkTitleMap = buildLinkTitleMap(dataYaml.sections);
@@ -445,8 +431,17 @@ export const getAllCheckingCategories = async (
   nameArr,
   book,
   tool,
-  lecixonName = null,
+  versionPathLexicon = null,
 ) => {
+  let splitedPathLexicon;
+  let originLexicon;
+  let nameLexicon;
+  if (versionPathLexicon) {
+    splitedPathLexicon = versionPathLexicon[0].split("/");
+    originLexicon = splitedPathLexicon[0] + "/" + splitedPathLexicon[1];
+    nameLexicon = splitedPathLexicon[2];
+  }
+
   let path = `${nameArr}/apps/translationCore/index/${tool}/${book}`;
   const json = {};
   let categories;
@@ -460,11 +455,11 @@ export const getAllCheckingCategories = async (
     return tool;
   }
   let linkTitleMap;
-  if (lecixonName) {
+  if (versionPathLexicon) {
     let categories = await fsGetRust(
-      lecixonName,
+      nameLexicon,
       "translate/toc.yaml",
-      "git.door43.org/uW",
+      originLexicon,
     );
     let dataYaml = yaml.load(categories);
     // build { "figs-abstractnouns": "Abstract Nouns", ... }
@@ -502,16 +497,14 @@ export const loadAlignment = async (reposName, nameArr) => {
   }
   return json;
 };
-export const getLexiconData = async (repoName) => {
-  const arb = repoName.split("_")[1];
+export const getLexiconData = async (pathVersion) => {
+  let splitedPath = pathVersion[0].split("/");
+  let origin = splitedPath[0] + "/" + splitedPath[1];
+  let name = splitedPath[2];
+
+  const arb = name.split("_")[1];
   let json = { [arb]: {} };
-  let lexiconData = await fsGetRust(
-    repoName,
-    "content",
-    "git.door43.org/uW",
-    false,
-    true,
-  );
+  let lexiconData = await fsGetRust(name, "content", origin, false, true);
   for (let [k, v] of Object.entries(lexiconData)) {
     json[arb][k.split(".")[0]] = JSON.parse(v);
   }
@@ -524,15 +517,11 @@ export const getProgressChecker = async (
   repoName,
   nameArr,
   book,
-  lexiconNameForProgress = null,
+  pathVersionLexicon = null,
 ) => {
   let checks = await getCheckingData(repoName, nameArr, book, toolName);
-  if (lexiconNameForProgress) {
-    checks = await removeNotServiceTNCategories(
-      lexiconNameForProgress,
-      "git.door43.org/uW",
-      checks,
-    );
+  if (pathVersionLexicon) {
+    checks = await removeNotServiceTNCategories(pathVersionLexicon, checks);
   }
   const filteredChecks = Object.fromEntries(
     Object.entries(checks).filter(([key]) => selectedCategories.includes(key)),

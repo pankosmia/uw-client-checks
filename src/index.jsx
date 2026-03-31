@@ -5,13 +5,21 @@ import { Box } from "@mui/system";
 // import ToolsManagementContainer from "./pages/ToolsManagementContainer";
 // import ReduxStateViewer from "./pages/ReduxStateViewer";
 import { useEffect, useState } from "react";
-import { SpaContainer, Header } from "pankosmia-rcl";
+import { SpaContainer, Header, typographyContext } from "pankosmia-rcl";
 import "./index.css";
 import SelectBook from "./pages/SelectBook";
 import { createTheme, ThemeProvider } from "@mui/material";
 import { getAndSetJson } from "pithekos-lib";
 import UsfmExport from "./pages/UsfmExport";
+import { useContext, useMemo } from "react";
+import GraphiteTest from "./js/ui_tool_kit/GraphiteTest";
+import { styled } from "@mui/material/styles";
 
+import {
+  enqueueSnackbar,
+  MaterialDesignContent,
+  SnackbarProvider,
+} from "notistack";
 function AppLayout() {
   const [themeSpec, setThemeSpec] = useState({
     palette: {
@@ -23,6 +31,35 @@ function AppLayout() {
       },
     },
   });
+  const { typographyRef } = useContext(typographyContext);
+  const [fontFamily, setFontFamily] = useState("");
+  const [adjSelectedFontFamilies, setAdjSelectedFontFamilies] = useState(null);
+  const [fontFamilyCorrespondance, setFontFamilyCorrespondance] =
+    useState(null);
+
+  const isGraphite = GraphiteTest();
+  useEffect(() => {
+    if (fontFamilyCorrespondance) {
+      let stringFront = [];
+      let newFont = {};
+      let table = typographyRef.current.font_set.split("Pankosmia");
+      table.shift();
+      table = table.map((e) => "Pankosmia" + e);
+      Object.entries(fontFamilyCorrespondance).forEach(([k, v]) => {
+        let index = table.indexOf(k);
+        if (index >= 0) {
+          newFont[index] = v;
+        }
+      });
+      for (let e = 0; e < Object.keys(table).length; e++) {
+        if (newFont[e]) {
+          stringFront.push(newFont[e]);
+        }
+      }
+      setFontFamily(stringFront);
+    }
+  }, [typographyRef.current?.font_set, isGraphite, fontFamilyCorrespondance]);
+
   useEffect(() => {
     if (
       themeSpec.palette &&
@@ -36,7 +73,26 @@ function AppLayout() {
       }).then();
     }
   });
-  const theme = createTheme(themeSpec);
+  const theme = useMemo(
+    () =>
+      createTheme({
+        ...themeSpec,
+        typography: {
+          ...themeSpec.typography,
+          fontFamily: fontFamily ? fontFamily.join(",") : "",
+        },
+      }),
+    [themeSpec, fontFamily],
+  );
+  useEffect(() => {
+    let cores = {};
+    document.fonts.ready.then(() => {
+      document.fonts.forEach((f) => {
+        cores[f.family.replaceAll(" ", "")] = f.family;
+      });
+      setFontFamilyCorrespondance(cores);
+    });
+  }, []);
 
   useEffect(() => {
     document.body.style.setProperty(
@@ -45,18 +101,45 @@ function AppLayout() {
     );
     document.body.style.setProperty("--background-color-light", "#ffffff");
   }, [theme.palette.primary.main]);
-
+  const CustomSnackbarContent = styled(MaterialDesignContent)(() => ({
+    "&.notistack-MuiContent-error": {
+      backgroundColor: "#FDEDED",
+      color: "#D32F2F",
+    },
+    "&.notistack-MuiContent-info": {
+      backgroundColor: "#E5F6FD",
+      color: "#0288D1",
+    },
+    "&.notistack-MuiContent-warning": {
+      backgroundColor: "#FFF4E5",
+      color: "#EF6C00",
+    },
+    "&.notistack-MuiContent-success": {
+      backgroundColor: "#EDF7ED",
+      color: "#2E7D32",
+    },
+  }));
   return (
-    <ThemeProvider theme={theme}>
-      <Box className="my-wrapper">
-        <Header
-          titleKey="pages:uw-client-checks:title"
-          requireNet={false}
-          currentId="uw-client-checks"
-        />
-        <Outlet />
-      </Box>
-    </ThemeProvider>
+    <SnackbarProvider
+      Components={{
+        error: CustomSnackbarContent,
+        info: CustomSnackbarContent,
+        warning: CustomSnackbarContent,
+        success: CustomSnackbarContent,
+      }}
+      maxSnack={6}
+    >
+      <ThemeProvider theme={theme}>
+        <Box className="my-wrapper">
+          <Header
+            titleKey="pages:uw-client-checks:title"
+            requireNet={false}
+            currentId="uw-client-checks"
+          />
+          <Outlet />
+        </Box>
+      </ThemeProvider>
+    </SnackbarProvider>
   );
 }
 
@@ -72,9 +155,9 @@ const router = createHashRouter([
         element: <ToolWrapper />,
       },
       {
-        path:":export/usfm",
-        element:<UsfmExport />
-      }
+        path: ":export/usfm",
+        element: <UsfmExport />,
+      },
     ],
   },
 ]);

@@ -48,7 +48,7 @@ import BIBLE_BOOKS from "../common/BooksOfTheBible";
 // Load sample data from fixtures
 // const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 import translations from "../uwSrc/locales/English-en_US.json";
-import AddBookModal from "../js/components/AddBookModal";
+import AddScriptureModal from "../js/components/AddScriptureModal";
 
 // Configuration settings
 const showDocument = true; // set to false to disable showing ta or tw document
@@ -134,6 +134,19 @@ export const ToolWrapper = () => {
   const [biblesForAligner, setBiblesForAligner] = useState(null);
 
   const [selectedResources, setSelectedResources] = useState([]);
+  const [ressourcesToFetch, setRessourcesToFetch] = useState(null);
+
+  useEffect(() => {
+    async function getRessources() {
+      let response = await fsGetRust(
+        projectName,
+        `book_projects/${tCoreName}/version_manager.json`,
+      );
+      setRessourcesToFetch(response);
+    }
+    getRessources();
+  }, []);
+
   useEffect(() => {
     setBiblesForAligner(verseHelpers.getBibleObject(bibles));
   }, [bibles]);
@@ -333,9 +346,12 @@ export const ToolWrapper = () => {
     let index = data.contextId.groupId;
     if (toolName === "translationNotes") {
       let categories = await fsGetRust(
-        "en_ta",
+        ressourcesToFetch["peripheral/x-peripheralArticles"][0].split("/")[2],
         "translate/toc.yaml",
-        "git.door43.org/uW",
+        ressourcesToFetch["peripheral/x-peripheralArticles"][0]
+          .split("/")
+          .slice(0, 2)
+          .join("/"),
       );
       let dataYaml = yaml.load(categories);
       const linkTitleMap = buildLinkTitleMap(dataYaml.sections);
@@ -420,7 +436,7 @@ export const ToolWrapper = () => {
   // Load all required data concurrently
   useEffect(() => {
     if (!book) return;
-
+    if (!ressourcesToFetch) return;
     const loadAll = async () => {
       const [targetBibleRes, originBibleRes, ultBibleRes, lexiconRes] =
         await Promise.all([
@@ -432,21 +448,16 @@ export const ToolWrapper = () => {
             "_local_/_local_",
             true,
           ),
-          isOldTestament(book)
-            ? getBookFromName(
-                "hbo_uhb",
-                "",
-                book,
-                "original_language",
-                "git.door43.org/uW",
-              )
-            : getBookFromName(
-                "grc_ugnt",
-                "",
-                book,
-                "original_language",
-                "git.door43.org/uW",
-              ),
+          getBookFromName(
+            ressourcesToFetch["scripture/textTranslation"][0].split("/")[2],
+            "",
+            book,
+            "original_language",
+            ressourcesToFetch["scripture/textTranslation"][0]
+              .split("/")
+              .slice(0, 2)
+              .join("/"),
+          ),
           getBookFromName(
             "en_ult",
             "",
@@ -454,7 +465,7 @@ export const ToolWrapper = () => {
             "gateway_language",
             "git.door43.org/uW",
           ),
-          getLexiconData(isOldTestament(book) ? "en_uhl" : "en_ugl"),
+          getLexiconData(ressourcesToFetch["peripheral/x-lexicon"]),
         ]);
 
       setTargetBible(targetBibleRes);
@@ -464,11 +475,11 @@ export const ToolWrapper = () => {
     };
 
     loadAll();
-  }, [book, projectName, tCoreName]);
+  }, [book, projectName, tCoreName, ressourcesToFetch]);
 
   useEffect(() => {
     if (!book) return;
-
+    if (!ressourcesToFetch) return;
     const loadData = async () => {
       setLoadingTool(true);
       setTargetBible(
@@ -483,7 +494,7 @@ export const ToolWrapper = () => {
       if (toolName === "translationWords") {
         if (!dataTw) {
           toolData = await getglTwData(
-            "en_tw",
+            ressourcesToFetch["parascriptural/x-bcvarticles"],
             book,
             `book_projects/${tCoreName}`,
           );
@@ -491,10 +502,13 @@ export const ToolWrapper = () => {
         }
       } else if (toolName === "translationNotes") {
         if (!dataTn) {
-          toolData = await getTnData("en_ta", projectName, tCoreName);
+          toolData = await getTnData(
+            ressourcesToFetch["peripheral/x-peripheralArticles"],
+            projectName,
+            tCoreName,
+          );
           toolData = await changeTnCategories(
-            "en_ta",
-            "git.door43.org/uW",
+            ressourcesToFetch["peripheral/x-peripheralArticles"],
             toolData,
             false,
           );
@@ -502,7 +516,7 @@ export const ToolWrapper = () => {
           setDataTn(toolData);
         }
       }
-      if (toolName != "wordAlignment") {
+      if (toolName !== "wordAlignment") {
         let checkingRes = await getCheckingData(
           projectName,
           `book_projects/${tCoreName}`,
@@ -511,14 +525,12 @@ export const ToolWrapper = () => {
         );
         if (toolName === "translationNotes") {
           checkingRes = await removeNotServiceTNCategories(
-            "en_ta",
-            "git.door43.org/uW",
+            ressourcesToFetch["peripheral/x-peripheralArticles"],
             checkingRes,
           );
 
           checkingRes = await changeTnCategories(
-            "en_ta",
-            "git.door43.org/uW",
+            ressourcesToFetch["peripheral/x-peripheralArticles"],
             checkingRes,
           );
         }
@@ -527,7 +539,7 @@ export const ToolWrapper = () => {
       }
     };
     loadData();
-  }, [book, projectName, tCoreName, toolName]);
+  }, [book, projectName, tCoreName, toolName, ressourcesToFetch]);
 
   useEffect(() => {
     _setToolSettings({
@@ -730,7 +742,6 @@ export const ToolWrapper = () => {
           }
         }
 
-        console.log(groupsData);
         setGroupsData(groupsData);
         setGroupsIndex(groupsIndex);
       }
@@ -756,7 +767,6 @@ export const ToolWrapper = () => {
     saveCheckingData != null &&
     toolSettings != null &&
     !loadingTool;
-
   return (
     <div style={{ height: "calc(100vh - 100px)" }}>
       <Box
@@ -804,7 +814,7 @@ export const ToolWrapper = () => {
         </Box>
 
         {/* RIGHT: Test / Add Book button */}
-        <AddBookModal
+        <AddScriptureModal
           book={book}
           selectedResources={selectedResources}
           setSelectedResources={setSelectedResources}

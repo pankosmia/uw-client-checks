@@ -20,31 +20,31 @@ import yaml from "js-yaml";
 import { PanDialog, PanDialogActions } from "pankosmia-rcl";
 import { buildLinkTitleMap } from "../checkerUtils";
 
-const CheckerSetting = ({
-  repoName,
-  tCoreNameProject = null,
-  lecixonName = "en_ta",
-  callBack,
-}) => {
+const CheckerSetting = ({ repoName, tCoreNameProject = null, callBack }) => {
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const [canWeClose, setCanWeClose] = useState(false);
   const [firstPass, setFirstPass] = useState(true);
   const { i18nRef } = useContext(i18nContext);
   const tools = ["translationWords", "translationNotes", "wordAlignment"];
-
-  const [translationWordsResourcesName, setTranslationWordsResourcesName] =
-    useState("en_tw");
-  const [translationWordsCategories, setTranslationWordsCategories] = useState(
-    [],
-  );
   const [translationNotesCategories, setTranslationNotesCategories] = useState(
     [],
   );
+  const [versionManager, setVersionManager] = useState(null);
   const [settingJson, setSettingJson] = useState({});
   useEffect(() => {
     setCanWeClose(checkIfOneCategoriesIsOk());
   }, [settingJson]);
 
+  useEffect(() => {
+    async function getVersionManager() {
+      let versionManager = await fsGetRust(
+        repoName,
+        `book_projects/${tCoreNameProject}/version_manager.json`,
+      );
+      setVersionManager(versionManager);
+    }
+    getVersionManager();
+  }, []);
   function checkIfOneCategoriesIsOk() {
     let isOk = true;
     for (let k of Object.keys(settingJson)) {
@@ -79,17 +79,22 @@ const CheckerSetting = ({
   useEffect(() => {
     async function getTranslationNotesCategories() {
       let categories = await fsGetRust(
-        "en_ta",
+        versionManager["peripheral/x-peripheralArticles"][0].split("/")[2],
         "translate/toc.yaml",
-        "git.door43.org/uW",
+        versionManager["peripheral/x-peripheralArticles"][0]
+          .split("/")
+          .slice(0, 2)
+          .join("/"),
       );
       let dataYaml = yaml.load(categories);
       // build { "figs-abstractnouns": "Abstract Nouns", ... }
       const linkTitleMap = buildLinkTitleMap(dataYaml.sections);
       setTranslationNotesCategories(linkTitleMap);
     }
-    getTranslationNotesCategories();
-  }, []);
+    if (versionManager) {
+      getTranslationNotesCategories();
+    }
+  }, [versionManager]);
 
   //changeCategories TranslationWords
 
@@ -117,7 +122,7 @@ const CheckerSetting = ({
         "book_projects/" + tCoreNameProject,
         tCoreNameProject.split("_")[2],
         "translationNotes",
-        lecixonName,
+        versionManager["peripheral/x-peripheralArticles"],
       );
       json["translationNotes"] = {};
       for (let [k, v] of Object.entries(categoriesTN)) {
@@ -129,10 +134,14 @@ const CheckerSetting = ({
         }
       }
       let categoriesTW = await fsGetRust(
-        translationWordsResourcesName,
+        versionManager["parascriptural/x-bcvarticles"][0].split("/")[2],
         "payload",
-        "git.door43.org/uW",
+        versionManager["parascriptural/x-bcvarticles"][0]
+          .split("/")
+          .slice(0, 2)
+          .join("/"),
       );
+      categoriesTW = categoriesTW.filter((e) => e.split(".").length < 2);
       if (!json["translationWords"]) {
         json["translationWords"] = {};
       }
@@ -142,8 +151,10 @@ const CheckerSetting = ({
       setSettingJson(json);
       return;
     }
-    getSettingJson();
-  }, []);
+    if (versionManager) {
+      getSettingJson();
+    }
+  }, [versionManager]);
 
   //write settingJson
   async function writeSettingJson(json) {
@@ -228,7 +239,7 @@ const CheckerSetting = ({
           )}
         </Typography>
       </Button>
-      {openResourcesDialog && (
+      {openResourcesDialog && versionManager && (
         <PanDialog
           isOpen={openResourcesDialog}
           closeFn={() => {
@@ -241,7 +252,7 @@ const CheckerSetting = ({
           titleLabel={`${doI18n(
             "pages:uw-client-checks:checks_settings_book",
             i18nRef.current,
-          )} - ${tCoreNameProject.split('_')[2].toUpperCase()}`}
+          )} - ${tCoreNameProject.split("_")[2].toUpperCase()}`}
         >
           <DialogContent>
             {tools

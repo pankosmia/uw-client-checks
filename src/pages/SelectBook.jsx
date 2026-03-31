@@ -1,13 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { doI18n } from "pithekos-lib";
-import {
-  i18nContext,
-  currentProjectContext,
-  PanDialog,
-  PanDialogActions,
-} from "pankosmia-rcl";
+import { i18nContext, currentProjectContext } from "pankosmia-rcl";
 
-import AddIcon from "@mui/icons-material/Add";
 import CircularProgress from "@mui/material/CircularProgress";
 import DeleteDialogueButton from "../js/components/DeleteDialogueButton";
 import ArrowBack from "@mui/icons-material/ArrowBack";
@@ -20,40 +14,29 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  DialogContent,
 } from "@mui/material";
-import ImportZipProject from "../js/components/ImportZipProject";
+import { ImportZipProject } from "../js/CreateBookProject/ImportZipProject/ImportZipProject";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { convertToProjectFormat } from "../js/creatProject"; // <-- import your function
 import { getJson } from "pithekos-lib";
 import { BASE_URL } from "../common/constants";
-import { fsGetRust, fsWriteRust } from "../js/serverUtils";
-import { isOldTestament } from "../js/creatProject";
 import ButtonDashBoard from "../js/components/ButtonDashBoard";
-import DownloadRessources from "../js/components/DownloadRessources";
-
+import CreateBookProjectScratch from "../js/CreateBookProject/CreateBookProjectScratch/CreatBookProjectScratch";
 
 export default function SelectBook() {
   const { currentProjectRef } = useContext(currentProjectContext);
 
-  const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const { i18nRef } = useContext(i18nContext);
+
   const [inDirectory, setInDirectory] = useState([]);
   const [tree, setTree] = useState([]);
   const [books, setBooks] = useState([]);
-  const [openModal, setOpenModal] = useState(false);
-  const [manifestPath, setManifestPath] = useState("");
-  const [resourcesStatus, setResourcesStatus] = useState(null);
   const [errorsData, setErrorsData] = useState([]);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [currentErrors, setCurrentErrors] = useState([]);
   const [burritos, setBurritos] = useState(null);
-  const [globalResourcesStatus, setGlobalResourcesStatus] = useState(null);
-  const [allResourcesPresent, setAllResourcesPresent] = useState(false);
   const [selectedBurrito, setSelectedBurrito] = useState();
   const [openedBooks, setOpenedBooks] = useState(new Set());
-  const [downloadRessourcesDialogueOpen, setDownloadRessourcesDialogueOpen] =
-    useState(false);
   const [initializing, setInitializing] = useState([]);
 
   useEffect(() => {
@@ -89,24 +72,6 @@ export default function SelectBook() {
     }
     fetchSummaries();
   }, [currentProjectRef.current]);
-
-  async function runGlobalCheck() {
-    const status = await checkRequiredResources();
-    setGlobalResourcesStatus(status);
-    setAllResourcesPresent(status.every((r) => r.exists));
-  }
-
-  useEffect(() => {
-    if (!openResourcesDialog) {
-      runGlobalCheck();
-    }
-  }, [openResourcesDialog]);
-
-  useEffect(() => {
-    if (globalResourcesStatus && !allResourcesPresent) {
-      setOpenResourcesDialog(true);
-    }
-  }, [globalResourcesStatus, allResourcesPresent]);
 
   const REQUIRED_RESOURCES = [
     "git.door43.org/uW/en_tn",
@@ -159,25 +124,6 @@ export default function SelectBook() {
       name: manifests[path]?.name || null,
     }));
   }
-  async function getPathFromOriginalResources(name) {
-    const manifestsObj = (
-      await getJson(BASE_URL + "/burrito/metadata/summaries")
-    ).json;
-
-    const AbrName = name.split("_")[0].toUpperCase();
-
-    const entry = Object.entries(manifestsObj)
-      .filter(([path]) => path.includes("_local_/_local_"))
-      .find(
-        ([, manifest]) =>
-          manifest.abbreviation.toUpperCase() === AbrName.toUpperCase() ||
-          manifest.abbreviation.toLowerCase() === AbrName.toLowerCase(),
-      );
-
-    if (!entry) return null;
-
-    return entry;
-  }
 
   async function fetchData() {
     try {
@@ -202,32 +148,6 @@ export default function SelectBook() {
     }
   }, [selectedBurrito]);
 
-  const handleAddBook = async (
-    bookCode,
-    manifestPath,
-    currentProject,
-    projectExemple,
-  ) => {
-    try {
-      let nameProject = manifestPath.split("/")[2];
-
-      let lang = selectedBurrito.language_code;
-      let abr = selectedBurrito.abbreviation.split("_")[0];
-      let nameBook = bookCode.toLowerCase();
-      let name = lang + "_" + abr + "_" + nameBook + "_book";
-
-      let usfm = await fsGetRust(nameProject, `${bookCode}.usfm`);
-      await fsWriteRust(
-        currentProject,
-        `book_projects/${name}/${bookCode.toLowerCase()}.usfm`,
-        usfm,
-      );
-      fetchData();
-      setOpenModal(false);
-    } catch (err) {
-      console.log(`Failed to add ${bookCode}`);
-    }
-  };
   function find_manifest(path) {
     return tree.includes(`${path}/manifest.json`);
   }
@@ -261,69 +181,6 @@ export default function SelectBook() {
   }, [tree]);
 
   useEffect(() => {
-    async function checkResourcesForBookCode(name) {
-      const path = await getPathFromOriginalResources(name);
-      setManifestPath(path);
-      let errors = {};
-      const manifestsObj = (
-        await getJson(BASE_URL + "/burrito/metadata/summaries")
-      ).json;
-      const projectManifest = Object.values(manifestsObj).find(
-        (e) => e.abbreviation === name.split("_")[0].toUpperCase(),
-      );
-
-      for (let book of projectManifest.book_codes) {
-        let isOldTestamentBook = isOldTestament(book.toLowerCase());
-
-        errors[book] = [];
-        for (let e of REQUIRED_RESOURCES) {
-          if (isOldTestamentBook && e === "git.door43.org/uW/grc_ugnt") {
-            continue;
-          }
-          if (!isOldTestamentBook && e === "git.door43.org/uW/hbo_uhb") {
-            continue;
-          }
-          if (
-            e === "git.door43.org/uW/en_ta" ||
-            e === "git.door43.org/uW/en_uhl" ||
-            e === "git.door43.org/uW/en_ugl"
-          ) {
-            continue;
-          }
-          if (!manifestsObj[e]) {
-            errors[book].push(
-              `${e} ${doI18n(
-                "pages:uw-client-checks:required_ressources_check",
-                i18nRef.current,
-              )}`,
-            );
-          } else {
-            if (!manifestsObj[e].book_codes.includes(book)) {
-              errors[book].push(
-                `${e} ${doI18n(
-                  "pages:uw-client-checks:doesnt_have",
-                  i18nRef.current,
-                )} ${book}`,
-              );
-            }
-          }
-        }
-      }
-
-      return errors;
-    }
-    if (selectedBurrito) {
-      checkResourcesForBookCode(selectedBurrito.abbreviation).then(
-        (responceError) => {
-          setErrorsData(responceError);
-        },
-      );
-    }
-  }, [selectedBurrito, downloadRessourcesDialogueOpen]);
-
-  const handleCloseModal = () => setOpenModal(false);
-
-  useEffect(() => {
     setBooks(
       inDirectory.map((rep, n) => {
         const splitname = rep.split("_");
@@ -338,7 +195,6 @@ export default function SelectBook() {
       }),
     );
   }, [inDirectory, selectedBurrito]);
-
   return (
     <Box
       sx={{
@@ -374,23 +230,20 @@ export default function SelectBook() {
           </Typography>
         </Button>
         <Box>
-          <Button
-            sx={{ marginX: 1 }}
-            variant="outlined"
-            aria-label={doI18n("pages:content:fab_import", i18nRef.current)}
-            onClick={(event) => setOpenModal(event.currentTarget)}
-          >
-            <AddIcon sx={{ mr: 1 }} />
-            <Typography variant="body2">
-              {doI18n("pages:uw-client-checks:add_book", i18nRef.current)}
-            </Typography>
-          </Button>
+          {selectedBurrito && (
+            <CreateBookProjectScratch
+              repoName={selectedBurrito.abbreviation}
+              nameBurito={selectedBurrito.name}
+              reloadProject={() => fetchData()}
+              selectedBurrito={selectedBurrito}
+            />
+          )}
         </Box>
         {selectedBurrito && (
           <ImportZipProject
             repoName={selectedBurrito.abbreviation}
             nameBurito={selectedBurrito.name}
-            callBack={() => fetchData()}
+            reloadProject={() => fetchData()}
           />
         )}
       </Box>
@@ -586,7 +439,7 @@ export default function SelectBook() {
                     >
                       <Box sx={{ gap: 1, display: "flex" }}>
                         {book.hasManifest ? (
-                          <>                         
+                          <>
                             <CheckerSetting
                               repoName={selectedBurrito.abbreviation}
                               tCoreNameProject={book.tCoreName}
@@ -635,142 +488,6 @@ export default function SelectBook() {
       ) : (
         <></>
       )}
-      <PanDialog
-        isOpen={openModal}
-        closeFn={handleCloseModal}
-        titleLabel={doI18n(
-          "pages:uw-client-checks:add_book_tCore",
-          i18nRef.current,
-        )}
-      >
-        <DialogContent>
-          {manifestPath ? (
-            <Box>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
-                {manifestPath[1].book_codes.map((code) => (
-                  <Button
-                    key={code}
-                    disabled={inDirectory
-                      .map((e) => e.split("_")[2].toUpperCase())
-                      .includes(code)}
-                    variant="contained"
-                    size="small"
-                    color={errorsData[code]?.length > 0 ? "warning" : "primary"}
-                    onClick={() => {
-                      if (errorsData[code]?.length > 0) {
-                        setCurrentErrors(errorsData[code]);
-                        setErrorModalOpen(true);
-                      } else {
-                        handleAddBook(
-                          code,
-                          manifestPath[0],
-                          selectedBurrito.abbreviation,
-                        );
-                      }
-                    }}
-                  >
-                    {code}
-                  </Button>
-                ))}
-              </Box>
-            </Box>
-          ) : (
-            doI18n("pages:uw-client-checks:no_manifest_found", i18nRef.current)
-          )}
-        </DialogContent>
-        <PanDialogActions
-          onlyCloseButton={true}
-          closeFn={handleCloseModal}
-          closeLabel={doI18n("pages:uw-client-checks:close", i18nRef.current)}
-        />
-      </PanDialog>
-      <PanDialog
-        isOpen={errorModalOpen}
-        closeFn={() => setErrorModalOpen(false)}
-        size="xs"
-        titleLabel={doI18n(
-          "pages:uw-client-checks:book_errors",
-          i18nRef.current,
-        )}
-      >
-        <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            {currentErrors.map((err, idx) => (
-              <Typography key={idx} sx={{ mb: 1 }}>
-                - {err}
-              </Typography>
-            ))}
-          </Box>
-        </DialogContent>
-        <PanDialogActions
-          onlyCloseButton={true}
-          closeFn={() => setErrorModalOpen(false)}
-          closeLabel={doI18n("pages:uw-client-checks:close", i18nRef.current)}
-        />
-      </PanDialog>
-      <PanDialog
-        isOpen={openResourcesDialog}
-        closeFn={() => (window.location.href = "/clients/main")}
-        size="sm"
-        titleLabel={doI18n(
-          "pages:uw-client-checks:required_ressources_check",
-          i18nRef.current,
-        )}
-        actions={<></>}
-      >
-        <DialogContent>
-          <Typography sx={{ mb: 2 }}>
-            {doI18n(
-              "pages:uw-client-checks:ressource_required",
-              i18nRef.current,
-            )}
-          </Typography>
-
-          <Box>
-            {globalResourcesStatus
-              ?.filter((r) => !r.exists)
-              .map((r) => (
-                <Box
-                  key={r.path}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 1,
-                    px: 1,
-                  }}
-                >
-                  <Typography>{r.path}</Typography>
-                </Box>
-              ))}
-          </Box>
-
-          {/* <Typography sx={{ mt: 2, mb: 1 }}>
-            {doI18n(
-            "pages:uw-client-checks:missing_resources",
-            i18nRef.current,
-          )}
-          </Typography> */}
-        </DialogContent>
-        <PanDialogActions
-          closeFn={() => (window.location.href = `/clients/main`)}
-          closeLabel={doI18n("pages:uw-client-checks:back", i18nRef.current)}
-          isDisabled={resourcesStatus?.some((r) => !r.exists)}
-          actionFn={() => {
-            setDownloadRessourcesDialogueOpen(true);
-            setOpenResourcesDialog(false);
-          }}
-          closeOnAction={false}
-          actionLabel={doI18n(
-            "pages:uw-client-checks:go_to_download",
-            i18nRef.current,
-          )}
-        />
-      </PanDialog>
-      <DownloadRessources
-        setOpenResourcesDialog={setOpenResourcesDialog}
-        downloadRessourcesDialogueOpen={downloadRessourcesDialogueOpen}
-        setDownloadRessourcesDialogueOpen={setDownloadRessourcesDialogueOpen}
-      />
     </Box>
   );
 }

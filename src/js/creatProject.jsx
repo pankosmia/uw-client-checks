@@ -8,6 +8,7 @@ import usfm, { toJSON } from "usfm-js";
 import wordaligner from "word-aligner";
 import { fsExistsRust, fsWriteRust, fsGetRust,updateIngredients} from "./serverUtils";
 import { USER_RESOURCES_PATH, T_NOTES_CATEGORIES } from "../common/constants";
+import { write_version_manager } from "./CreateBookProject/ImportZipProject/ImportZipProject";
 /**
  * @description Function that count occurrences of a substring in a string
  * @param {String} string - The string to search in
@@ -915,12 +916,12 @@ const generateHelperForTool = async (
   typeOfTools
 ) => {
   let book = getBookFromProjectFileName(selectedProjectFilename);
-
+  let path = helperFolderName.split("/")
   const tsv = parseTsv(
     await fsGetRust(
-      helperFolderName,
+      path[2],
       `${book.toUpperCase()}.tsv`,
-      "git.door43.org/uW"
+      path[0]+"/"+path[1]
     )
   );
 
@@ -955,7 +956,7 @@ const generateHelperForTool = async (
         tsv[i][3].split("/").slice(-1)[0].trim()
       );
     } else {
-      category = tsv[i][5].split("/")[2].trim();
+      category = tsv[i][5].split("/")[2].trim().replace(".md","");
     }
 
     let newJson = structuredClone(emptyJson);
@@ -991,11 +992,11 @@ const generateHelperForTool = async (
       );
     } else {
       newJson.contextId.quoteString = tsv[i][3];
-      newJson.contextId.groupId = tsv[i][5].split("/").slice(-1)[0].replace(/\r/g, "");
+      newJson.contextId.groupId = tsv[i][5].split("/").slice(-1)[0].replace(/\r/g, "").replace(".md","");
       newJson.contextId.quote = tsv[i][3];
       newJson.contextId.occurrence = parseInt(tsv[i][4]);
 
-      categoryKey = tsv[i][5].split("/")[3].replace(/\s+/g, "").trim();
+      categoryKey = tsv[i][5].split("/")[3].replace(/\s+/g, "").trim().replace(".md","");
       
       url = join(
         selectedProjectFilename,
@@ -1169,37 +1170,39 @@ function pathJoin(table) {
 }
 /*################################################################*/
 export const convertToProjectFormat = async (
-  sourceProjectPath,
-  selectedProjectFilename
+  repoName,
+  tCoreProject,
+  ressources
 ) => {
   // let book = selectedProjectFilename.split('_')[2]+
   const usfmData = await verifyIsValidUsfmFile(
-    sourceProjectPath,
-    selectedProjectFilename
+    repoName,
+    tCoreProject
   );
   await generateHelperForTool(
-    "en_tw",
-    sourceProjectPath,
-    selectedProjectFilename,
+    ressources['parascriptural/x-bcvarticles'][0],
+    repoName,
+    tCoreProject,
     "translationWords"
   );
   await generateHelperForTool(
-    "en_tn",
-    sourceProjectPath,
-    selectedProjectFilename,
+    ressources['parascriptural/x-bcvnotes'][0],
+    repoName,
+    tCoreProject,
     "translationNotes"
   );
   const parsedUsfm = getParsedUSFM(usfmData);
   const manifest = await generateManifestForUsfm(
-    sourceProjectPath,
-    selectedProjectFilename,
+    repoName,
+    tCoreProject,
     parsedUsfm
   );
   await generateTargetLanguageBibleFromUsfm(
     parsedUsfm,
     manifest,
-    sourceProjectPath,
-    selectedProjectFilename
+    repoName,
+    tCoreProject
   );
-  await updateIngredients(sourceProjectPath)
+  await write_version_manager(ressources,repoName,tCoreProject.slice(0, -1).replace('book_projects/',''))
+  await updateIngredients(repoName)
 };
