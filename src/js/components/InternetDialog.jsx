@@ -19,8 +19,13 @@ export default function InternetDialog({ callBack }) {
   useEffect(() => {
     if (!enabledRef.current) {
       setInternetDialogOpen(true);
+    } else {
+      if (callBack) {
+        callBack();
+      }
     }
   }, []);
+
   const handleCloseDialog = () => {
     if (enabledRef.current) {
       setInternetDialogOpen(false);

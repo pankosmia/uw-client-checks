@@ -17,14 +17,12 @@ const ALL_BOOKS = [
 ];
 
 export default function RessourcesPicker({
-  currentProjectRef,
-  listPreSelected,
   setFinalVersionManager,
-  book,
-  prefLanguage,
-  setBook,
+  book = null,
+  prefLanguage = null,
+  listPreSelected = null,
+  setBook = null,
 }) {
-
   const [values, setValues] = useState({
     "parascriptural/x-bcvarticles": ["", ""],
     "parascriptural/x-bcvnotes": ["", ""],
@@ -36,7 +34,6 @@ export default function RessourcesPicker({
   const [selectedBook, setSelectedBook] = useState(book || "");
   const [summaries, setSummaries] = useState(null);
   const { i18nRef } = useContext(i18nContext);
-  console.log(options);
   useEffect(() => {
     if (setBook) {
       setBook(selectedBook);
@@ -112,7 +109,9 @@ export default function RessourcesPicker({
               ? filtered.filter((b) =>
                   ["grc", "hbo", "el-x-koine"].includes(b.language_code),
                 )
-              : filtered.filter((b) => prefLanguage?.includes(b.language_code));
+              : filtered.filter((b) =>
+                  prefLanguage ? prefLanguage.includes(b.language_code) : true,
+                );
 
           newOptions[t] = langFiltered;
 
@@ -199,7 +198,6 @@ export default function RessourcesPicker({
           </Box>
         );
       })}
-     
     </Box>
   );
 }

@@ -10,6 +10,7 @@ export default function ImportZipProjectNoInternet({
   listDependancy,
   keysValue,
   setUsedRessources,
+  summary
 }) {
   const {i18nRef} = useContext(i18nContext)
   const [dependenciesDone, setDependaniesDone] = useState([]);
@@ -21,7 +22,6 @@ export default function ImportZipProjectNoInternet({
   }, [keysValue]);
   useEffect(() => {
     async function noInternet() {
-      let summary = await getJson("/burrito/metadata/summaries");
       let newKeysValues = [];
       for (let kvi = 0; kvi < keysValue.length; kvi++) {
         let path =

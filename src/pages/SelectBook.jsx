@@ -1,11 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { doI18n } from "pithekos-lib";
-import {
-  i18nContext,
-  currentProjectContext,
-  PanDialog,
-  PanDialogActions,
-} from "pankosmia-rcl";
+import { i18nContext, currentProjectContext } from "pankosmia-rcl";
 
 import CircularProgress from "@mui/material/CircularProgress";
 import DeleteDialogueButton from "../js/components/DeleteDialogueButton";
@@ -19,41 +14,29 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  DialogContent,
 } from "@mui/material";
 import { ImportZipProject } from "../js/CreateBookProject/ImportZipProject/ImportZipProject";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { convertToProjectFormat } from "../js/creatProject"; // <-- import your function
 import { getJson } from "pithekos-lib";
 import { BASE_URL } from "../common/constants";
-import { fsGetRust, fsWriteRust } from "../js/serverUtils";
-import { isOldTestament } from "../js/creatProject";
 import ButtonDashBoard from "../js/components/ButtonDashBoard";
-import DownloadRessources from "../js/components/DownloadRessources";
-import RessourcesPicker from "../js/CreateBookProject/RessourcesPicker";
 import CreateBookProjectScratch from "../js/CreateBookProject/CreateBookProjectScratch/CreatBookProjectScratch";
 
 export default function SelectBook() {
   const { currentProjectRef } = useContext(currentProjectContext);
 
-  const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const { i18nRef } = useContext(i18nContext);
 
   const [inDirectory, setInDirectory] = useState([]);
   const [tree, setTree] = useState([]);
   const [books, setBooks] = useState([]);
-  const [openModal, setOpenModal] = useState(false);
-  const [resourcesStatus, setResourcesStatus] = useState(null);
   const [errorsData, setErrorsData] = useState([]);
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [currentErrors, setCurrentErrors] = useState([]);
   const [burritos, setBurritos] = useState(null);
-  const [globalResourcesStatus, setGlobalResourcesStatus] = useState(null);
-  const [allResourcesPresent, setAllResourcesPresent] = useState(false);
   const [selectedBurrito, setSelectedBurrito] = useState();
   const [openedBooks, setOpenedBooks] = useState(new Set());
-  const [downloadRessourcesDialogueOpen, setDownloadRessourcesDialogueOpen] =
-    useState(false);
   const [initializing, setInitializing] = useState([]);
 
   useEffect(() => {
@@ -89,7 +72,6 @@ export default function SelectBook() {
     }
     fetchSummaries();
   }, [currentProjectRef.current]);
-
 
   const REQUIRED_RESOURCES = [
     "git.door43.org/uW/en_tn",
@@ -197,8 +179,6 @@ export default function SelectBook() {
     }
     setInDirectory(Array.from(firstLevel));
   }, [tree]);
-
-  const handleCloseModal = () => setOpenModal(false);
 
   useEffect(() => {
     setBooks(
@@ -508,23 +488,6 @@ export default function SelectBook() {
       ) : (
         <></>
       )}
-      <PanDialog
-        isOpen={openModal}
-        closeFn={handleCloseModal}
-        titleLabel={doI18n(
-          "pages:uw-client-checks:add_book_tCore",
-          i18nRef.current,
-        )}
-      >
-        <DialogContent>
-          <RessourcesPicker />
-        </DialogContent>
-        <PanDialogActions
-          onlyCloseButton={true}
-          closeFn={handleCloseModal}
-          closeLabel={doI18n("pages:uw-client-checks:close", i18nRef.current)}
-        />
-      </PanDialog>
     </Box>
   );
 }

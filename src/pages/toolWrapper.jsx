@@ -742,7 +742,6 @@ export const ToolWrapper = () => {
           }
         }
 
-        console.log(groupsData);
         setGroupsData(groupsData);
         setGroupsIndex(groupsIndex);
       }
@@ -768,7 +767,6 @@ export const ToolWrapper = () => {
     saveCheckingData != null &&
     toolSettings != null &&
     !loadingTool;
-  console.log(dataTw);
   return (
     <div style={{ height: "calc(100vh - 100px)" }}>
       <Box

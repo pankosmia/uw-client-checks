@@ -11,20 +11,20 @@ const ImportZipProjectInternet = ({
   repoName,
   keysValue,
   setUsedRessources,
+  summary,
 }) => {
   const { debugRef } = useContext(debugContext);
   const { i18nRef } = useContext(i18nContext);
   const [dependancyVersion, setDependancyVersion] = useState(null);
   const [listDependancy, setListDependancy] = useState(null);
 
-
   const uploadZip = async (keysValue) => {
     let door43_catalog = (
-      await getJson("/gitea/remote-repos/qa.door43.org/Door43-Catalog")
+      await getJson("/gitea/remote-repos/git.door43.org/Door43-Catalog")
     ).json;
 
     keysValue = keysValue.map((e) => {
-      e[0] = e[0].replace("git", "qa");
+      // e[0] = e[0].replace("git", "qa");
       if (e[1] === "Door43-Catalog") {
         let catalogRepo = door43_catalog.find((p) => p.name === e[2]);
         if (catalogRepo) {
@@ -41,7 +41,6 @@ const ImportZipProjectInternet = ({
       }
       return e;
     });
-    let summary = await getJson("/burrito/metadata/summaries");
     let newKeysValues = [];
     for (let kvi = 0; kvi < keysValue.length; kvi++) {
       let path =
@@ -65,7 +64,10 @@ const ImportZipProjectInternet = ({
             ]);
             return prevE;
           });
-        } else if (response.json === "no branch") {
+        } else if (
+          response.json === "no branch" &&
+          !["uW", "BurritoTruck"].includes(keysValue[kvi][1])
+        ) {
           let response = gitCreatBranch([path, version], i18nRef, debugRef);
           if (response) {
             let new_branch_zip = "https://" + path + "/sb/" + version + ".zip";
@@ -73,7 +75,7 @@ const ImportZipProjectInternet = ({
             if (!downloadResponse.ok) {
               enqueueSnackbar(
                 doI18n(
-                  "pages:core-contenthandler_text_translation:could_not_fetch_sb",
+                  "pages:core-uw-client-checks:could_not_fetch_sb",
                   i18nRef.current,
                 ),
                 { variant: "error" },
@@ -95,7 +97,7 @@ const ImportZipProjectInternet = ({
             if (!fetchResponse.ok) {
               enqueueSnackbar(
                 doI18n(
-                  "pages:core-contenthandler_text_translation:could_not_upload_sb_version",
+                  "pages:core-uw-client-checks:could_not_upload_sb_version",
                   i18nRef.current,
                 ),
                 { variant: "error" },
@@ -113,7 +115,6 @@ const ImportZipProjectInternet = ({
               `/burrito/remake_burrito_from_zip/${uuid}/${path}`,
             );
             if (response.ok) {
-
               setUsedRessources((prev) => {
                 let prevE = [...prev];
                 prevE.push([
@@ -129,7 +130,7 @@ const ImportZipProjectInternet = ({
             } else {
               enqueueSnackbar(
                 doI18n(
-                  "pages:core-contenthandler_text_translation:could_no_remake_zip_project",
+                  "pages:core-uw-client-checks:could_no_remake_zip_project",
                   i18nRef.current,
                 ),
                 { variant: "error" },
@@ -176,25 +177,28 @@ const ImportZipProjectInternet = ({
   }, [keysValue]);
 
   async function DowloadBurrito(params, remoteRepoPath, postType) {
-    console.log(params);
     let fetchUrl =
       postType === "clone"
         ? `/git/clone-repo/${remoteRepoPath}`
         : `/git/pull-repo/origin/${remoteRepoPath}`;
-
+    let versionRepo = dependancyVersion.find((e) => params.row.id === e[0]);
+    let isStrangeRepo = ["uW", "BurritoTruck"].includes(
+      versionRepo[0].split("/")[1],
+    );
+    console.log(versionRepo)
     if (
       params.row.topics.some((topic) =>
         ["pushing2sb", "tc-ready"].includes(topic),
       )
     ) {
-      if (postType === "clone") fetchUrl += "?branch=main";
+      if (postType === "clone" && !isStrangeRepo) fetchUrl += "?branch=main";
     }
 
     let response = await postEmptyJson(fetchUrl, debugRef.current);
     if (postType === "clone") {
-      let versionRepo = dependancyVersion.find((e) => params.row.id === e[0]);
-      response = gitCreatBranch(versionRepo, i18nRef, debugRef);
-      if (response.ok) {
+      if (response.ok && !isStrangeRepo) {
+        response = gitCreatBranch(versionRepo, i18nRef, debugRef);
+
         let new_branch_zip =
           "https://" + versionRepo[0] + "/sb/" + versionRepo[1] + ".zip";
         const downloadResponse = await fetch(new_branch_zip);
@@ -238,6 +242,12 @@ const ImportZipProjectInternet = ({
           prevE.push([versionRepo[0], versionRepo[1]]);
           return prevE;
         });
+      } else if (response.ok && !isStrangeRepo) {
+        setUsedRessources((prev) => {
+          let prevE = [...prev];
+          prevE.push([versionRepo[0], versionRepo[1]]);
+          return prevE;
+        });
       }
     }
 
@@ -256,7 +266,6 @@ const ImportZipProjectInternet = ({
       ) : (
         <CircularProgress />
       )}
-
     </>
   );
 };

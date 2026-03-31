@@ -165,7 +165,7 @@ function UsfmExport() {
       />
       <PanDialog
         titleLabel={doI18n(
-          "pages:core-contenthandler_text_translation:export_as_usfm",
+          "pages:core-uw-client-checks:export_as_usfm",
           i18nRef.current,
         )}
         closeFn={() => handleClose()}
@@ -177,7 +177,7 @@ function UsfmExport() {
             <DialogContentText>
               <Typography>
                 {doI18n(
-                  "pages:core-contenthandler_text_translation:pick_one_or_more_books_export",
+                  "pages:core-uw-client-checks:pick_one_or_more_books_export",
                   i18nRef.current,
                 )}
               </Typography>
@@ -221,7 +221,7 @@ function UsfmExport() {
             if (!selectedBooks || selectedBooks.length === 0) {
               enqueueSnackbar(
                 doI18n(
-                  "pages:core-contenthandler_text_translation:no_books_selected",
+                  "pages:core-uw-client-checks:no_books_selected",
                   i18nRef.current,
                 ),
                 { variant: "error" },
@@ -234,7 +234,7 @@ function UsfmExport() {
             handleCloseCreate();
           }}
           actionLabel={doI18n(
-            "pages:core-contenthandler_text_translation:export_label",
+            "pages:core-uw-client-checks:export_label",
             i18nRef.current,
           )}
           isDisabled={selectedBooks.length === 0}

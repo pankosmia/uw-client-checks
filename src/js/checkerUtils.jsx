@@ -240,7 +240,9 @@ export const getglTwData = async (pathVersion, BookCode) => {
     const pathParts = path.split("/");
     const category = pathParts[2];
     let articleId = pathParts[3].replace(/\r/g, "");
-    articleId = articleId.includes(".md") ? articleId.replace('.md',"") : articleId ;
+    articleId = articleId.includes(".md")
+      ? articleId.replace(".md", "")
+      : articleId;
     if (json[category]?.articles[articleId]) {
       if (!filteredJson[category].articles[articleId]) {
         filteredJson[category].articles[articleId] = json[category].articles[
@@ -429,8 +431,17 @@ export const getAllCheckingCategories = async (
   nameArr,
   book,
   tool,
-  lecixonName = null,
+  versionPathLexicon = null,
 ) => {
+  let splitedPathLexicon;
+  let originLexicon;
+  let nameLexicon;
+  if (versionPathLexicon) {
+    splitedPathLexicon = versionPathLexicon[0].split("/");
+    originLexicon = splitedPathLexicon[0] + "/" + splitedPathLexicon[1];
+    nameLexicon = splitedPathLexicon[2];
+  }
+
   let path = `${nameArr}/apps/translationCore/index/${tool}/${book}`;
   const json = {};
   let categories;
@@ -444,11 +455,11 @@ export const getAllCheckingCategories = async (
     return tool;
   }
   let linkTitleMap;
-  if (lecixonName) {
+  if (versionPathLexicon) {
     let categories = await fsGetRust(
-      lecixonName,
+      nameLexicon,
       "translate/toc.yaml",
-      "git.door43.org/uW",
+      originLexicon,
     );
     let dataYaml = yaml.load(categories);
     // build { "figs-abstractnouns": "Abstract Nouns", ... }

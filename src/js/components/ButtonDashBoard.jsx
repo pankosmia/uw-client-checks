@@ -9,21 +9,34 @@ import {
   Box,
   Typography,
   CircularProgress,
+  DialogContent,
 } from "@mui/material";
 import { Tooltip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getProgressAligment } from "../checkerUtils";
 import { isOldTestament } from "../creatProject";
 import InvalidatedIcon from "../ui_tool_kit/InvalidatedIcon";
-import { doI18n } from "pithekos-lib";
+import { doI18n, getJson } from "pithekos-lib";
 import { i18nContext } from "pankosmia-rcl";
 import { useContext } from "react";
-import { fsGetRust } from "../serverUtils";
-export const ButtonDashBoard = ({
-  projectName,
-  tCoreName,
-  openedBooks,
-}) => {
+import { PanDialog, PanDialogActions } from "pankosmia-rcl";
+import RessourcesPicker from "../CreateBookProject/RessourcesPicker";
+import { write_version_manager } from "../CreateBookProject/ImportZipProject/ImportZipProject";
+import { enqueueSnackbar } from "notistack";
+import { fsExistsRust, fsGetRust } from "../serverUtils";
+
+function checkKeysVersion(version) {
+  let keys = [
+    "parascriptural/x-bcvarticles",
+    "parascriptural/x-bcvnotes",
+    "peripheral/x-lexicon",
+    "peripheral/x-peripheralArticles",
+    "scripture/textTranslation",
+  ];
+  return keys.every((e) => Object.keys(version).includes(e));
+}
+
+export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
   const { i18nRef } = useContext(i18nContext);
   const navigate = useNavigate();
   const [progressTranslationWords, setProgressTranslationWords] =
@@ -40,14 +53,38 @@ export const ButtonDashBoard = ({
   const [numberCategoriesTw, setNumberCategoriesTw] = useState([]);
 
   const [ressourcesToFetch, setRessourcesToFetch] = useState(null);
+  const [needRessourcesForVersionManager, setNeedRessourcesForVersionManager] =
+    useState(false);
+  const [openModal, setOpenModal] = useState(false);
+  const [finalVersionManager, setFinalVersionManager] = useState({});
+  const [oldVersionManager, setOldVersionManager] = useState({});
+
+  function handleCloseModal() {
+    if (!needRessourcesForVersionManager) {
+      setOpenModal(false);
+    }
+  }
 
   useEffect(() => {
     async function getRessources() {
-      let response = await fsGetRust(
+      let existVM = await fsExistsRust(
         projectName,
         `book_projects/${tCoreName}/version_manager.json`,
       );
-      setRessourcesToFetch(response);
+      if (existVM) {
+        let response = await fsGetRust(
+          projectName,
+          `book_projects/${tCoreName}/version_manager.json`,
+        );
+        if (checkKeysVersion(response)) {
+          setRessourcesToFetch(response);
+        } else {
+          setOldVersionManager(response);
+          setNeedRessourcesForVersionManager(true);
+        }
+      } else {
+        setNeedRessourcesForVersionManager(true);
+      }
     }
     getRessources();
   }, []);
@@ -135,8 +172,20 @@ export const ButtonDashBoard = ({
     }
   };
   useEffect(() => {
-    if(!ressourcesToFetch) return;
-    if (openedBooks.has(bookCode.toUpperCase())) {
+    if (!ressourcesToFetch) {
+      if (openedBooks.has(bookCode.toUpperCase())) {
+        if (needRessourcesForVersionManager) {
+          setOpenModal(true);
+          return;
+        }
+      }
+      return;
+    } else if (openedBooks.has(bookCode.toUpperCase())) {
+      if (needRessourcesForVersionManager) {
+        setOpenModal(true);
+        return;
+      }
+
       getProgressChecker(
         "translationNotes",
         ["discourse", "figures", "culture", "grammar", "other", "numbers"],
@@ -160,20 +209,30 @@ export const ButtonDashBoard = ({
         setInvalidatedTw(e.invalidated);
       });
       getBookFromName(
-            ressourcesToFetch["scripture/textTranslation"][0].split('/')[2],
-            "",
-            tCoreName.split("_")[2],
-            "original_language",
-            ressourcesToFetch["scripture/textTranslation"][0].split('/').slice(0,2).join('/'),
-          ).then((book) =>
-            getProgressAligment(projectName, tCoreName, book).then((r) => {
-              setProgressWordAlignment(r.selection || 0);
-              setInvalidatedAlignment(r.invalidated);
-            }),
-          )
+        ressourcesToFetch["scripture/textTranslation"][0].split("/")[2],
+        "",
+        tCoreName.split("_")[2],
+        "original_language",
+        ressourcesToFetch["scripture/textTranslation"][0]
+          .split("/")
+          .slice(0, 2)
+          .join("/"),
+      ).then((book) =>
+        getProgressAligment(projectName, tCoreName, book).then((r) => {
+          setProgressWordAlignment(r.selection || 0);
+          setInvalidatedAlignment(r.invalidated);
+        }),
+      );
       getCategories();
     }
-  }, [projectName, tCoreName, bookCode, openedBooks,ressourcesToFetch]);
+  }, [
+    projectName,
+    tCoreName,
+    bookCode,
+    openedBooks,
+    ressourcesToFetch,
+    needRessourcesForVersionManager,
+  ]);
 
   const renderProgress = (progress) => {
     return progress === null ? (
@@ -268,6 +327,51 @@ export const ButtonDashBoard = ({
           {tool === "wordAlignment" && renderProgress(progressWordAlignment)}
         </Box>
       ))}
+      {openModal && (
+        <PanDialog
+          isOpen={openModal}
+          closeFn={handleCloseModal}
+          titleLabel={doI18n(
+            "pages:uw-client-checks:add_version_manager",
+            i18nRef.current,
+          )}
+        >
+          <DialogContent>
+            <RessourcesPicker
+              book={tCoreName.split("_")[2]}
+              listPreSelected={oldVersionManager}
+              setFinalVersionManager={setFinalVersionManager}
+            />
+          </DialogContent>
+          <PanDialogActions
+            closeFn={handleCloseModal}
+            closeLabel={doI18n("pages:uw-client-checks:close", i18nRef.current)}
+            actionLabel={doI18n(
+              "pages:uw-client-checks:write_version",
+              i18nRef.current,
+            )}
+            actionFn={async () => {
+              if (checkKeysVersion(finalVersionManager)) {
+                await write_version_manager(
+                  finalVersionManager,
+                  projectName,
+                  tCoreName,
+                );
+                setNeedRessourcesForVersionManager(false);
+                setOpenModal(false);
+              } else {
+                enqueueSnackbar(
+                  `${doI18n(
+                    "pages:core-uw-client-checks:missing_ressources",
+                    i18nRef.current,
+                  )}`,
+                  { variant: "error" },
+                );
+              }
+            }}
+          />
+        </PanDialog>
+      )}
     </Box>
   );
 };

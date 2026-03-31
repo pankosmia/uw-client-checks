@@ -127,62 +127,67 @@ export default function CreateBookProjectScratch({
           {doI18n("pages:uw-client-checks:add_book", i18nRef.current)}
         </Typography>
       </Button>
-      <PanDialog
-        isOpen={openResourcesDialog}
-        closeFn={() => setOpenResourcesDialog(false)}
-        size="md"
-        titleLabel={`${doI18n(
-          "pages:uw-client-checks:add_book_zip",
-          i18nRef.current,
-        )}`}
-      >
-        <DialogContent>
-          {step === 1 && (
-            <LangueConfig
-              languageChoices={languageChoices}
-              setLanguageChoices={setLanguageChoices}
-            />
-          )}
-          {step === 2 && (
-            <Box>
-              <Tooltip title={"need more ressources?"}>
-                <IconButton
-                  onClick={() => {
-                    setStep(3);
-                  }}
-                >
-                  <Info />
-                </IconButton>
-              </Tooltip>
-              <RessourcesPicker
-                setFinalVersionManager={setFinalVersionManager}
-                prefLanguage={languageChoices}
-                setBook={setBook}
-              />
-            </Box>
-          )}
-          {step === 3 && (<InternetDialog callBack={() => setStep(4)} />)}
-          {step === 4 && (
-            <DownloadRessources
-              setOpenResourcesDialog={setOpenResourcesDialog}
-              downloadRessourcesDialogueOpen={downloadRessourcesDialogueOpen}
-              setDownloadRessourcesDialogueOpen={
-                setDownloadRessourcesDialogueOpen
-              }
-            />
-          )}
-        </DialogContent>
-        <PanDialogActions
+      {openResourcesDialog && (
+        <PanDialog
+          isOpen={openResourcesDialog}
           closeFn={() => setOpenResourcesDialog(false)}
-          closeLabel={doI18n("pages:uw-client-checks:cancel", i18nRef.current)}
-          actionFn={() => {
-            goNext();
-          }}
-          closeOnAction={false}
-          actionLabel={step === 2 ? "finish" : "next"}
-          onlyCloseButton={false}
-        />
-      </PanDialog>
+          size="md"
+          titleLabel={`${doI18n(
+            "pages:uw-client-checks:add_book_zip",
+            i18nRef.current,
+          )}`}
+        >
+          <DialogContent>
+            {step === 1 && (
+              <LangueConfig
+                languageChoices={languageChoices}
+                setLanguageChoices={setLanguageChoices}
+              />
+            )}
+            {step === 2 && (
+              <Box>
+                <Tooltip title={"need more ressources?"}>
+                  <IconButton
+                    onClick={() => {
+                      setStep(3);
+                    }}
+                  >
+                    <Info />
+                  </IconButton>
+                </Tooltip>
+                <RessourcesPicker
+                  setFinalVersionManager={setFinalVersionManager}
+                  prefLanguage={languageChoices}
+                  setBook={setBook}
+                />
+              </Box>
+            )}
+            {step === 3 && <InternetDialog callBack={() => setStep(4)} />}
+            {step === 4 && (
+              <DownloadRessources
+                setOpenResourcesDialog={setOpenResourcesDialog}
+                downloadRessourcesDialogueOpen={downloadRessourcesDialogueOpen}
+                setDownloadRessourcesDialogueOpen={
+                  setDownloadRessourcesDialogueOpen
+                }
+              />
+            )}
+          </DialogContent>
+          <PanDialogActions
+            closeFn={() => setOpenResourcesDialog(false)}
+            closeLabel={doI18n(
+              "pages:uw-client-checks:cancel",
+              i18nRef.current,
+            )}
+            actionFn={() => {
+              goNext();
+            }}
+            closeOnAction={false}
+            actionLabel={step === 2 ? "finish" : "next"}
+            onlyCloseButton={false}
+          />
+        </PanDialog>
+      )}
     </Box>
   );
 }

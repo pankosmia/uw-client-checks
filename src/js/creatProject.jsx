@@ -956,7 +956,7 @@ const generateHelperForTool = async (
         tsv[i][3].split("/").slice(-1)[0].trim()
       );
     } else {
-      category = tsv[i][5].split("/")[2].trim();
+      category = tsv[i][5].split("/")[2].trim().replace(".md","");
     }
 
     let newJson = structuredClone(emptyJson);
@@ -992,11 +992,11 @@ const generateHelperForTool = async (
       );
     } else {
       newJson.contextId.quoteString = tsv[i][3];
-      newJson.contextId.groupId = tsv[i][5].split("/").slice(-1)[0].replace(/\r/g, "");
+      newJson.contextId.groupId = tsv[i][5].split("/").slice(-1)[0].replace(/\r/g, "").replace(".md","");
       newJson.contextId.quote = tsv[i][3];
       newJson.contextId.occurrence = parseInt(tsv[i][4]);
 
-      categoryKey = tsv[i][5].split("/")[3].replace(/\s+/g, "").trim();
+      categoryKey = tsv[i][5].split("/")[3].replace(/\s+/g, "").trim().replace(".md","");
       
       url = join(
         selectedProjectFilename,

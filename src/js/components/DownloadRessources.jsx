@@ -27,7 +27,7 @@ const DownloadRessources = ({}) => {
 
   const ListTc4 = {
     "git.door43.org": {
-      uW: [
+      unfoldingWord: [
         "en_tn",
         "en_tw",
         "en_ugl",

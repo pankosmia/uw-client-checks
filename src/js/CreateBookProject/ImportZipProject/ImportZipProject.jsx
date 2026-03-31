@@ -21,18 +21,17 @@ async function checkIfBookProjectExist(repoName, tCoreNameProject, i18nRef) {
     repoName,
     `book_projects/${tCoreNameProject}/manifest.json`,
   );
-  console.log(bookProjects);
   if (bookProjects) {
     enqueueSnackbar(
       `${doI18n(
-        "pages:core-contenthandler_text_translation:book_project_already_exist",
+        "pages:core-uw-client-checks:book_project_already_exist",
         i18nRef.current,
       )}`,
       { variant: "error" },
     );
     throw new Error(
       `${doI18n(
-        "pages:core-contenthandler_text_translation:zip_is_no_valid",
+        "pages:core-uw-client-checks:zip_is_no_valid",
         i18nRef.current,
       )}`,
     );
@@ -46,7 +45,7 @@ function checkZipName(name, i18nRef) {
   if (response) {
     enqueueSnackbar(
       `${doI18n(
-        "pages:core-contenthandler_text_translation:zip_selected",
+        "pages:core-uw-client-checks:zip_selected",
         i18nRef.current,
       )} : ${name}`,
       { variant: "success" },
@@ -54,14 +53,14 @@ function checkZipName(name, i18nRef) {
   } else {
     enqueueSnackbar(
       `${doI18n(
-        "pages:core-contenthandler_text_translation:zip_is_no_valid",
+        "pages:core-uw-client-checks:zip_is_no_valid",
         i18nRef.current,
       )}`,
       { variant: "error" },
     );
     throw new Error(
       `${doI18n(
-        "pages:core-contenthandler_text_translation:zip_is_no_valid",
+        "pages:core-uw-client-checks:zip_is_no_valid",
         i18nRef.current,
       )}`,
     );
@@ -104,10 +103,9 @@ async function getZip(file, repoName, i18nRef) {
     externalResources = Object.values(externalResources);
     let keysValue = externalResources.map((e) => {
       let splitArray = e.split("/").splice(2);
-      splitArray[0] = splitArray[0].replace("git.", "qa.");
+      // splitArray[0] = splitArray[0].replace("git.", "qa.");
       return splitArray;
     });
-    console.log(keysValue);
     return [keysValue, projectNameResponse, externalResourcesType];
   }
 }
@@ -122,12 +120,72 @@ const convertionTable = {
   tNotesOriginalLang: "scripture/textTranslation",
 };
 
-export async function write_version_manager(keysValue, repoName, tCoreProjectName) {
+export async function write_version_manager(
+  keysValue,
+  repoName,
+  tCoreProjectName,
+) {
   await fsWriteRust(
     repoName,
     `book_projects/${tCoreProjectName}/version_manager.json`,
     keysValue,
   );
+}
+
+function checkIfMendatoryRessourcesArePresent(summary) {
+  let neededRessources = {
+    scriptures: { en_ust: false, en_ult: false },
+    lexicons: { en_ugl: false, en_uhl: false },
+  };
+  for (let p of Object.keys(summary)) {
+    for (let c of Object.keys(neededRessources)) {
+      for (let s of Object.keys(neededRessources[c])) {
+        if (!neededRessources[c][s]) {
+          if (p.includes(s)) {
+            neededRessources[c][s] = true;
+          }
+        }
+      }
+    }
+  }
+  return neededRessources;
+}
+
+function AddRessourcesToDepency(listDependancy, neededRessources) {
+  let newDependancy = [...listDependancy];
+  for (let [type, ressources] of Object.entries(neededRessources)) {
+    for (let [ressouce, value] of Object.entries(ressources)) {
+      if (!value) {
+        let isPresentInDependancy = false;
+        for (let array of listDependancy) {
+          if (array[2] === ressouce) {
+            isPresentInDependancy = true;
+            break;
+          }
+        }
+        if (!isPresentInDependancy) {
+          if (type === "lexicons") {
+            newDependancy.push([
+              "git.door43.org",
+              "uW",
+              ressouce,
+              "archive",
+              "master.zip",
+            ]);
+          } else {
+            newDependancy.push([
+              "git.door43.org",
+              "unfoldingWord",
+              ressouce,
+              "archive",
+              "master.zip",
+            ]);
+          }
+        }
+      }
+    }
+  }
+  return newDependancy;
 }
 
 export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
@@ -141,15 +199,29 @@ export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
   const [keysValue, setKeysValue] = useState(null);
   const [projectName, setProjectName] = useState("");
   const [finalVersionManager, setFinalVersionManager] = useState({});
+  const [summary, setSummary] = useState(null);
+
+  useEffect(() => {
+    async function getSummary() {
+      let summaryFetched = await getJson("/burrito/metadata/summaries");
+      setSummary(summaryFetched);
+    }
+    getSummary();
+  }, []);
   async function write_version(values) {
-    console.log(values);
     await write_version_manager(values, repoName, projectName);
   }
   async function goNext() {
     if (step === 1) {
-      if (listDependancy.length === 0) {
+      let newDependancy = AddRessourcesToDepency(
+        listDependancy,
+        checkIfMendatoryRessourcesArePresent(summary),
+      );
+      console.log(newDependancy);
+      if (newDependancy.length === 0) {
         setStep(4);
       } else {
+        setListDependancy(newDependancy);
         if (enabledRef.current) {
           setStep(3);
         } else {
@@ -176,8 +248,9 @@ export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
     for (let e of usedRessources) {
       console.log("External resources:", externalResources);
 
-      let pair = Object.entries(externalResources).find(([key, value]) =>
-        value.replace("git.", "qa.").includes(e[0].split("/")[2]),
+      let pair = Object.entries(externalResources).find(
+        ([key, value]) => value.includes(e[0].split("/")[2]),
+        //replace("git.", "qa.")
       );
 
       if (pair) {
@@ -240,32 +313,36 @@ export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
             i18nRef.current,
           )}`}
         >
-          <DialogContent>
-            {step === 1 && (
-              <ImportZipProjectNoInternet
-                setListDependancy={setListDependancy}
-                listDependancy={listDependancy}
-                keysValue={keysValue}
-                setUsedRessources={setUsedRessources}
-              />
-            )}
-            {step === 2 && <InternetDialog callBack={goNext}/>}
-            {step === 3 && (
-              <ImportZipProjectInternet
-                projectName={projectName}
-                repoName={repoName}
-                keysValue={listDependancy}
-                setUsedRessources={setUsedRessources}
-              />
-            )}
-            {step === 4 && (
-              <RessourcesPicker
-                listPreSelected={makeList()}
-                book={projectName.split("_")[2]}
-                setFinalVersionManager={setFinalVersionManager}
-              />
-            )}
-          </DialogContent>
+          {summary && (
+            <DialogContent>
+              {step === 1 && (
+                <ImportZipProjectNoInternet
+                  setListDependancy={setListDependancy}
+                  listDependancy={listDependancy}
+                  keysValue={keysValue}
+                  setUsedRessources={setUsedRessources}
+                  summary={summary}
+                />
+              )}
+              {step === 2 && <InternetDialog callBack={goNext} />}
+              {step === 3 && (
+                <ImportZipProjectInternet
+                  projectName={projectName}
+                  repoName={repoName}
+                  keysValue={listDependancy}
+                  setUsedRessources={setUsedRessources}
+                  summary={summary}
+                />
+              )}
+              {step === 4 && (
+                <RessourcesPicker
+                  listPreSelected={makeList()}
+                  book={projectName.split("_")[2]}
+                  setFinalVersionManager={setFinalVersionManager}
+                />
+              )}
+            </DialogContent>
+          )}
           <PanDialogActions
             closeFn={() => setOpenResourcesDialog(false)}
             closeLabel={doI18n(
