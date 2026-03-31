@@ -387,6 +387,7 @@ export default function SelectBook() {
                     >
                       {book.hasManifest ? (
                         <ButtonDashBoard
+                          setOpenedBooks={setOpenedBooks}
                           openedBooks={openedBooks}
                           projectName={book.projectName}
                           tCoreName={book.tCoreName}

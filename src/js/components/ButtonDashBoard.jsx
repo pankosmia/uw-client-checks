@@ -21,22 +21,19 @@ import { i18nContext } from "pankosmia-rcl";
 import { useContext } from "react";
 import { PanDialog, PanDialogActions } from "pankosmia-rcl";
 import RessourcesPicker from "../CreateBookProject/RessourcesPicker";
-import { write_version_manager } from "../CreateBookProject/ImportZipProject/ImportZipProject";
+import {
+  write_version_manager,
+  checkKeysVersion,
+} from "../CreateBookProject/ImportZipProject/ImportZipProject";
 import { enqueueSnackbar } from "notistack";
 import { fsExistsRust, fsGetRust } from "../serverUtils";
 
-function checkKeysVersion(version) {
-  let keys = [
-    "parascriptural/x-bcvarticles",
-    "parascriptural/x-bcvnotes",
-    "peripheral/x-lexicon",
-    "peripheral/x-peripheralArticles",
-    "scripture/textTranslation",
-  ];
-  return keys.every((e) => Object.keys(version).includes(e));
-}
-
-export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
+export const ButtonDashBoard = ({
+  projectName,
+  tCoreName,
+  openedBooks,
+  setOpenedBooks,
+}) => {
   const { i18nRef } = useContext(i18nContext);
   const navigate = useNavigate();
   const [progressTranslationWords, setProgressTranslationWords] =
@@ -62,6 +59,13 @@ export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
   function handleCloseModal() {
     if (!needRessourcesForVersionManager) {
       setOpenModal(false);
+    } else {
+      setOpenedBooks((prev) => {
+        let newS = new Set(prev);
+        newS.delete(tCoreName.split("_")[2].toUpperCase())
+        return newS
+      });
+      setOpenModal(false)
     }
   }
 
@@ -269,64 +273,65 @@ export const ButtonDashBoard = ({ projectName, tCoreName, openedBooks }) => {
         width: "100%",
       }}
     >
-      {tools.map((tool) => (
-        <Box
-          key={tool}
-          sx={{
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 2,
-            p: 2,
-            cursor: "pointer",
-
-            // 👇 hover styles
-            transition: "background-color 0.2s ease, box-shadow 0.2s ease",
-            "&:hover": {
-              backgroundColor: "action.hover",
-              boxShadow: 3,
-            },
-          }}
-          onClick={() => {
-            navigate(`/${projectName}/ToolWrapper/${tCoreName}`, {
-              state: {
-                toolName: tool === "wordAlignment" ? "wordAlignment" : tool,
-              },
-            });
-          }}
-        >
+      {!needRessourcesForVersionManager &&
+        tools.map((tool) => (
           <Box
+            key={tool}
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              mb: 1,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 2,
+              p: 2,
+              cursor: "pointer",
+
+              // 👇 hover styles
+              transition: "background-color 0.2s ease, box-shadow 0.2s ease",
+              "&:hover": {
+                backgroundColor: "action.hover",
+                boxShadow: 3,
+              },
+            }}
+            onClick={() => {
+              navigate(`/${projectName}/ToolWrapper/${tCoreName}`, {
+                state: {
+                  toolName: tool === "wordAlignment" ? "wordAlignment" : tool,
+                },
+              });
             }}
           >
-            <Typography fontWeight={600}>{tool}</Typography>
-            <Typography>{getNumberCategories(tool)}</Typography>
-            {getInvalidatedCount(tool) > 0 && (
-              <Tooltip
-                title={doI18n(
-                  "pages:uw-client-checks:invalidate_checks",
-                  i18nRef.current,
-                )}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <Typography variant="body2">
-                    {getInvalidatedCount(tool)}
-                  </Typography>
-                  <InvalidatedIcon />
-                </Box>
-              </Tooltip>
-            )}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 1,
+              }}
+            >
+              <Typography fontWeight={600}>{tool}</Typography>
+              <Typography>{getNumberCategories(tool)}</Typography>
+              {getInvalidatedCount(tool) > 0 && (
+                <Tooltip
+                  title={doI18n(
+                    "pages:uw-client-checks:invalidate_checks",
+                    i18nRef.current,
+                  )}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Typography variant="body2">
+                      {getInvalidatedCount(tool)}
+                    </Typography>
+                    <InvalidatedIcon />
+                  </Box>
+                </Tooltip>
+              )}
+            </Box>
+            {tool === "translationWords" &&
+              renderProgress(progressTranslationWords)}
+            {tool === "translationNotes" &&
+              renderProgress(progressTranslationNotes)}
+            {tool === "wordAlignment" && renderProgress(progressWordAlignment)}
           </Box>
-          {tool === "translationWords" &&
-            renderProgress(progressTranslationWords)}
-          {tool === "translationNotes" &&
-            renderProgress(progressTranslationNotes)}
-          {tool === "wordAlignment" && renderProgress(progressWordAlignment)}
-        </Box>
-      ))}
+        ))}
       {openModal && (
         <PanDialog
           isOpen={openModal}

@@ -120,16 +120,36 @@ const convertionTable = {
   tNotesOriginalLang: "scripture/textTranslation",
 };
 
+export function checkKeysVersion(version) {
+  let keys = [
+    "parascriptural/x-bcvarticles",
+    "parascriptural/x-bcvnotes",
+    "peripheral/x-lexicon",
+    "peripheral/x-peripheralArticles",
+    "scripture/textTranslation",
+  ];
+
+  return keys.every((e) =>
+    Object.entries(version).some(
+      ([key, value]) => key === e && value[0] !== "" && value[1] !== "",
+    ),
+  );
+}
+
 export async function write_version_manager(
   keysValue,
   repoName,
   tCoreProjectName,
 ) {
-  await fsWriteRust(
-    repoName,
-    `book_projects/${tCoreProjectName}/version_manager.json`,
-    keysValue,
-  );
+  let isOk = checkKeysVersion(keysValue);
+  if (isOk) {
+    await fsWriteRust(
+      repoName,
+      `book_projects/${tCoreProjectName}/version_manager.json`,
+      keysValue,
+    );
+  }
+  return isOk
 }
 
 function checkIfMendatoryRessourcesArePresent(summary) {

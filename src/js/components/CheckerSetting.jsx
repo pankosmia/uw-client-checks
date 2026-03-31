@@ -37,11 +37,17 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, callBack }) => {
 
   useEffect(() => {
     async function getVersionManager() {
-      let versionManager = await fsGetRust(
+      let existVM = await fsExistsRust(
         repoName,
         `book_projects/${tCoreNameProject}/version_manager.json`,
       );
-      setVersionManager(versionManager);
+      if (existVM) {
+        let versionManager = await fsGetRust(
+          repoName,
+          `book_projects/${tCoreNameProject}/version_manager.json`,
+        );
+        setVersionManager(versionManager);
+      }
     }
     getVersionManager();
   }, []);
