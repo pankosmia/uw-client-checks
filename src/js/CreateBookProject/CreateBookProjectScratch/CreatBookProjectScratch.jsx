@@ -5,10 +5,16 @@ import {
   Box,
   Tooltip,
   IconButton,
+  Divider,
 } from "@mui/material";
 import { useState, useContext } from "react";
 import { doI18n } from "pithekos-lib";
-import { i18nContext, PanDialog, PanDialogActions } from "pankosmia-rcl";
+import {
+  i18nContext,
+  PanDialog,
+  PanDialogActions,
+  netContext,
+} from "pankosmia-rcl";
 import RessourcesPicker from "../RessourcesPicker";
 import LangueConfig from "../LanguagePicker/LangueConfig";
 import AddIcon from "@mui/icons-material/Add";
@@ -18,7 +24,7 @@ import { BASE_URL } from "../../../common/constants";
 import { convertToProjectFormat } from "../../creatProject";
 import InternetDialog from "../../components/InternetDialog";
 import DownloadRessources from "../../components/DownloadRessources";
-import { Info } from "@mui/icons-material";
+import { Download, Info } from "@mui/icons-material";
 
 async function initialiseProject(sourceProjectPath, selectedProjectFilename) {
   await convertToProjectFormat(
@@ -78,6 +84,7 @@ export default function CreateBookProjectScratch({
   reloadProject,
   selectedBurrito,
 }) {
+  const { enabledRef } = useContext(netContext);
   const [step, setStep] = useState(1);
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const [languageChoices, setLanguageChoices] = useState(["en"]);
@@ -87,7 +94,6 @@ export default function CreateBookProjectScratch({
   const [downloadRessourcesDialogueOpen, setDownloadRessourcesDialogueOpen] =
     useState(false);
 
-  console.log(finalVersionManager);
   async function goNext() {
     if (step === 1) {
       setStep(2);
@@ -107,9 +113,9 @@ export default function CreateBookProjectScratch({
       reloadProject();
     }
     if (step === 3) {
+      setStep(2)
       return;
     }
-    if (step === 4) setStep(2);
   }
   return (
     <Box>
@@ -129,32 +135,51 @@ export default function CreateBookProjectScratch({
       </Button>
       {openResourcesDialog && (
         <PanDialog
+          showInternetSwitch={true}
           isOpen={openResourcesDialog}
           closeFn={() => setOpenResourcesDialog(false)}
           size="md"
           titleLabel={`${doI18n(
-            "pages:uw-client-checks:add_book_zip",
+            "pages:uw-client-checks:add_book_tCore",
             i18nRef.current,
           )}`}
         >
           <DialogContent>
             {step === 1 && (
-              <LangueConfig
-                languageChoices={languageChoices}
-                setLanguageChoices={setLanguageChoices}
-              />
+              <Box>
+                <Typography>
+                  {doI18n(
+                    "pages:uw-client-checks:language_picker",
+                    i18nRef.current,
+                  )}
+                </Typography>
+                <Divider sx={{ m: 1 }} />
+                <LangueConfig
+                  languageChoices={languageChoices}
+                  setLanguageChoices={setLanguageChoices}
+                />
+              </Box>
             )}
             {step === 2 && (
               <Box>
-                <Tooltip title={"need more ressources?"}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Typography>
+                    {doI18n(
+                      "pages:uw-client-checks:need_more_ressources",
+                      i18nRef.current,
+                    )}
+                  </Typography>
                   <IconButton
+                    disabled={!enabledRef.current}
                     onClick={() => {
                       setStep(3);
                     }}
                   >
-                    <Info />
+                    <Download />
                   </IconButton>
-                </Tooltip>
+                </Box>
+                <Divider sx={{ m: 1 }} />
+
                 <RessourcesPicker
                   setFinalVersionManager={setFinalVersionManager}
                   prefLanguage={languageChoices}
@@ -162,15 +187,25 @@ export default function CreateBookProjectScratch({
                 />
               </Box>
             )}
-            {step === 3 && <InternetDialog callBack={() => setStep(4)} />}
-            {step === 4 && (
-              <DownloadRessources
-                setOpenResourcesDialog={setOpenResourcesDialog}
-                downloadRessourcesDialogueOpen={downloadRessourcesDialogueOpen}
-                setDownloadRessourcesDialogueOpen={
-                  setDownloadRessourcesDialogueOpen
-                }
-              />
+            {step === 3 && (
+              <Box>
+                <Typography>
+                  {doI18n(
+                    "pages:uw-client-checks:preSelected_resources",
+                    i18nRef.current,
+                  )}
+                </Typography>
+                <Divider sx={{ m: 1 }} />
+                <DownloadRessources
+                  setOpenResourcesDialog={setOpenResourcesDialog}
+                  downloadRessourcesDialogueOpen={
+                    downloadRessourcesDialogueOpen
+                  }
+                  setDownloadRessourcesDialogueOpen={
+                    setDownloadRessourcesDialogueOpen
+                  }
+                />
+              </Box>
             )}
           </DialogContent>
           <PanDialogActions

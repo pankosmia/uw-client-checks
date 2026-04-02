@@ -16,7 +16,7 @@ export async function gitCheckout(pathVersion, i18nRef) {
       if (responce.ok) {
         enqueueSnackbar(
           `${doI18n(
-            "pages:core-uw-client-checks:change_branch",
+            "pages:uw-client-checks:change_branch",
             i18nRef.current,
           )} : ${pathVersion[0]} ${pathVersion[1]}`,
           { variant: "success" },
@@ -24,7 +24,7 @@ export async function gitCheckout(pathVersion, i18nRef) {
       } else {
         enqueueSnackbar(
           `${doI18n(
-            "pages:core-uw-client-checks:could_not_change_branch",
+            "pages:uw-client-checks:could_not_change_branch",
             i18nRef.current,
           )} : ${pathVersion[0]} ${pathVersion[1]}`,
 
@@ -32,7 +32,7 @@ export async function gitCheckout(pathVersion, i18nRef) {
         );
         throw new Error(
           `${doI18n(
-            "pages:core-uw-client-checks:could_not_change_branch",
+            "pages:uw-client-checks:could_not_change_branch",
             i18nRef.current,
           )}`,
         );
@@ -48,7 +48,7 @@ export async function gitCreatBranch(pathVersion, i18nRef, debugRef) {
   if (response.ok) {
     enqueueSnackbar(
       `${doI18n(
-        "pages:core-uw-client-checks:branche_created",
+        "pages:uw-client-checks:branche_created",
         i18nRef.current,
       )} : ${pathVersion[0]} ${pathVersion[1]}`,
       { variant: "success" },
@@ -56,14 +56,14 @@ export async function gitCreatBranch(pathVersion, i18nRef, debugRef) {
   } else {
     enqueueSnackbar(
       `${doI18n(
-        "pages:core-uw-client-checks:could_not_create_branch",
+        "pages:uw-client-checks:could_not_create_branch",
         i18nRef.current,
       )} : ${pathVersion[0]} ${pathVersion[1]}`,
       { variant: "error" },
     );
     throw new Error(
       `${doI18n(
-        "pages:core-uw-client-checks:could_not_change_branch",
+        "pages:uw-client-checks:could_not_change_branch",
         i18nRef.current,
       )}`,
     );

@@ -1,10 +1,15 @@
 import ImportZipProjectInternet from "./ImportZipProjectInternet";
 import ImportZipProjectNoInternet from "./ImportZipProjectNoInternet";
 import { FilePicker } from "react-file-picker";
-import { Button, DialogContent } from "@mui/material";
+import { Box, Button, DialogContent, Divider, Typography } from "@mui/material";
 import { useState, useContext, useEffect } from "react";
 import { doI18n, getJson } from "pithekos-lib";
-import { fsExistsRust, fsWriteRust } from "../../serverUtils";
+import {
+  deleteBookProject,
+  deleteIngredient,
+  fsExistsRust,
+  fsWriteRust,
+} from "../../serverUtils";
 import {
   i18nContext,
   PanDownload,
@@ -24,16 +29,13 @@ async function checkIfBookProjectExist(repoName, tCoreNameProject, i18nRef) {
   if (bookProjects) {
     enqueueSnackbar(
       `${doI18n(
-        "pages:core-uw-client-checks:book_project_already_exist",
+        "pages:uw-client-checks:book_project_already_exist",
         i18nRef.current,
       )}`,
       { variant: "error" },
     );
     throw new Error(
-      `${doI18n(
-        "pages:core-uw-client-checks:zip_is_no_valid",
-        i18nRef.current,
-      )}`,
+      `${doI18n("pages:uw-client-checks:zip_is_no_valid", i18nRef.current)}`,
     );
     return true;
   }
@@ -45,24 +47,18 @@ function checkZipName(name, i18nRef) {
   if (response) {
     enqueueSnackbar(
       `${doI18n(
-        "pages:core-uw-client-checks:zip_selected",
+        "pages:uw-client-checks:zip_selected",
         i18nRef.current,
       )} : ${name}`,
       { variant: "success" },
     );
   } else {
     enqueueSnackbar(
-      `${doI18n(
-        "pages:core-uw-client-checks:zip_is_no_valid",
-        i18nRef.current,
-      )}`,
+      `${doI18n("pages:uw-client-checks:zip_is_no_valid", i18nRef.current)}`,
       { variant: "error" },
     );
     throw new Error(
-      `${doI18n(
-        "pages:core-uw-client-checks:zip_is_no_valid",
-        i18nRef.current,
-      )}`,
+      `${doI18n("pages:uw-client-checks:zip_is_no_valid", i18nRef.current)}`,
     );
   }
   return response;
@@ -120,16 +116,36 @@ const convertionTable = {
   tNotesOriginalLang: "scripture/textTranslation",
 };
 
+export function checkKeysVersion(version) {
+  let keys = [
+    "parascriptural/x-bcvarticles",
+    "parascriptural/x-bcvnotes",
+    "peripheral/x-lexicon",
+    "peripheral/x-peripheralArticles",
+    "scripture/textTranslation",
+  ];
+
+  return keys.every((e) =>
+    Object.entries(version).some(
+      ([key, value]) => key === e && value[0] !== "" && value[1] !== "",
+    ),
+  );
+}
+
 export async function write_version_manager(
   keysValue,
   repoName,
   tCoreProjectName,
 ) {
-  await fsWriteRust(
-    repoName,
-    `book_projects/${tCoreProjectName}/version_manager.json`,
-    keysValue,
-  );
+  let isOk = checkKeysVersion(keysValue);
+  if (isOk) {
+    await fsWriteRust(
+      repoName,
+      `book_projects/${tCoreProjectName}/version_manager.json`,
+      keysValue,
+    );
+  }
+  return isOk;
 }
 
 function checkIfMendatoryRessourcesArePresent(summary) {
@@ -150,7 +166,10 @@ function checkIfMendatoryRessourcesArePresent(summary) {
   }
   return neededRessources;
 }
-
+async function removeImportedProject(repoName, tCoreName) {
+  let response = await deleteBookProject(repoName, tCoreName);
+  return response;
+}
 function AddRessourcesToDepency(listDependancy, neededRessources) {
   let newDependancy = [...listDependancy];
   for (let [type, ressources] of Object.entries(neededRessources)) {
@@ -188,11 +207,12 @@ function AddRessourcesToDepency(listDependancy, neededRessources) {
   return newDependancy;
 }
 
-export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
-  const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
-  const { i18nRef } = useContext(i18nContext);
-  const [step, setStep] = useState(0);
+export function ImportZipProject({ repoName, reloadProject }) {
   const { enabledRef } = useContext(netContext);
+  const { i18nRef } = useContext(i18nContext);
+
+  const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
+  const [step, setStep] = useState(0);
   const [usedRessources, setUsedRessources] = useState([]);
   const [listDependancy, setListDependancy] = useState([]);
   const [externalResources, setExternalResources] = useState({});
@@ -200,7 +220,6 @@ export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
   const [projectName, setProjectName] = useState("");
   const [finalVersionManager, setFinalVersionManager] = useState({});
   const [summary, setSummary] = useState(null);
-
   useEffect(() => {
     async function getSummary() {
       let summaryFetched = await getJson("/burrito/metadata/summaries");
@@ -217,25 +236,17 @@ export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
         listDependancy,
         checkIfMendatoryRessourcesArePresent(summary),
       );
-      console.log(newDependancy);
       if (newDependancy.length === 0) {
-        setStep(4);
+        setStep(3);
       } else {
         setListDependancy(newDependancy);
-        if (enabledRef.current) {
-          setStep(3);
-        } else {
-          setStep(2);
-        }
+        setStep(2);
       }
     }
     if (step === 2) {
       setStep(3);
     }
     if (step === 3) {
-      setStep(4);
-    }
-    if (step === 4) {
       await write_version(finalVersionManager);
       setOpenResourcesDialog(false);
       reloadProject();
@@ -305,8 +316,12 @@ export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
       </FilePicker>
       {openResourcesDialog && (
         <PanDialog
+          showInternetSwitch={true}
           isOpen={openResourcesDialog}
-          closeFn={() => setOpenResourcesDialog(false)}
+          closeFn={() => {
+            removeImportedProject(repoName, projectName);
+            setOpenResourcesDialog(false);
+          }}
           size="md"
           titleLabel={`${doI18n(
             "pages:uw-client-checks:import_zip_project",
@@ -316,44 +331,91 @@ export function ImportZipProject({ repoName, nameBurrito, reloadProject }) {
           {summary && (
             <DialogContent>
               {step === 1 && (
-                <ImportZipProjectNoInternet
-                  setListDependancy={setListDependancy}
-                  listDependancy={listDependancy}
-                  keysValue={keysValue}
-                  setUsedRessources={setUsedRessources}
-                  summary={summary}
-                />
+                <Box>
+                  <Typography>
+                    {doI18n(
+                      "pages:uw-client-checks:text_import_zip_no_internet",
+                      i18nRef.current,
+                    )}
+                  </Typography>
+                  <Divider sx={{ m: 1 }} />
+                  <ImportZipProjectNoInternet
+                    setListDependancy={setListDependancy}
+                    listDependancy={listDependancy}
+                    keysValue={keysValue}
+                    setUsedRessources={setUsedRessources}
+                    summary={summary}
+                  />
+                </Box>
               )}
-              {step === 2 && <InternetDialog callBack={goNext} />}
+              {step === 2 && (
+                <Box>
+                  <Typography>
+                    {doI18n(
+                      "pages:uw-client-checks:download_imported_ressources",
+                      i18nRef.current,
+                    )}
+                  </Typography>
+                  <Divider sx={{ m: 1 }} />
+                  <ImportZipProjectInternet
+                    projectName={projectName}
+                    repoName={repoName}
+                    keysValue={listDependancy}
+                    setUsedRessources={setUsedRessources}
+                    summary={summary}
+                  />
+                </Box>
+              )}
               {step === 3 && (
-                <ImportZipProjectInternet
-                  projectName={projectName}
-                  repoName={repoName}
-                  keysValue={listDependancy}
-                  setUsedRessources={setUsedRessources}
-                  summary={summary}
-                />
-              )}
-              {step === 4 && (
-                <RessourcesPicker
-                  listPreSelected={makeList()}
-                  book={projectName.split("_")[2]}
-                  setFinalVersionManager={setFinalVersionManager}
-                />
+                <Box>
+                  <Typography>
+                    {doI18n(
+                      "pages:uw-client-checks:choose_ressources",
+                      i18nRef.current,
+                    )}
+                  </Typography>
+                  <Divider sx={{ m: 1 }} />
+                  <RessourcesPicker
+                    listPreSelected={makeList()}
+                    book={projectName.split("_")[2]}
+                    setFinalVersionManager={setFinalVersionManager}
+                  />
+                </Box>
               )}
             </DialogContent>
           )}
           <PanDialogActions
-            closeFn={() => setOpenResourcesDialog(false)}
+            closeFn={() => {
+              removeImportedProject(repoName, projectName);
+              setOpenResourcesDialog(false);
+            }}
             closeLabel={doI18n(
               "pages:uw-client-checks:cancel",
               i18nRef.current,
             )}
             actionFn={() => {
+              if (step === 1) {
+                if (listDependancy.length > 0) {
+                  if (enabledRef.current) {
+                    goNext();
+                    return;
+                  } else {
+                    enqueueSnackbar(
+                      `${doI18n(
+                        "pages:uw-client-checks:need_internet_to_download",
+                        i18nRef.current,
+                      )}`,
+                      { variant: "warning" },
+                    );
+                    return;
+                  }
+                }
+                goNext();
+              }
               goNext();
             }}
             closeOnAction={false}
-            actionLabel={step === 4 ? "finish" : "next"}
+            actionLabel={step === 3 ? "finish" : "next"}
             onlyCloseButton={false}
           />
         </PanDialog>

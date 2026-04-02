@@ -136,8 +136,8 @@
       "en": "Invalidated check"
     },
     "import_zip_project": {
-      "en": "Import translationCore 3 book to",
-      "fr": "Importer un livre translationCore 3 vers"
+      "en": "Import translationCore 3 Book Project",
+      "fr": "Importer un projet de livre translationCore 3"
     },
     "import_book": {
       "en": "Import tC3 book",
@@ -164,8 +164,8 @@
       "fr": "Voulez-vous vous connecter à internet ?"
     },
     "missing_resources": {
-      "en": "You can download or sideload these resources",
-      "fr": "Vous pouvez télécharger ou téléverser ces ressources"
+      "en": "You can download or sideload these resources. You must allow an internet connection.",
+      "fr": "Vous pouvez télécharger ou téléverser ces ressources. Vous devez autoriser la connexion à Internet."
     },
     "export_usfm": {
       "en": "export usfm"
@@ -209,13 +209,101 @@
       "fr": "Éditer",
       "id": "Edit"
     },
-    "change_branch":{
-      "en":"change branch to ",
-      "fr": "changement de branch"
+    "change_branch": {
+      "en": "Change branch to",
+      "fr": "Changement de branche vers"
     },
-    "could_not_change_branch":{
-      "en":"could not change branch",
-      "fr":"Changement de branch annule"
+    "could_not_change_branch": {
+      "en": "Could not change branch",
+      "fr": "Changement de branche annulé"
+    },
+    "book_project_already_exist": {
+      "en": "Book project already exists",
+      "fr": "Le projet de livre existe déjà"
+    },
+    "branche_created": {
+      "en": "Branch created",
+      "fr": "Branche créée"
+    },
+    "could_no_remake_zip_project": {
+      "en": "Could not remake zip project",
+      "fr": "N'a pas réussi à refaire le projet"
+    },
+    "could_not_create_branch": {
+      "en": "Could not create branch",
+      "fr": "N'a pas réussi à créer la branche"
+    },
+    "could_not_fetch_sb": {
+      "en": "Could not fetch Scripture Burrito",
+      "fr": "N'a pas réussi à récupérer le Scripture Burrito"
+    },
+    "could_not_upload_sb_version": {
+      "en": "Could not upload Scripture Burrito version",
+      "fr": "N'a pas pu envoyer la version du Scripture Burrito"
+    },
+    "export_as_usfm": {
+      "en": "Export as USFM",
+      "fr": "Exporter en USFM"
+    },
+    "export_label": {
+      "en": "Export",
+      "fr": "Exporter"
+    },
+    "missing_ressources": {
+      "en": "Missing resources",
+      "fr": "Ressources manquantes"
+    },
+    "no_books_selected": {
+      "en": "No book selected",
+      "fr": "Aucun livre sélectionné"
+    },
+    "pick_one_or_more_books_export": {
+      "en": "Pick one or more books to export",
+      "fr": "Choisir un ou plusieurs livres à exporter"
+    },
+    "zip_is_no_valid": {
+      "en": "Zip is not valid",
+      "fr": "Le zip n'est pas valide"
+    },
+    "zip_selected": {
+      "en": "Zip selected",
+      "fr": "Zip sélectionné"
+    },
+    "language_picker": {
+      "en": "You must choose your preferred language for resources",
+      "fr": "Vous devez choisir votre langue préférée pour les ressources"
+    },
+    "need_more_ressources": {
+      "en": "You can download more resources here if needed",
+      "fr": "S'il vous manque des ressources, vous pouvez les télécharger ici"
+    },
+    "text_import_zip_no_internet": {
+      "en": "These are all the resources needed to import this tC3 project. If you already have them, it will try to update the version of your current resources",
+      "fr": "Ce sont toutes les ressources nécessaires pour importer votre projet tC3. Si vous les avez déjà, le logiciel essaiera de mettre à jour la version de vos ressources"
+    },
+    "download_imported_ressources": {
+      "en": "Here are all the resources you are missing",
+      "fr": "Voici toutes les ressources qu'il vous manque"
+    },
+    "choose_ressources": {
+      "en": "You must first choose a book, then select a resource for each type of resource needed for your tC4 project",
+      "fr": "Vous devez d'abord choisir un livre, puis sélectionner une ressource pour chaque type de ressource requise pour votre projet tC4"
+    },
+    "preSelected_resources": {
+      "en": "This is a set of pre-selected English resources that will work with tC4",
+      "fr": "Ceci est une liste de ressources anglaises présélectionnées qui fonctionneront avec tC4"
+    },
+    "write_version": {
+      "en": "Accept changes",
+      "fr": "Accepter les changements"
+    },
+    "need_internet_to_download": {
+      "en": "You are missing resources. Connect to the internet to continue or sideload them.",
+      "fr": "Il vous manque des ressources. Connectez-vous à Internet pour continuer ou téléversez-les."
+    },
+    "add_version_manager":{
+      "en":"Choose ressources",
+      "fr":"Choisir les ressources"
     }
   }
 }

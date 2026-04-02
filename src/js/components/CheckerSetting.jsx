@@ -20,7 +20,12 @@ import yaml from "js-yaml";
 import { PanDialog, PanDialogActions } from "pankosmia-rcl";
 import { buildLinkTitleMap } from "../checkerUtils";
 
-const CheckerSetting = ({ repoName, tCoreNameProject = null, callBack }) => {
+const CheckerSetting = ({
+  repoName,
+  tCoreNameProject = null,
+  missingRessourcesCheckBook,
+  callBack,
+}) => {
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const [canWeClose, setCanWeClose] = useState(false);
   const [firstPass, setFirstPass] = useState(true);
@@ -31,20 +36,13 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, callBack }) => {
   );
   const [versionManager, setVersionManager] = useState(null);
   const [settingJson, setSettingJson] = useState({});
-  useEffect(() => {
-    setCanWeClose(checkIfOneCategoriesIsOk());
-  }, [settingJson]);
 
   useEffect(() => {
-    async function getVersionManager() {
-      let versionManager = await fsGetRust(
-        repoName,
-        `book_projects/${tCoreNameProject}/version_manager.json`,
-      );
-      setVersionManager(versionManager);
+    if (missingRessourcesCheckBook?.length < 1) {
+      setCanWeClose(checkIfOneCategoriesIsOk());
     }
-    getVersionManager();
-  }, []);
+  }, [settingJson, missingRessourcesCheckBook]);
+
   function checkIfOneCategoriesIsOk() {
     let isOk = true;
     for (let k of Object.keys(settingJson)) {
@@ -91,10 +89,10 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, callBack }) => {
       const linkTitleMap = buildLinkTitleMap(dataYaml.sections);
       setTranslationNotesCategories(linkTitleMap);
     }
-    if (versionManager) {
+    if (versionManager && missingRessourcesCheckBook?.length < 1) {
       getTranslationNotesCategories();
     }
-  }, [versionManager]);
+  }, [versionManager, missingRessourcesCheckBook]);
 
   //changeCategories TranslationWords
 
@@ -151,10 +149,10 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, callBack }) => {
       setSettingJson(json);
       return;
     }
-    if (versionManager) {
+    if (versionManager && missingRessourcesCheckBook?.length < 1) {
       getSettingJson();
     }
-  }, [versionManager]);
+  }, [versionManager, missingRessourcesCheckBook]);
 
   //write settingJson
   async function writeSettingJson(json) {
@@ -239,152 +237,166 @@ const CheckerSetting = ({ repoName, tCoreNameProject = null, callBack }) => {
           )}
         </Typography>
       </Button>
-      {openResourcesDialog && versionManager && (
-        <PanDialog
-          isOpen={openResourcesDialog}
-          closeFn={() => {
-            if (canWeClose) {
-              setOpenResourcesDialog(false);
-            }
-          }}
-          size="md"
-          fullWidth={true}
-          titleLabel={`${doI18n(
-            "pages:uw-client-checks:checks_settings_book",
-            i18nRef.current,
-          )} - ${tCoreNameProject.split("_")[2].toUpperCase()}`}
-        >
-          <DialogContent>
-            {tools
-              .filter((t) => t !== "wordAlignment")
-              .map((tool) => (
-                <>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
-                    {tool}
-                  </Typography>
-
-                  {tool === "translationWords" && settingJson[tool] && (
-                    <FormGroup>
-                      {Object.keys(settingJson.translationWords).map((cat) => (
-                        <Box
-                          key={cat}
-                          sx={{
-                            border: "1px solid",
-                            borderColor: "divider",
-                            borderRadius: 1,
-                            mb: 1,
-                            px: 2,
-                            py: 1,
-                            display: "flex",
-                            alignItems: "center",
-                          }}
-                        >
-                          <FormControlLabel
-                            sx={{ m: 0, width: "100%" }}
-                            control={
-                              <Checkbox
-                                checked={settingJson[tool][cat] || false}
-                                onChange={() => toggleTWCategory(tool, cat)}
-                              />
-                            }
-                            label={
-                              <Typography variant="body1" fontWeight={500}>
-                                {cat.toUpperCase()}
-                              </Typography>
-                            }
-                          />
-                        </Box>
-                      ))}
-                    </FormGroup>
-                  )}
-                  {tool === "translationNotes" &&
-                    settingJson.translationNotes &&
-                    translationNotesCategories && (
-                      <Box>
-                        {Object.entries(settingJson["translationNotes"]).map(
-                          ([groupKey, categories]) => {
-                            const categoryKeys = Object.keys(categories);
-                            const values = settingJson.translationNotes || {};
-
-                            const allChecked = categoryKeys.every(
-                              (cat) => values?.[groupKey]?.[cat],
-                            );
-
-                            const someChecked =
-                              !allChecked &&
-                              categoryKeys.some(
-                                (cat) => values?.[groupKey]?.[cat],
-                              );
-
-                            return (
-                              <Accordion key={groupKey}>
-                                <AccordionSummary
-                                  expandIcon={<ExpandMoreIcon />}
-                                >
-                                  <FormControlLabel
-                                    onClick={(e) => e.stopPropagation()}
-                                    onFocus={(e) => e.stopPropagation()}
-                                    control={
-                                      <Checkbox
-                                        checked={allChecked}
-                                        indeterminate={someChecked}
-                                        onChange={() =>
-                                          toggleTNGroup(groupKey, categoryKeys)
-                                        }
-                                      />
-                                    }
-                                    label={
-                                      <Typography fontWeight={500}>
-                                        {groupKey.toUpperCase()}
-                                      </Typography>
-                                    }
-                                  />
-                                </AccordionSummary>
-
-                                <AccordionDetails>
-                                  <FormGroup>
-                                    {categoryKeys.map((catKey) => (
-                                      <FormControlLabel
-                                        key={catKey}
-                                        control={
-                                          <Checkbox
-                                            checked={
-                                              !!values?.[groupKey]?.[catKey]
-                                            }
-                                            onChange={() =>
-                                              toggleTNCategory(groupKey, catKey)
-                                            }
-                                          />
-                                        }
-                                        label={
-                                          translationNotesCategories[catKey] ||
-                                          catKey
-                                        }
-                                      />
-                                    ))}
-                                  </FormGroup>
-                                </AccordionDetails>
-                              </Accordion>
-                            );
-                          },
-                        )}
-                      </Box>
-                    )}
-                </>
-              ))}
-          </DialogContent>
-          <PanDialogActions
+      {openResourcesDialog &&
+        versionManager &&
+        missingRessourcesCheckBook?.length < 1 && (
+          <PanDialog
+            isOpen={openResourcesDialog}
             closeFn={() => {
               if (canWeClose) {
                 setOpenResourcesDialog(false);
               }
             }}
-            closeLabel={doI18n("pages:uw-client-checks:close", i18nRef.current)}
-            isDisabled={!canWeClose}
-            onlyCloseButton={true}
-          />
-        </PanDialog>
-      )}
+            size="md"
+            fullWidth={true}
+            titleLabel={`${doI18n(
+              "pages:uw-client-checks:checks_settings_book",
+              i18nRef.current,
+            )} - ${tCoreNameProject.split("_")[2].toUpperCase()}`}
+          >
+            <DialogContent>
+              {tools
+                .filter((t) => t !== "wordAlignment")
+                .map((tool) => (
+                  <>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+                      {tool}
+                    </Typography>
+
+                    {tool === "translationWords" && settingJson[tool] && (
+                      <FormGroup>
+                        {Object.keys(settingJson.translationWords).map(
+                          (cat) => (
+                            <Box
+                              key={cat}
+                              sx={{
+                                border: "1px solid",
+                                borderColor: "divider",
+                                borderRadius: 1,
+                                mb: 1,
+                                px: 2,
+                                py: 1,
+                                display: "flex",
+                                alignItems: "center",
+                              }}
+                            >
+                              <FormControlLabel
+                                sx={{ m: 0, width: "100%" }}
+                                control={
+                                  <Checkbox
+                                    checked={settingJson[tool][cat] || false}
+                                    onChange={() => toggleTWCategory(tool, cat)}
+                                  />
+                                }
+                                label={
+                                  <Typography variant="body1" fontWeight={500}>
+                                    {cat.toUpperCase()}
+                                  </Typography>
+                                }
+                              />
+                            </Box>
+                          ),
+                        )}
+                      </FormGroup>
+                    )}
+                    {tool === "translationNotes" &&
+                      settingJson.translationNotes &&
+                      translationNotesCategories && (
+                        <Box>
+                          {Object.entries(settingJson["translationNotes"]).map(
+                            ([groupKey, categories]) => {
+                              const categoryKeys = Object.keys(categories);
+                              const values = settingJson.translationNotes || {};
+
+                              const allChecked = categoryKeys.every(
+                                (cat) => values?.[groupKey]?.[cat],
+                              );
+
+                              const someChecked =
+                                !allChecked &&
+                                categoryKeys.some(
+                                  (cat) => values?.[groupKey]?.[cat],
+                                );
+
+                              return (
+                                <Accordion key={groupKey}>
+                                  <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon />}
+                                  >
+                                    <FormControlLabel
+                                      onClick={(e) => e.stopPropagation()}
+                                      onFocus={(e) => e.stopPropagation()}
+                                      control={
+                                        <Checkbox
+                                          checked={allChecked}
+                                          indeterminate={someChecked}
+                                          onChange={() =>
+                                            toggleTNGroup(
+                                              groupKey,
+                                              categoryKeys,
+                                            )
+                                          }
+                                        />
+                                      }
+                                      label={
+                                        <Typography fontWeight={500}>
+                                          {groupKey.toUpperCase()}
+                                        </Typography>
+                                      }
+                                    />
+                                  </AccordionSummary>
+
+                                  <AccordionDetails>
+                                    <FormGroup>
+                                      {categoryKeys.map((catKey) => (
+                                        <FormControlLabel
+                                          key={catKey}
+                                          control={
+                                            <Checkbox
+                                              checked={
+                                                !!values?.[groupKey]?.[catKey]
+                                              }
+                                              onChange={() =>
+                                                toggleTNCategory(
+                                                  groupKey,
+                                                  catKey,
+                                                )
+                                              }
+                                            />
+                                          }
+                                          label={
+                                            translationNotesCategories[
+                                              catKey
+                                            ] || catKey
+                                          }
+                                        />
+                                      ))}
+                                    </FormGroup>
+                                  </AccordionDetails>
+                                </Accordion>
+                              );
+                            },
+                          )}
+                        </Box>
+                      )}
+                  </>
+                ))}
+            </DialogContent>
+            <PanDialogActions
+              closeFn={() => {
+                if (canWeClose) {
+                  setOpenResourcesDialog(false);
+                }
+              }}
+              closeLabel={doI18n(
+                "pages:uw-client-checks:close",
+                i18nRef.current,
+              )}
+              isDisabled={!canWeClose}
+              onlyCloseButton={true}
+            />
+          </PanDialog>
+        )}
     </>
   );
 };

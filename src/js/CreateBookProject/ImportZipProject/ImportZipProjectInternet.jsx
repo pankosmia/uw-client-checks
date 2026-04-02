@@ -75,7 +75,7 @@ const ImportZipProjectInternet = ({
             if (!downloadResponse.ok) {
               enqueueSnackbar(
                 doI18n(
-                  "pages:core-uw-client-checks:could_not_fetch_sb",
+                  "pages:uw-client-checks:could_not_fetch_sb",
                   i18nRef.current,
                 ),
                 { variant: "error" },
@@ -97,7 +97,7 @@ const ImportZipProjectInternet = ({
             if (!fetchResponse.ok) {
               enqueueSnackbar(
                 doI18n(
-                  "pages:core-uw-client-checks:could_not_upload_sb_version",
+                  "pages:uw-client-checks:could_not_upload_sb_version",
                   i18nRef.current,
                 ),
                 { variant: "error" },
@@ -130,7 +130,7 @@ const ImportZipProjectInternet = ({
             } else {
               enqueueSnackbar(
                 doI18n(
-                  "pages:core-uw-client-checks:could_no_remake_zip_project",
+                  "pages:uw-client-checks:could_no_remake_zip_project",
                   i18nRef.current,
                 ),
                 { variant: "error" },

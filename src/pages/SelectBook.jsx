@@ -1,8 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { doI18n } from "pithekos-lib";
 import { i18nContext, currentProjectContext } from "pankosmia-rcl";
-
-import CircularProgress from "@mui/material/CircularProgress";
 import DeleteDialogueButton from "../js/components/DeleteDialogueButton";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import CheckerSetting from "../js/components/CheckerSetting";
@@ -17,27 +15,80 @@ import {
 } from "@mui/material";
 import { ImportZipProject } from "../js/CreateBookProject/ImportZipProject/ImportZipProject";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { convertToProjectFormat } from "../js/creatProject"; // <-- import your function
 import { getJson } from "pithekos-lib";
-import { BASE_URL } from "../common/constants";
+import { fsGetRust, fsExistsRust } from "../js/serverUtils";
 import ButtonDashBoard from "../js/components/ButtonDashBoard";
 import CreateBookProjectScratch from "../js/CreateBookProject/CreateBookProjectScratch/CreatBookProjectScratch";
+
+const getAccordionStyles = (variant) => {
+  switch (variant) {
+    case "warning":
+      return {
+        border: "2px solid",
+        borderColor: "warning.main",
+      };
+    case "error":
+      return {
+        border: "2px solid",
+        borderColor: "error.main",
+      };
+    default:
+      return {};
+  }
+};
+
+function getStyleParamFromStateRessources(response) {
+  if (response === "null") {
+    return "error";
+  }
+  if (response.length > 0) {
+    return "warning";
+  }
+  return null;
+}
+
+async function checkValidRessourcesVersion(
+  repoName,
+  tCoreNameProject,
+  summary,
+) {
+  let existVM = await fsExistsRust(
+    repoName,
+    `book_projects/${tCoreNameProject}/version_manager.json`,
+  );
+  if (existVM) {
+    let versionManager = await fsGetRust(
+      repoName,
+      `book_projects/${tCoreNameProject}/version_manager.json`,
+    );
+    let allRessourcesMissing = [];
+    Object.values(versionManager).forEach((r) => {
+      if (!Boolean(summary[r[0]])) {
+        allRessourcesMissing.push([r]);
+      }
+    });
+    return allRessourcesMissing;
+  }
+  return "null";
+}
 
 export default function SelectBook() {
   const { currentProjectRef } = useContext(currentProjectContext);
 
   const { i18nRef } = useContext(i18nContext);
+  const [selectedtCoreProject, setSelectedtCoreProject] = useState(null);
 
   const [inDirectory, setInDirectory] = useState([]);
+
   const [tree, setTree] = useState([]);
   const [books, setBooks] = useState([]);
-  const [errorsData, setErrorsData] = useState([]);
-  const [errorModalOpen, setErrorModalOpen] = useState(false);
-  const [currentErrors, setCurrentErrors] = useState([]);
-  const [burritos, setBurritos] = useState(null);
-  const [selectedBurrito, setSelectedBurrito] = useState();
+
   const [openedBooks, setOpenedBooks] = useState(new Set());
-  const [initializing, setInitializing] = useState([]);
+
+  const [summary, setSummary] = useState(null);
+  const [burritos, setBurritos] = useState(null);
+
+  const [missingRessourcesCheck, setMissingRessourcesCheck] = useState(null);
 
   useEffect(() => {
     async function fetchSummaries() {
@@ -46,6 +97,7 @@ export default function SelectBook() {
           const response = await getJson("/burrito/metadata/summaries");
           if (!response.ok) throw new Error(`HTTP error ${response.status}`);
           const data = await response.json;
+          setSummary(data);
           // Filter only those with flavor_type = scripture
           const burritoArray = Object.entries(data).map(([key, value]) => ({
             path: key,
@@ -63,7 +115,7 @@ export default function SelectBook() {
                   "/" +
                   currentProjectRef.current.project,
           );
-          setSelectedBurrito(scriptures);
+          setSelectedtCoreProject(scriptures);
         } catch (err) {
           console.error("Error fetching summaries:", err);
         } finally {
@@ -72,18 +124,6 @@ export default function SelectBook() {
     }
     fetchSummaries();
   }, [currentProjectRef.current]);
-
-  const REQUIRED_RESOURCES = [
-    "git.door43.org/uW/en_tn",
-    "git.door43.org/uW/en_tw",
-    "git.door43.org/uW/en_ugl",
-    "git.door43.org/uW/grc_ugnt",
-    "git.door43.org/uW/hbo_uhb",
-    "git.door43.org/uW/en_ust",
-    "git.door43.org/uW/en_ult",
-    "git.door43.org/uW/en_ta",
-    "git.door43.org/uW/en_uhl",
-  ];
 
   useEffect(() => {
     async function fetchSummaries() {
@@ -112,23 +152,12 @@ export default function SelectBook() {
       }
     }
     fetchSummaries();
-  }, [selectedBurrito]);
-
-  async function checkRequiredResources() {
-    const manifests = (await getJson(BASE_URL + "/burrito/metadata/summaries"))
-      .json;
-
-    return REQUIRED_RESOURCES.map((path) => ({
-      path,
-      exists: Boolean(manifests[path]),
-      name: manifests[path]?.name || null,
-    }));
-  }
+  }, [selectedtCoreProject]);
 
   async function fetchData() {
     try {
-      if (selectedBurrito) {
-        const url = `/burrito/paths/_local_/_local_/${selectedBurrito.abbreviation}`;
+      if (selectedtCoreProject) {
+        const url = `/burrito/paths/_local_/_local_/${selectedtCoreProject.abbreviation}`;
         const res = await getJson(url);
         const data = await res.json;
         const ipath = "book_projects";
@@ -143,34 +172,14 @@ export default function SelectBook() {
   }
 
   useEffect(() => {
-    if (selectedBurrito) {
+    if (selectedtCoreProject) {
       fetchData();
     }
-  }, [selectedBurrito]);
+  }, [selectedtCoreProject]);
 
   function find_manifest(path) {
     return tree.includes(`${path}/manifest.json`);
   }
-  const handleTryConvert = async (
-    sourceProjectPath,
-    selectedProjectFilename,
-  ) => {
-    try {
-      await convertToProjectFormat(
-        sourceProjectPath,
-        "book_projects/" + selectedProjectFilename + "/",
-      );
-      fetchData();
-      setInitializing((prev) =>
-        prev.filter(
-          ([p2, t2]) =>
-            !(p2 === sourceProjectPath && t2 === selectedProjectFilename),
-        ),
-      );
-    } catch (error) {
-      alert("Conversion failed — see console for details.");
-    }
-  };
   useEffect(() => {
     const firstLevel = new Set();
     for (const entry of tree) {
@@ -187,14 +196,32 @@ export default function SelectBook() {
         return {
           id: n,
           tCoreName: rep,
-          projectName: selectedBurrito.abbreviation,
+          projectName: selectedtCoreProject.abbreviation,
           bookCode: splitname[2].toUpperCase(),
           language: splitname[0],
           hasManifest: find_manifest(rep),
         };
       }),
     );
-  }, [inDirectory, selectedBurrito]);
+  }, [inDirectory, selectedtCoreProject]);
+
+  async function getVersionManager() {
+    let missingRessources = {};
+    for (let b of books) {
+      missingRessources[b.bookCode] = await checkValidRessourcesVersion(
+        b.projectName,
+        b.tCoreName,
+        summary,
+      );
+    }
+    setMissingRessourcesCheck(missingRessources);
+  }
+  useEffect(() => {
+    if (summary && books) {
+      getVersionManager();
+    }
+  }, [summary, books]);
+
   return (
     <Box
       sx={{
@@ -230,20 +257,22 @@ export default function SelectBook() {
           </Typography>
         </Button>
         <Box>
-          {selectedBurrito && (
+          {selectedtCoreProject && (
             <CreateBookProjectScratch
-              repoName={selectedBurrito.abbreviation}
-              nameBurito={selectedBurrito.name}
+              repoName={selectedtCoreProject.abbreviation}
+              nameBurito={selectedtCoreProject.name}
               reloadProject={() => fetchData()}
-              selectedBurrito={selectedBurrito}
+              selectedBurrito={selectedtCoreProject}
             />
           )}
         </Box>
-        {selectedBurrito && (
+        {selectedtCoreProject && (
           <ImportZipProject
-            repoName={selectedBurrito.abbreviation}
-            nameBurito={selectedBurrito.name}
-            reloadProject={() => fetchData()}
+            repoName={selectedtCoreProject.abbreviation}
+            nameBurito={selectedtCoreProject.name}
+            reloadProject={() => {
+              fetchData();
+            }}
           />
         )}
       </Box>
@@ -290,7 +319,7 @@ export default function SelectBook() {
           </Button>
         </Box>
       )}
-      {selectedBurrito ? (
+      {selectedtCoreProject ? (
         <Box sx={{ display: "contents" }}>
           <Box
             sx={{
@@ -299,7 +328,7 @@ export default function SelectBook() {
             }}
           >
             <Typography variant="h6" fontWeight={600}>
-              {selectedBurrito.name}
+              {selectedtCoreProject.name}
               {/* {doI18n("pages:uw-client-checks:book", i18nRef.current)} */}
             </Typography>
           </Box>
@@ -314,175 +343,152 @@ export default function SelectBook() {
               overflowY: "auto",
             }}
           >
-            {books.map((book) => (
-              <Accordion
-                expanded={openedBooks.has(book.bookCode)}
-                onChange={() => {
-                  setOpenedBooks((prev) => {
-                    const next = new Set(prev);
+            {missingRessourcesCheck &&
+              Object.values(missingRessourcesCheck).length > 0 &&
+              books.map(
+                (book) =>
+                  missingRessourcesCheck[book.bookCode] && (
+                    <Accordion
+                      expanded={openedBooks.has(book.bookCode)}
+                      onChange={() => {
+                        setOpenedBooks((prev) => {
+                          const next = new Set(prev);
 
-                    if (next.has(book.bookCode)) {
-                      next.delete(book.bookCode); // close → remove
-                    } else {
-                      next.add(book.bookCode); // open → add
-                    }
+                          if (next.has(book.bookCode)) {
+                            next.delete(book.bookCode); // close → remove
+                          } else {
+                            next.add(book.bookCode); // open → add
+                          }
 
-                    return next;
-                  });
-                }}
-                key={book.id}
-                sx={{
-                  borderRadius: 2,
-                  boxShadow: 2,
-                  "&:before": { display: "none" },
-                }}
-              >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      width: "100%",
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="subtitle1" fontWeight={600}>
-                        {book.bookCode}
-                      </Typography>
-                    </Box>
-
-                    <Box>
-                      {book.hasManifest ? (
-                        <></>
-                      ) : (
-                        // <Typography color="success.main" fontWeight={600}>
-                        //   {doI18n(
-                        //     `pages:uw-client-checks:ready`,
-                        //     i18nRef.current,
-                        //   )}
-                        // </Typography>
-                        <Typography color="warning.main" fontWeight={600}>
-                          {doI18n(
-                            `pages:uw-client-checks:need_initalisation`,
-                            i18nRef.current,
-                          )}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Box>
-                </AccordionSummary>
-
-                <AccordionDetails>
-                  <Divider sx={{ mb: 2 }} />
-                  <Box>
-                    <Box
+                          return next;
+                        });
+                      }}
+                      key={book.id}
                       sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        width: "100%",
-                        minHeight: 80, // optional: gives breathing space
+                        ...getAccordionStyles(
+                          getStyleParamFromStateRessources(
+                            missingRessourcesCheck[book.bookCode],
+                          ),
+                        ),
+                        borderRadius: 2,
+                        boxShadow: 2,
+                        "&:before": { display: "none" },
                       }}
                     >
-                      {book.hasManifest ? (
-                        <ButtonDashBoard
-                          openedBooks={openedBooks}
-                          projectName={book.projectName}
-                          tCoreName={book.tCoreName}
-                        />
-                      ) : (
-                        <Button
-                          variant="contained"
-                          color="warning"
-                          disabled={initializing.some(
-                            ([p2, t2]) =>
-                              p2 === book.projectName && t2 === book.tCoreName,
-                          )}
-                          onClick={async () => {
-                            if (errorsData[book.bookCode]?.length > 0) {
-                              setCurrentErrors(errorsData[book.bookCode]);
-                              setErrorModalOpen(true);
-                            } else {
-                              setInitializing((prev) => [
-                                ...prev,
-                                [book.projectName, book.tCoreName],
-                              ]);
-                              await handleTryConvert(
-                                book.projectName,
-                                book.tCoreName,
-                              );
-                            }
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            width: "100%",
                           }}
                         >
-                          {initializing.some(
-                            ([p2, t2]) =>
-                              p2 === book.projectName && t2 === book.tCoreName,
-                          ) ? (
-                            <CircularProgress size={18} color="inherit" />
-                          ) : (
-                            doI18n(
-                              "pages:uw-client-checks:to_initialised",
-                              i18nRef.current,
-                            )
-                          )}
-                        </Button>
-                      )}
-                    </Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "flex-end", // ✅ right
-                        width: "100%",
-                        mt: 1,
-                      }}
-                    >
-                      <Box sx={{ gap: 1, display: "flex" }}>
-                        {book.hasManifest ? (
-                          <>
-                            <CheckerSetting
-                              repoName={selectedBurrito.abbreviation}
-                              tCoreNameProject={book.tCoreName}
-                              callBack={() => {
-                                setOpenedBooks((prev) => {
-                                  const next = new Set(prev);
+                          <Box>
+                            <Typography variant="subtitle1" fontWeight={600}>
+                              {book.bookCode}
+                            </Typography>
+                          </Box>
 
-                                  if (next.has(book.bookCode)) {
-                                    next.delete(book.bookCode); // close → remove
-                                  } else {
-                                    next.add(book.bookCode); // open → add
-                                  }
+                          <Box>
+                            {book.hasManifest ? (
+                              <></>
+                            ) : (
+                              <Typography color="warning.main" fontWeight={600}>
+                                {doI18n(
+                                  `pages:uw-client-checks:need_initalisation`,
+                                  i18nRef.current,
+                                )}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+                      </AccordionSummary>
 
-                                  return next;
-                                });
-                                setOpenedBooks((prev) => {
-                                  const next = new Set(prev);
-
-                                  if (next.has(book.bookCode)) {
-                                    next.delete(book.bookCode); // close → remove
-                                  } else {
-                                    next.add(book.bookCode); // open → add
-                                  }
-
-                                  return next;
-                                });
-                              }}
+                      <AccordionDetails>
+                        <Divider sx={{ mb: 2 }} />
+                        <Box>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              width: "100%",
+                              minHeight: 80, // optional: gives breathing space
+                            }}
+                          >
+                            <ButtonDashBoard
+                              setOpenedBooks={setOpenedBooks}
+                              openedBooks={openedBooks}
+                              projectName={book.projectName}
+                              tCoreName={book.tCoreName}
+                              missingRessourcesCheckBook={
+                                missingRessourcesCheck[book.bookCode]
+                              }
+                              callBack={() => getVersionManager()}
                             />
-                          </>
-                        ) : (
-                          <></>
-                        )}
-                        <DeleteDialogueButton
-                          repoName={selectedBurrito.abbreviation}
-                          tCoreNameProject={book.tCoreName}
-                          callBack={() => fetchData()}
-                        />
-                      </Box>
-                    </Box>
-                  </Box>
-                </AccordionDetails>
-              </Accordion>
-            ))}
+                          </Box>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "flex-end", // ✅ right
+                              width: "100%",
+                              mt: 1,
+                            }}
+                          >
+                            <Box sx={{ gap: 1, display: "flex" }}>
+                              {book.hasManifest ? (
+                                <>
+                                  <CheckerSetting
+                                    repoName={selectedtCoreProject.abbreviation}
+                                    tCoreNameProject={book.tCoreName}
+                                    missingRessourcesCheckBook={
+                                      missingRessourcesCheck[book.bookCode]
+                                    }
+                                    callBack={() => {
+                                      setOpenedBooks((prev) => {
+                                        const next = new Set(prev);
+
+                                        if (next.has(book.bookCode)) {
+                                          next.delete(book.bookCode); // close → remove
+                                        } else {
+                                          next.add(book.bookCode); // open → add
+                                        }
+
+                                        return next;
+                                      });
+                                      setOpenedBooks((prev) => {
+                                        const next = new Set(prev);
+
+                                        if (next.has(book.bookCode)) {
+                                          next.delete(book.bookCode); // close → remove
+                                        } else {
+                                          next.add(book.bookCode); // open → add
+                                        }
+
+                                        return next;
+                                      });
+                                    }}
+                                  />
+                                </>
+                              ) : (
+                                <></>
+                              )}
+                              <DeleteDialogueButton
+                                repoName={selectedtCoreProject.abbreviation}
+                                tCoreNameProject={book.tCoreName}
+                                callBack={() => {
+                                  fetchData();
+                                  getVersionManager();
+                                }}
+                              />
+                            </Box>
+                          </Box>
+                        </Box>
+                      </AccordionDetails>
+                    </Accordion>
+                  ),
+              )}
           </Box>
         </Box>
       ) : (
