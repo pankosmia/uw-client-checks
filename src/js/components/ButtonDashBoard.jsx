@@ -70,10 +70,10 @@ export const ButtonDashBoard = ({
       setOpenModal(false);
     }
   }
-
+  console.log(missingRessourcesCheckBook)
   useEffect(() => {
     async function getRessources() {
-      if (missingRessourcesCheckBook) {
+      if (!(missingRessourcesCheckBook === 'null')) {
         if (missingRessourcesCheckBook.length < 1) {
           let existVM = await fsExistsRust(
             projectName,
