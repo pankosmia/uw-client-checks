@@ -463,7 +463,7 @@ export const ToolWrapper = () => {
             "",
             book,
             "gateway_language",
-            "git.door43.org/uW",
+            "git.door43.org/unfoldingWord",
           ),
           getLexiconData(ressourcesToFetch["peripheral/x-lexicon"]),
         ]);

@@ -1,7 +1,7 @@
 import ImportZipProjectInternet from "./ImportZipProjectInternet";
 import ImportZipProjectNoInternet from "./ImportZipProjectNoInternet";
 import { FilePicker } from "react-file-picker";
-import { Button, DialogContent } from "@mui/material";
+import { Box, Button, DialogContent, Divider, Typography } from "@mui/material";
 import { useState, useContext, useEffect } from "react";
 import { doI18n, getJson } from "pithekos-lib";
 import {
@@ -29,16 +29,13 @@ async function checkIfBookProjectExist(repoName, tCoreNameProject, i18nRef) {
   if (bookProjects) {
     enqueueSnackbar(
       `${doI18n(
-        "pages:core-uw-client-checks:book_project_already_exist",
+        "pages:uw-client-checks:book_project_already_exist",
         i18nRef.current,
       )}`,
       { variant: "error" },
     );
     throw new Error(
-      `${doI18n(
-        "pages:core-uw-client-checks:zip_is_no_valid",
-        i18nRef.current,
-      )}`,
+      `${doI18n("pages:uw-client-checks:zip_is_no_valid", i18nRef.current)}`,
     );
     return true;
   }
@@ -50,24 +47,18 @@ function checkZipName(name, i18nRef) {
   if (response) {
     enqueueSnackbar(
       `${doI18n(
-        "pages:core-uw-client-checks:zip_selected",
+        "pages:uw-client-checks:zip_selected",
         i18nRef.current,
       )} : ${name}`,
       { variant: "success" },
     );
   } else {
     enqueueSnackbar(
-      `${doI18n(
-        "pages:core-uw-client-checks:zip_is_no_valid",
-        i18nRef.current,
-      )}`,
+      `${doI18n("pages:uw-client-checks:zip_is_no_valid", i18nRef.current)}`,
       { variant: "error" },
     );
     throw new Error(
-      `${doI18n(
-        "pages:core-uw-client-checks:zip_is_no_valid",
-        i18nRef.current,
-      )}`,
+      `${doI18n("pages:uw-client-checks:zip_is_no_valid", i18nRef.current)}`,
     );
   }
   return response;
@@ -217,10 +208,11 @@ function AddRessourcesToDepency(listDependancy, neededRessources) {
 }
 
 export function ImportZipProject({ repoName, reloadProject }) {
-  const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
-  const { i18nRef } = useContext(i18nContext);
-  const [step, setStep] = useState(0);
   const { enabledRef } = useContext(netContext);
+  const { i18nRef } = useContext(i18nContext);
+
+  const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
+  const [step, setStep] = useState(0);
   const [usedRessources, setUsedRessources] = useState([]);
   const [listDependancy, setListDependancy] = useState([]);
   const [externalResources, setExternalResources] = useState({});
@@ -228,7 +220,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
   const [projectName, setProjectName] = useState("");
   const [finalVersionManager, setFinalVersionManager] = useState({});
   const [summary, setSummary] = useState(null);
-
+  console.log(listDependancy)
   useEffect(() => {
     async function getSummary() {
       let summaryFetched = await getJson("/burrito/metadata/summaries");
@@ -261,9 +253,6 @@ export function ImportZipProject({ repoName, reloadProject }) {
       setStep(3);
     }
     if (step === 3) {
-      setStep(4);
-    }
-    if (step === 4) {
       await write_version(finalVersionManager);
       setOpenResourcesDialog(false);
       reloadProject();
@@ -333,6 +322,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
       </FilePicker>
       {openResourcesDialog && (
         <PanDialog
+          showInternetSwitch={true}
           isOpen={openResourcesDialog}
           closeFn={() => {
             removeImportedProject(repoName, projectName);
@@ -347,30 +337,56 @@ export function ImportZipProject({ repoName, reloadProject }) {
           {summary && (
             <DialogContent>
               {step === 1 && (
-                <ImportZipProjectNoInternet
-                  setListDependancy={setListDependancy}
-                  listDependancy={listDependancy}
-                  keysValue={keysValue}
-                  setUsedRessources={setUsedRessources}
-                  summary={summary}
-                />
+                <Box>
+                  <Typography>
+                    {doI18n(
+                      "pages:uw-client-checks:text_import_zip_no_internet",
+                      i18nRef.current,
+                    )}
+                  </Typography>
+                  <Divider sx={{ m: 1 }} />
+                  <ImportZipProjectNoInternet
+                    setListDependancy={setListDependancy}
+                    listDependancy={listDependancy}
+                    keysValue={keysValue}
+                    setUsedRessources={setUsedRessources}
+                    summary={summary}
+                  />
+                </Box>
               )}
-              {step === 2 && <InternetDialog callBack={goNext} />}
+              {step === 2 && (
+                <Box>
+                  <Typography>
+                    {doI18n(
+                      "pages:uw-client-checks:download_imported_ressources",
+                      i18nRef.current,
+                    )}
+                  </Typography>
+                  <Divider sx={{ m: 1 }} />
+                  <ImportZipProjectInternet
+                    projectName={projectName}
+                    repoName={repoName}
+                    keysValue={listDependancy}
+                    setUsedRessources={setUsedRessources}
+                    summary={summary}
+                  />
+                </Box>
+              )}
               {step === 3 && (
-                <ImportZipProjectInternet
-                  projectName={projectName}
-                  repoName={repoName}
-                  keysValue={listDependancy}
-                  setUsedRessources={setUsedRessources}
-                  summary={summary}
-                />
-              )}
-              {step === 4 && (
-                <RessourcesPicker
-                  listPreSelected={makeList()}
-                  book={projectName.split("_")[2]}
-                  setFinalVersionManager={setFinalVersionManager}
-                />
+                <Box>
+                  <Typography>
+                    {doI18n(
+                      "pages:uw-client-checks:choose_ressources",
+                      i18nRef.current,
+                    )}
+                  </Typography>
+                  <Divider sx={{ m: 1 }} />
+                  <RessourcesPicker
+                    listPreSelected={makeList()}
+                    book={projectName.split("_")[2]}
+                    setFinalVersionManager={setFinalVersionManager}
+                  />
+                </Box>
               )}
             </DialogContent>
           )}
@@ -384,6 +400,24 @@ export function ImportZipProject({ repoName, reloadProject }) {
               i18nRef.current,
             )}
             actionFn={() => {
+              if (step === 1) {
+                if (listDependancy.length > 0) {
+                  if (enabledRef.current) {
+                    goNext();
+                    return
+                  } else {
+                    enqueueSnackbar(
+                      `${doI18n(
+                        "pages:uw-client-checks:need_internet_to_download",
+                        i18nRef.current,
+                      )}`,
+                      { variant: "warning" },
+                    );
+                    return
+                  }
+                }
+                goNext();
+              }
               goNext();
             }}
             closeOnAction={false}

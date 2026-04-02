@@ -33,6 +33,8 @@ export const ButtonDashBoard = ({
   tCoreName,
   openedBooks,
   setOpenedBooks,
+  missingRessourcesCheckBook,
+  callBack,
 }) => {
   const { i18nRef } = useContext(i18nContext);
   const navigate = useNavigate();
@@ -62,36 +64,60 @@ export const ButtonDashBoard = ({
     } else {
       setOpenedBooks((prev) => {
         let newS = new Set(prev);
-        newS.delete(tCoreName.split("_")[2].toUpperCase())
-        return newS
+        newS.delete(tCoreName.split("_")[2].toUpperCase());
+        return newS;
       });
-      setOpenModal(false)
+      setOpenModal(false);
     }
   }
 
   useEffect(() => {
     async function getRessources() {
-      let existVM = await fsExistsRust(
-        projectName,
-        `book_projects/${tCoreName}/version_manager.json`,
-      );
-      if (existVM) {
-        let response = await fsGetRust(
-          projectName,
-          `book_projects/${tCoreName}/version_manager.json`,
-        );
-        if (checkKeysVersion(response)) {
-          setRessourcesToFetch(response);
+      if (missingRessourcesCheckBook) {
+        if (missingRessourcesCheckBook.length < 1) {
+          let existVM = await fsExistsRust(
+            projectName,
+            `book_projects/${tCoreName}/version_manager.json`,
+          );
+          if (existVM) {
+            let response = await fsGetRust(
+              projectName,
+              `book_projects/${tCoreName}/version_manager.json`,
+            );
+            if (checkKeysVersion(response)) {
+              setRessourcesToFetch(response);
+              return
+            } else {
+              setOldVersionManager(response);
+              setNeedRessourcesForVersionManager(true);
+              return
+            }
+          } else {
+            setNeedRessourcesForVersionManager(true);
+            return
+          }
         } else {
-          setOldVersionManager(response);
+          let response = await fsGetRust(
+            projectName,
+            `book_projects/${tCoreName}/version_manager.json`,
+          );
+          let keysToRemove = {...response}
+          Object.entries(response).forEach((k, v) => {
+            let keyToRemoved = missingRessourcesCheckBook.find((e) => e[0] === v[0]);
+            if(keyToRemoved){
+              keysToRemove.delete(k)
+            }
+          });
+          setOldVersionManager(keysToRemove)
           setNeedRessourcesForVersionManager(true);
+          return
         }
-      } else {
-        setNeedRessourcesForVersionManager(true);
       }
+      setNeedRessourcesForVersionManager(true);
+      return
     }
     getRessources();
-  }, []);
+  }, [missingRessourcesCheckBook]);
 
   async function getCategories() {
     let categories = await getSelectedChecksCategories(
@@ -364,10 +390,11 @@ export const ButtonDashBoard = ({
                 );
                 setNeedRessourcesForVersionManager(false);
                 setOpenModal(false);
+                callBack();
               } else {
                 enqueueSnackbar(
                   `${doI18n(
-                    "pages:core-uw-client-checks:missing_ressources",
+                    "pages:uw-client-checks:missing_ressources",
                     i18nRef.current,
                   )}`,
                   { variant: "error" },

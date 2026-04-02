@@ -1,7 +1,13 @@
 import { getJson, postJson } from "pithekos-lib";
 import { fsGetRust } from "../../serverUtils";
-import { Typography, Box, CircularProgress, Button } from "@mui/material";
-import { useEffect, useState,useContext } from "react";
+import {
+  Typography,
+  Box,
+  CircularProgress,
+  Button,
+  Stack,
+} from "@mui/material";
+import { useEffect, useState, useContext } from "react";
 import { ArrowDownwardRounded, Done } from "@mui/icons-material";
 import { gitCheckout } from "../../gitUtils";
 import { i18nContext } from "pankosmia-rcl";
@@ -10,9 +16,9 @@ export default function ImportZipProjectNoInternet({
   listDependancy,
   keysValue,
   setUsedRessources,
-  summary
+  summary,
 }) {
-  const {i18nRef} = useContext(i18nContext)
+  const { i18nRef } = useContext(i18nContext);
   const [dependenciesDone, setDependaniesDone] = useState([]);
   const [canGoNext, setCanGoNext] = useState(false);
   useEffect(() => {
@@ -27,8 +33,8 @@ export default function ImportZipProjectNoInternet({
         let path =
           keysValue[kvi][0] + "/" + keysValue[kvi][1] + "/" + keysValue[kvi][2];
         let version = keysValue[kvi][4].split(".zip")[0];
-        if(version === 'master'){
-          version = "main"
+        if (version === "master") {
+          version = "main";
         }
         if (summary.json[path]) {
           let response = await gitCheckout([path, version], i18nRef);
@@ -68,15 +74,27 @@ export default function ImportZipProjectNoInternet({
   }, []);
 
   return (
-    <Box>
-      {keysValue.map((e, i) => (
-        <Box>
-          <Typography>{e}</Typography>
-          {dependenciesDone[i] === "progress" && <CircularProgress />}
-          {dependenciesDone[i] === true && <Done />}
-          {dependenciesDone[i] === false && <ArrowDownwardRounded />}
+    <Stack spacing={2}>
+      {keysValue.map((kv, i) => (
+        <Box
+          key={i}
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          <Typography>{kv[0] + "/" + kv[1] + "/" + kv[2]}</Typography>
+
+          <Box display="flex" alignItems="center" gap={1}>
+            <Typography>{kv[4].split(".zip")[0]}</Typography>
+
+            {dependenciesDone[i] === "progress" && (
+              <CircularProgress size={20} />
+            )}
+            {dependenciesDone[i] === true && <Done />}
+            {dependenciesDone[i] === false && <ArrowDownwardRounded />}
+          </Box>
         </Box>
       ))}
-    </Box>
+    </Stack>
   );
 }

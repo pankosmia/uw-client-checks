@@ -21,11 +21,12 @@ import LayoutIcon from "../ui_tool_kit/LayoutIcon";
 export default function AddScriptureModal({
   selectedResources,
   setSelectedResources,
-  book
+  book,
 }) {
   const { debugRef } = useContext(debugContext);
   const { i18nRef } = useContext(i18nContext);
   const { currentProjectRef } = useContext(currentProjectContext);
+
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
 
   const [isoThreeLookup, setIsoThreeLookup] = useState([]);
@@ -59,30 +60,26 @@ export default function AddScriptureModal({
       .then((r) => r.json())
       .then((data) => setIsoThreeLookup(data));
   }, []);
-    const filterChip = [
+  const filterChip = [
     {
       label: "Local",
       filter: (row) => row.path.toLowerCase().startsWith("_local_/_local_"),
     },
-    
+
     {
       label: "SideLoad",
       filter: (row) => row.path.startsWith("_local_/_sideload_"),
     },
     {
       label: "Download",
-           filter: (row) => !row.path.startsWith("_local_/"),
-
+      filter: (row) => !row.path.startsWith("_local_/"),
     },
   ];
 
   const columns = [
     {
       field: "name",
-      headerName: doI18n(
-        "pages:uw-client-checks:row_name",
-        i18nRef.current,
-      ),
+      headerName: doI18n("pages:uw-client-checks:row_name", i18nRef.current),
       // minWidth: 110,
       flex: 1,
     },
@@ -97,10 +94,7 @@ export default function AddScriptureModal({
     },
     {
       field: "source",
-      headerName: doI18n(
-        "pages:uw-client-checks:row_source",
-        i18nRef.current,
-      ),
+      headerName: doI18n("pages:uw-client-checks:row_source", i18nRef.current),
       // minWidth: 110,
       flex: 0.5,
     },
@@ -114,7 +108,7 @@ export default function AddScriptureModal({
       flex: 0.5,
     },
   ];
-  
+
   const rows = Object.entries(projectSummaries)
     .map((e) => {
       return { ...e[1], path: e[0] };
@@ -154,7 +148,7 @@ export default function AddScriptureModal({
         }}
         onClick={() => setOpenResourcesDialog(true)}
       >
-        <LayoutIcon/>
+        <LayoutIcon />
       </Button>
       <PanDialog
         isOpen={openResourcesDialog}

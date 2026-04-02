@@ -41,8 +41,8 @@ const DownloadRessources = ({}) => {
     },
   };
 
-  let preSelected = { ...ListTc4 }["git.door43.org"]["uW"].map(
-    (e) => "git.door43.org/uW/" + e,
+  let preSelected = { ...ListTc4 }["git.door43.org"]["unfoldingWord"].map(
+    (e) => "git.door43.org/unfoldingWord/" + e,
   );
   return (
     <Box>
