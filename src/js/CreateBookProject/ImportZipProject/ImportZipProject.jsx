@@ -220,7 +220,6 @@ export function ImportZipProject({ repoName, reloadProject }) {
   const [projectName, setProjectName] = useState("");
   const [finalVersionManager, setFinalVersionManager] = useState({});
   const [summary, setSummary] = useState(null);
-  console.log(listDependancy)
   useEffect(() => {
     async function getSummary() {
       let summaryFetched = await getJson("/burrito/metadata/summaries");
@@ -237,16 +236,11 @@ export function ImportZipProject({ repoName, reloadProject }) {
         listDependancy,
         checkIfMendatoryRessourcesArePresent(summary),
       );
-      console.log(newDependancy);
       if (newDependancy.length === 0) {
-        setStep(4);
+        setStep(3);
       } else {
         setListDependancy(newDependancy);
-        if (enabledRef.current) {
-          setStep(3);
-        } else {
-          setStep(2);
-        }
+        setStep(2);
       }
     }
     if (step === 2) {
@@ -404,7 +398,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
                 if (listDependancy.length > 0) {
                   if (enabledRef.current) {
                     goNext();
-                    return
+                    return;
                   } else {
                     enqueueSnackbar(
                       `${doI18n(
@@ -413,7 +407,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
                       )}`,
                       { variant: "warning" },
                     );
-                    return
+                    return;
                   }
                 }
                 goNext();
@@ -421,7 +415,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
               goNext();
             }}
             closeOnAction={false}
-            actionLabel={step === 4 ? "finish" : "next"}
+            actionLabel={step === 3 ? "finish" : "next"}
             onlyCloseButton={false}
           />
         </PanDialog>

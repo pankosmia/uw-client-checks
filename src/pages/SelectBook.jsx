@@ -270,7 +270,9 @@ export default function SelectBook() {
           <ImportZipProject
             repoName={selectedtCoreProject.abbreviation}
             nameBurito={selectedtCoreProject.name}
-            reloadProject={() => fetchData()}
+            reloadProject={() => {
+              fetchData();
+            }}
           />
         )}
       </Box>
@@ -343,144 +345,150 @@ export default function SelectBook() {
           >
             {missingRessourcesCheck &&
               Object.values(missingRessourcesCheck).length > 0 &&
-              books.map((book) => (
-                <Accordion
-                  expanded={openedBooks.has(book.bookCode)}
-                  onChange={() => {
-                    setOpenedBooks((prev) => {
-                      const next = new Set(prev);
+              books.map(
+                (book) =>
+                  missingRessourcesCheck[book.bookCode] && (
+                    <Accordion
+                      expanded={openedBooks.has(book.bookCode)}
+                      onChange={() => {
+                        setOpenedBooks((prev) => {
+                          const next = new Set(prev);
 
-                      if (next.has(book.bookCode)) {
-                        next.delete(book.bookCode); // close → remove
-                      } else {
-                        next.add(book.bookCode); // open → add
-                      }
+                          if (next.has(book.bookCode)) {
+                            next.delete(book.bookCode); // close → remove
+                          } else {
+                            next.add(book.bookCode); // open → add
+                          }
 
-                      return next;
-                    });
-                  }}
-                  key={book.id}
-                  sx={{
-                    ...getAccordionStyles(
-                      getStyleParamFromStateRessources(
-                        missingRessourcesCheck[book.bookCode],
-                      ),
-                    ),
-                    borderRadius: 2,
-                    boxShadow: 2,
-                    "&:before": { display: "none" },
-                  }}
-                >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Box
+                          return next;
+                        });
+                      }}
+                      key={book.id}
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        width: "100%",
+                        ...getAccordionStyles(
+                          getStyleParamFromStateRessources(
+                            missingRessourcesCheck[book.bookCode],
+                          ),
+                        ),
+                        borderRadius: 2,
+                        boxShadow: 2,
+                        "&:before": { display: "none" },
                       }}
                     >
-                      <Box>
-                        <Typography variant="subtitle1" fontWeight={600}>
-                          {book.bookCode}
-                        </Typography>
-                      </Box>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            width: "100%",
+                          }}
+                        >
+                          <Box>
+                            <Typography variant="subtitle1" fontWeight={600}>
+                              {book.bookCode}
+                            </Typography>
+                          </Box>
 
-                      <Box>
-                        {book.hasManifest ? (
-                          <></>
-                        ) : (
-                          <Typography color="warning.main" fontWeight={600}>
-                            {doI18n(
-                              `pages:uw-client-checks:need_initalisation`,
-                              i18nRef.current,
+                          <Box>
+                            {book.hasManifest ? (
+                              <></>
+                            ) : (
+                              <Typography color="warning.main" fontWeight={600}>
+                                {doI18n(
+                                  `pages:uw-client-checks:need_initalisation`,
+                                  i18nRef.current,
+                                )}
+                              </Typography>
                             )}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  </AccordionSummary>
+                          </Box>
+                        </Box>
+                      </AccordionSummary>
 
-                  <AccordionDetails>
-                    <Divider sx={{ mb: 2 }} />
-                    <Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          width: "100%",
-                          minHeight: 80, // optional: gives breathing space
-                        }}
-                      >
-                        <ButtonDashBoard
-                          setOpenedBooks={setOpenedBooks}
-                          openedBooks={openedBooks}
-                          projectName={book.projectName}
-                          tCoreName={book.tCoreName}
-                          missingRessourcesCheckBook={
-                            missingRessourcesCheck[book.bookCode]
-                          }
-                          callBack={() => getVersionManager()}
-                        />
-                      </Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "flex-end", // ✅ right
-                          width: "100%",
-                          mt: 1,
-                        }}
-                      >
-                        <Box sx={{ gap: 1, display: "flex" }}>
-                          {book.hasManifest ? (
-                            <>
-                              <CheckerSetting
+                      <AccordionDetails>
+                        <Divider sx={{ mb: 2 }} />
+                        <Box>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              width: "100%",
+                              minHeight: 80, // optional: gives breathing space
+                            }}
+                          >
+                            <ButtonDashBoard
+                              setOpenedBooks={setOpenedBooks}
+                              openedBooks={openedBooks}
+                              projectName={book.projectName}
+                              tCoreName={book.tCoreName}
+                              missingRessourcesCheckBook={
+                                missingRessourcesCheck[book.bookCode]
+                              }
+                              callBack={() => getVersionManager()}
+                            />
+                          </Box>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "flex-end", // ✅ right
+                              width: "100%",
+                              mt: 1,
+                            }}
+                          >
+                            <Box sx={{ gap: 1, display: "flex" }}>
+                              {book.hasManifest ? (
+                                <>
+                                  <CheckerSetting
+                                    repoName={selectedtCoreProject.abbreviation}
+                                    tCoreNameProject={book.tCoreName}
+                                    missingRessourcesCheckBook={
+                                      missingRessourcesCheck[book.bookCode]
+                                    }
+                                    callBack={() => {
+                                      setOpenedBooks((prev) => {
+                                        const next = new Set(prev);
+
+                                        if (next.has(book.bookCode)) {
+                                          next.delete(book.bookCode); // close → remove
+                                        } else {
+                                          next.add(book.bookCode); // open → add
+                                        }
+
+                                        return next;
+                                      });
+                                      setOpenedBooks((prev) => {
+                                        const next = new Set(prev);
+
+                                        if (next.has(book.bookCode)) {
+                                          next.delete(book.bookCode); // close → remove
+                                        } else {
+                                          next.add(book.bookCode); // open → add
+                                        }
+
+                                        return next;
+                                      });
+                                    }}
+                                  />
+                                </>
+                              ) : (
+                                <></>
+                              )}
+                              <DeleteDialogueButton
                                 repoName={selectedtCoreProject.abbreviation}
                                 tCoreNameProject={book.tCoreName}
-                                missingRessourcesCheckBook={
-                                  missingRessourcesCheck[book.bookCode]
-                                }
                                 callBack={() => {
-                                  setOpenedBooks((prev) => {
-                                    const next = new Set(prev);
-
-                                    if (next.has(book.bookCode)) {
-                                      next.delete(book.bookCode); // close → remove
-                                    } else {
-                                      next.add(book.bookCode); // open → add
-                                    }
-
-                                    return next;
-                                  });
-                                  setOpenedBooks((prev) => {
-                                    const next = new Set(prev);
-
-                                    if (next.has(book.bookCode)) {
-                                      next.delete(book.bookCode); // close → remove
-                                    } else {
-                                      next.add(book.bookCode); // open → add
-                                    }
-
-                                    return next;
-                                  });
+                                  fetchData();
+                                  getVersionManager();
                                 }}
                               />
-                            </>
-                          ) : (
-                            <></>
-                          )}
-                          <DeleteDialogueButton
-                            repoName={selectedtCoreProject.abbreviation}
-                            tCoreNameProject={book.tCoreName}
-                            callBack={() => fetchData()}
-                          />
+                            </Box>
+                          </Box>
                         </Box>
-                      </Box>
-                    </Box>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
+                      </AccordionDetails>
+                    </Accordion>
+                  ),
+              )}
           </Box>
         </Box>
       ) : (
