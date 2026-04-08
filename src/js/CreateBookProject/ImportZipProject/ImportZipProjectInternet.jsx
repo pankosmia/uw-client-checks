@@ -185,7 +185,6 @@ const ImportZipProjectInternet = ({
     let isStrangeRepo = ["uW", "BurritoTruck"].includes(
       versionRepo[0].split("/")[1],
     );
-    console.log(versionRepo)
     if (
       params.row.topics.some((topic) =>
         ["pushing2sb", "tc-ready"].includes(topic),

@@ -70,7 +70,6 @@ export const ButtonDashBoard = ({
       setOpenModal(false);
     }
   }
-  console.log(missingRessourcesCheckBook)
   useEffect(() => {
     async function getRessources() {
       if (!(missingRessourcesCheckBook === 'null')) {

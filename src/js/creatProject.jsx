@@ -6,7 +6,12 @@ import _ from "lodash";
 import * as Bible from "../common/BooksOfTheBible";
 import usfm, { toJSON } from "usfm-js";
 import wordaligner from "word-aligner";
-import { fsExistsRust, fsWriteRust, fsGetRust,updateIngredients} from "./serverUtils";
+import {
+  fsExistsRust,
+  fsWriteRust,
+  fsGetRust,
+  updateIngredients,
+} from "./serverUtils";
 import { USER_RESOURCES_PATH, T_NOTES_CATEGORIES } from "../common/constants";
 import { write_version_manager } from "./CreateBookProject/ImportZipProject/ImportZipProject";
 /**
@@ -36,7 +41,7 @@ function creatWordList(text) {
     text
       .replace(/[^\p{L}\p{N}\s]/gu, "") // remove punctuation (keep letters, numbers, underscore, spaces)
       .split(/\s+/) // split by any whitespace (space, tab, newline)
-      .filter(Boolean)
+      .filter(Boolean),
   );
   let arr = [];
   for (let e of setText) {
@@ -128,7 +133,7 @@ export function convertAlignmentFromVerseToVerseSpanSub(
   chapter,
   low,
   hi,
-  blankVerseAlignments
+  blankVerseAlignments,
 ) {
   const bibleVerse = { verseObjects: originalVerseSpanData };
   const alignments = getVerseAlignments(alignedVerseObjects.verseObjects);
@@ -153,7 +158,7 @@ export function convertAlignmentFromVerseToVerseSpanSub(
 
     if (chapterRef.toString() !== chapter.toString()) {
       console.warn(
-        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - chapter in ref "${ref}" does not match current chapter ${chapter} for verse span "${low}-${hi}" - skipping`
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - chapter in ref "${ref}" does not match current chapter ${chapter} for verse span "${low}-${hi}" - skipping`,
       );
       invalidateAlignment(alignment);
       continue;
@@ -161,7 +166,7 @@ export function convertAlignmentFromVerseToVerseSpanSub(
 
     if (!(occurrence > 0)) {
       console.warn(
-        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - invalid occurrence in current verse span "${low}-${hi}" - skipping`
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - invalid occurrence in current verse span "${low}-${hi}" - skipping`,
       );
       invalidateAlignment(alignment);
       continue;
@@ -169,7 +174,7 @@ export function convertAlignmentFromVerseToVerseSpanSub(
 
     if (!(verseRef >= low || verseRef <= hi)) {
       console.warn(
-        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - verse in ref ${ref} is not within current verse span "${low}-${hi}" - skipping`
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - verse in ref ${ref} is not within current verse span "${low}-${hi}" - skipping`,
       );
       invalidateAlignment(alignment);
       continue;
@@ -187,7 +192,7 @@ export function convertAlignmentFromVerseToVerseSpanSub(
 
     if (occurrence > occurrences) {
       console.warn(
-        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - beyond ocurrences ${occurrences} in current verse span "${low}-${hi}" - skipping`
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - beyond ocurrences ${occurrences} in current verse span "${low}-${hi}" - skipping`,
       );
       invalidateAlignment(alignment);
     } else {
@@ -222,7 +227,7 @@ export function getVerseSpanRange(verseSpan) {
 export function getRawAlignmentsForVerseSpan(
   verseSpan,
   origLangChapterJson,
-  blankVerseAlignments
+  blankVerseAlignments,
 ) {
   const { low, high } = getVerseSpanRange(verseSpan);
 
@@ -252,13 +257,13 @@ function convertAlignmentFromVerseToVerseSpan(
   verseSpan,
   originalChapterData,
   alignedVerseObjects,
-  chapter
+  chapter,
 ) {
   const blankVerseAlignments = {};
   const { low, hi } = getRawAlignmentsForVerseSpan(
     verseSpan,
     originalChapterData,
-    blankVerseAlignments
+    blankVerseAlignments,
   );
   let originalVerseSpanData = [];
 
@@ -266,7 +271,7 @@ function convertAlignmentFromVerseToVerseSpan(
   for (let verse_ = low; verse_ <= hi; verse_++) {
     const verseData = originalChapterData[verse_];
     originalVerseSpanData = originalVerseSpanData.concat(
-      (verseData && verseData.verseObjects) || []
+      (verseData && verseData.verseObjects) || [],
     );
   }
 
@@ -276,7 +281,7 @@ function convertAlignmentFromVerseToVerseSpan(
     chapter,
     low,
     hi,
-    blankVerseAlignments
+    blankVerseAlignments,
   );
   return bibleVerse;
 }
@@ -289,23 +294,28 @@ function convertAlignmentFromVerseToVerseSpan(
  * @return {Object} contains chapter data
  */
 export const loadChapterResource = async function (
-  bibleID,
+  originalBiblePathVersion,
   bookId,
-  languageId,
-  chapter
+  chapter,
 ) {
+  let splitedOriginalBiblePathVersion = originalBiblePathVersion.split("/");
+  let pathOriginalBiBle =
+    splitedOriginalBiblePathVersion[0] +
+    "/" +
+    splitedOriginalBiblePathVersion[1];
+  let nameOriginalBiBle = splitedOriginalBiblePathVersion[2];
   try {
     let bibleData = {};
     let exist = await fsExistsRust(
-      bibleID,
+      nameOriginalBiBle,
       `${bookId.toUpperCase()}.usfm`,
-      "git.door43.org/uW"
+      pathOriginalBiBle,
     );
     if (exist) {
       let result = await fsGetRust(
-        bibleID,
+        nameOriginalBiBle,
         `${bookId.toUpperCase()}.usfm`,
-        "git.door43.org/uW"
+        pathOriginalBiBle,
       );
       let bibleChapterData = toJSON(result)["chapters"][chapter];
       for (
@@ -376,25 +386,6 @@ const trimNewLine = function (text) {
   }
   return text;
 };
-/**
- * get the original language chapter resources for project book
- * @param {string} projectBibleID
- * @param {string} chapter
- * @return {Object} resources for chapter
- */
-export const getOriginalLanguageChapterResources = async function (
-  projectBibleID,
-  chapter
-) {
-  const { languageId, bibleId } = getOrigLangforBook(projectBibleID);
-
-  return await loadChapterResource(
-    bibleId === "ugnt" ? "grc_ugnt" : "hbo_uhb",
-    projectBibleID,
-    languageId,
-    chapter
-  );
-};
 
 /**
  * generate the target language bible from parsed USFM and manifest data
@@ -407,7 +398,8 @@ export const generateTargetLanguageBibleFromUsfm = async (
   parsedUsfm,
   manifest,
   sourceProjectPath,
-  selectedProjectFilename
+  selectedProjectFilename,
+  originalBiblePathVersion,
 ) => {
   try {
     const chaptersObject = parsedUsfm.chapters;
@@ -438,12 +430,14 @@ export const generateTargetLanguageBibleFromUsfm = async (
         return alignmentData;
       });
       const alignmentData = alignmentIndex >= 0;
-      let bibleData;
-      if (alignmentData) {
-        bibleData = await getOriginalLanguageChapterResources(bookID, chapter);
-      }
+      let bibleData = await loadChapterResource(
+        originalBiblePathVersion,
+        bookID,
+        chapter,
+      );
 
-      verses.forEach((verse) => {
+      console.log(verses);
+      for (let verse of verses) {
         const verseParts = chaptersObject[chapter][verse];
         let verseText;
 
@@ -452,9 +446,10 @@ export const generateTargetLanguageBibleFromUsfm = async (
         } else {
           verseText = convertVerseDataToUSFM(verseParts);
         }
+        console.log(verseText);
         bibleChapter[verse] = trimNewLine(verseText);
-
-        if (alignmentData && bibleData && bibleData[chapter]) {
+        console.log(bibleChapter, bibleData, chapter, verse);
+        if (bibleChapter[verse] && bibleData[chapter]) {
           const chapterData = bibleData[chapter];
           let bibleVerse = chapterData[verse];
 
@@ -463,43 +458,43 @@ export const generateTargetLanguageBibleFromUsfm = async (
               verse,
               chapterData,
               verseParts,
-              chapter
+              chapter,
             );
           }
 
           const object = wordaligner.unmerge(verseParts, bibleVerse);
-
+          console.log(object);
           chapterAlignments[verse] = {
             alignments: object.alignment,
             wordBank: object.wordBank,
           };
         }
         verseFound = true;
-      });
+      }
 
       const filename = parseInt(chapter, 10) + ".json";
       fsQueue.push(
         fsWriteRust(
           sourceProjectPath,
           selectedProjectFilename + join(bookID, filename),
-          bibleChapter
-        )
+          bibleChapter,
+        ),
       );
 
-      if (alignmentData) {
+      if (chapterAlignments) {
         const alignmentDataPath = join(
           "apps",
           "translationCore",
           "alignmentData",
           bookID,
-          filename
+          filename,
         );
         alignQueue.push(
           fsWriteRust(
             sourceProjectPath,
             selectedProjectFilename + alignmentDataPath,
-            chapterAlignments
-          )
+            chapterAlignments,
+          ),
         );
       }
     }
@@ -508,8 +503,8 @@ export const generateTargetLanguageBibleFromUsfm = async (
       fsWriteRust(
         sourceProjectPath,
         selectedProjectFilename + join(bookID, "headers.json"),
-        parsedUsfm.headers
-      )
+        parsedUsfm.headers,
+      ),
     );
 
     if (alignQueue.length) {
@@ -632,7 +627,7 @@ const replaceWordsAndMilestones = (verseObject, wordSpacing) => {
       for (let i = 0; i < length; i++) {
         const flattened = replaceWordsAndMilestones(
           verseObject.children[i],
-          wordSpacing_
+          wordSpacing_,
         );
         wordSpacing_ = flattened.wordSpacing;
         verseObject_.children[i] = flattened.verseObject;
@@ -717,7 +712,7 @@ export async function getBibleManifest(bibleVersionPath, bibleID) {
     manifest = await fsGetRust(USER_RESOURCES_PATH, bibleManifestPath);
   } else {
     console.error(
-      `getBibleManifest() - Could not find manifest for ${bibleID} at ${bibleManifestPath}`
+      `getBibleManifest() - Could not find manifest for ${bibleID} at ${bibleManifestPath}`,
     );
   }
   return manifest;
@@ -913,16 +908,16 @@ const generateHelperForTool = async (
   helperFolderName,
   sourceProjectPath,
   selectedProjectFilename,
-  typeOfTools
+  typeOfTools,
 ) => {
   let book = getBookFromProjectFileName(selectedProjectFilename);
-  let path = helperFolderName.split("/")
+  let path = helperFolderName.split("/");
   const tsv = parseTsv(
     await fsGetRust(
       path[2],
       `${book.toUpperCase()}.tsv`,
-      path[0]+"/"+path[1]
-    )
+      path[0] + "/" + path[1],
+    ),
   );
 
   const emptyJson = {
@@ -945,18 +940,16 @@ const generateHelperForTool = async (
   };
 
   const filesToWrite = {}; // { [filePath]: json[] }
-  const categories = {};   // { [category]: string[] }
+  const categories = {}; // { [category]: string[] }
 
   for (let i = 1; i < tsv.length; i++) {
     let category = "";
 
     if (typeOfTools === "translationNotes") {
       if (tsv[i][3] === "") continue;
-      category = findCategoriesForTn(
-        tsv[i][3].split("/").slice(-1)[0].trim()
-      );
+      category = findCategoriesForTn(tsv[i][3].split("/").slice(-1)[0].trim());
     } else {
-      category = tsv[i][5].split("/")[2].trim().replace(".md","");
+      category = tsv[i][5].split("/")[2].trim().replace(".md", "");
     }
 
     let newJson = structuredClone(emptyJson);
@@ -973,13 +966,16 @@ const generateHelperForTool = async (
     let categoryKey = "";
 
     if (typeOfTools === "translationNotes") {
-      newJson.contextId.groupId = tsv[i][3].split("/").slice(-1)[0].replace(/\r/g, "");
+      newJson.contextId.groupId = tsv[i][3]
+        .split("/")
+        .slice(-1)[0]
+        .replace(/\r/g, "");
       newJson.contextId.quote = creatWordList(tsv[i][4]);
       newJson.contextId.occurrence = parseInt(tsv[i][5]);
       newJson.contextId.quoteString = tsv[i][4];
       newJson.contextId.occurrenceNote = tsv[i][6];
 
-      categoryKey = newJson.contextId.groupId.replace(/\s+/g, "").trim();;
+      categoryKey = newJson.contextId.groupId.replace(/\s+/g, "").trim();
 
       url = join(
         selectedProjectFilename,
@@ -988,16 +984,24 @@ const generateHelperForTool = async (
         "index",
         typeOfTools,
         book,
-        `${categoryKey}.json`
+        `${categoryKey}.json`,
       );
     } else {
       newJson.contextId.quoteString = tsv[i][3];
-      newJson.contextId.groupId = tsv[i][5].split("/").slice(-1)[0].replace(/\r/g, "").replace(".md","");
+      newJson.contextId.groupId = tsv[i][5]
+        .split("/")
+        .slice(-1)[0]
+        .replace(/\r/g, "")
+        .replace(".md", "");
       newJson.contextId.quote = tsv[i][3];
       newJson.contextId.occurrence = parseInt(tsv[i][4]);
 
-      categoryKey = tsv[i][5].split("/")[3].replace(/\s+/g, "").trim().replace(".md","");
-      
+      categoryKey = tsv[i][5]
+        .split("/")[3]
+        .replace(/\s+/g, "")
+        .trim()
+        .replace(".md", "");
+
       url = join(
         selectedProjectFilename,
         "apps",
@@ -1005,7 +1009,7 @@ const generateHelperForTool = async (
         "index",
         typeOfTools,
         book,
-        `${categoryKey}.json`
+        `${categoryKey}.json`,
       );
     }
 
@@ -1037,9 +1041,9 @@ const generateHelperForTool = async (
         typeOfTools,
         book,
         "categoryIndex",
-        `${category}.json`
+        `${category}.json`,
       ),
-      categories[category]
+      categories[category],
     );
   }
 };
@@ -1054,14 +1058,14 @@ const generateHelperForTool = async (
 export const generateManifestForUsfm = async (
   sourceProjectPath,
   selectedProjectFilename,
-  parsedUsfm
+  parsedUsfm,
 ) => {
   try {
     const manifest = generateManifestForUsfmProject(parsedUsfm);
     await fsWriteRust(
       sourceProjectPath,
       selectedProjectFilename + "manifest.json",
-      manifest
+      manifest,
     );
     return manifest;
   } catch (error) {
@@ -1079,13 +1083,13 @@ export const generateManifestForUsfm = async (
 
 export const verifyIsValidUsfmFile = async (
   sourceProjectPath,
-  selectedProjectFilename
+  selectedProjectFilename,
 ) => {
   const usfmName =
     getBookFromProjectFileName(selectedProjectFilename) + ".usfm";
   const usfmData = await loadUSFMFileAsync(
     sourceProjectPath,
-    selectedProjectFilename + usfmName
+    selectedProjectFilename + usfmName,
   );
 
   if (usfmData.includes("\\h ") || usfmData.includes("\\id ")) {
@@ -1108,16 +1112,16 @@ export const verifyIsValidUsfmFile = async (
  */
 export async function loadUSFMFileAsync(
   sourceProjectPath,
-  selectedProjectFilename
+  selectedProjectFilename,
 ) {
   try {
     const usfmText = await fsGetRust(
       sourceProjectPath,
-      selectedProjectFilename
+      selectedProjectFilename,
     );
     if (!usfmText)
       throw new Error(
-        `Failed to get USFM content from Rust endpoint: ${selectedProjectFilename}`
+        `Failed to get USFM content from Rust endpoint: ${selectedProjectFilename}`,
       );
     return usfmText;
   } catch (e) {
@@ -1131,12 +1135,12 @@ export async function loadUSFMFileAsync(
 export const moveUsfmFileFromSourceToImports = async (
   sourceProjectPath,
   manifest,
-  selectedProjectFilename
+  selectedProjectFilename,
 ) => {
   try {
     const usfmData = await fsGetRust(
       sourceProjectPath,
-      selectedProjectFilename
+      selectedProjectFilename,
     );
     const projectId =
       manifest && manifest.project && manifest.project.id
@@ -1172,37 +1176,39 @@ function pathJoin(table) {
 export const convertToProjectFormat = async (
   repoName,
   tCoreProject,
-  ressources
+  ressources,
 ) => {
   // let book = selectedProjectFilename.split('_')[2]+
-  const usfmData = await verifyIsValidUsfmFile(
-    repoName,
-    tCoreProject
-  );
+  const usfmData = await verifyIsValidUsfmFile(repoName, tCoreProject);
   await generateHelperForTool(
-    ressources['parascriptural/x-bcvarticles'][0],
+    ressources["parascriptural/x-bcvarticles"][0],
     repoName,
     tCoreProject,
-    "translationWords"
+    "translationWords",
   );
   await generateHelperForTool(
-    ressources['parascriptural/x-bcvnotes'][0],
+    ressources["parascriptural/x-bcvnotes"][0],
     repoName,
     tCoreProject,
-    "translationNotes"
+    "translationNotes",
   );
   const parsedUsfm = getParsedUSFM(usfmData);
   const manifest = await generateManifestForUsfm(
     repoName,
     tCoreProject,
-    parsedUsfm
+    parsedUsfm,
   );
   await generateTargetLanguageBibleFromUsfm(
     parsedUsfm,
     manifest,
     repoName,
-    tCoreProject
+    tCoreProject,
+    ressources["scripture/textTranslation"][0]
   );
-  await write_version_manager(ressources,repoName,tCoreProject.slice(0, -1).replace('book_projects/',''))
-  await updateIngredients(repoName)
+  await write_version_manager(
+    ressources,
+    repoName,
+    tCoreProject.slice(0, -1).replace("book_projects/", ""),
+  );
+  await updateIngredients(repoName);
 };

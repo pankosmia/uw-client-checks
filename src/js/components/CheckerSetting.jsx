@@ -24,6 +24,7 @@ const CheckerSetting = ({
   repoName,
   tCoreNameProject = null,
   missingRessourcesCheckBook,
+  versionManager,
   callBack,
 }) => {
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
@@ -34,8 +35,9 @@ const CheckerSetting = ({
   const [translationNotesCategories, setTranslationNotesCategories] = useState(
     [],
   );
-  const [versionManager, setVersionManager] = useState(null);
   const [settingJson, setSettingJson] = useState({});
+
+
 
   useEffect(() => {
     if (missingRessourcesCheckBook?.length < 1) {
