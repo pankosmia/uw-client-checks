@@ -47,22 +47,24 @@ function getStyleParamFromStateRessources(response) {
   return null;
 }
 
-async function checkValidRessourcesVersion(
-  repoName,
-  tCoreNameProject,
-  summary,
-) {
+async function getRessourcesVersion(repoName, tCoreNameProject) {
   let existVM = await fsExistsRust(
     repoName,
     `book_projects/${tCoreNameProject}/version_manager.json`,
   );
   if (existVM) {
-    let versionManager = await fsGetRust(
+    return await fsGetRust(
       repoName,
       `book_projects/${tCoreNameProject}/version_manager.json`,
     );
+  }
+  return null;
+}
+
+async function checkValidRessourcesVersion(ressourceManager, summary) {
+  if (ressourceManager) {
     let allRessourcesMissing = [];
-    Object.values(versionManager).forEach((r) => {
+    Object.values(ressourceManager).forEach((r) => {
       if (!Boolean(summary[r[0]])) {
         allRessourcesMissing.push([r]);
       }
@@ -76,7 +78,9 @@ export default function SelectBook() {
   const { currentProjectRef } = useContext(currentProjectContext);
 
   const { i18nRef } = useContext(i18nContext);
+
   const [selectedtCoreProject, setSelectedtCoreProject] = useState(null);
+  const [parentBurritoProject, setParentBurritoProject] = useState(null);
 
   const [inDirectory, setInDirectory] = useState([]);
 
@@ -89,7 +93,7 @@ export default function SelectBook() {
   const [burritos, setBurritos] = useState(null);
 
   const [missingRessourcesCheck, setMissingRessourcesCheck] = useState(null);
-
+  const [ressourcesManager,setRessourcesManager] = useState(null)
   useEffect(() => {
     async function fetchSummaries() {
       if (currentProjectRef.current) {
@@ -138,9 +142,7 @@ export default function SelectBook() {
         }));
 
         // Filter only scripture burritos
-        const scriptures = burritoArray.filter(
-          (item) => item?.flavor === "x-tcore",
-        );
+        const scriptures = burritoArray;
         if (scriptures.length < 1) {
           setBurritos(null);
         } else {
@@ -170,6 +172,15 @@ export default function SelectBook() {
       console.error(err);
     }
   }
+
+  useEffect(() => {
+    if (burritos) {
+      if (selectedtCoreProject) {
+        let abr = selectedtCoreProject.abbreviation.split("_")[0].toUpperCase();
+        setParentBurritoProject(burritos.find((e) => e.abbreviation === abr));
+      }
+    }
+  }, [burritos, selectedtCoreProject]);
 
   useEffect(() => {
     if (selectedtCoreProject) {
@@ -205,20 +216,25 @@ export default function SelectBook() {
     );
   }, [inDirectory, selectedtCoreProject]);
 
-  async function getVersionManager() {
+  async function getValidateRessourcesVersionAndErrors() {
+    let ressourcesManagerDict = {};
     let missingRessources = {};
     for (let b of books) {
-      missingRessources[b.bookCode] = await checkValidRessourcesVersion(
+      ressourcesManagerDict[b.bookCode] = await getRessourcesVersion(
         b.projectName,
         b.tCoreName,
+      );
+      missingRessources[b.bookCode] = await checkValidRessourcesVersion(
+        ressourcesManagerDict[b.bookCode],
         summary,
       );
     }
+    setRessourcesManager(ressourcesManagerDict)
     setMissingRessourcesCheck(missingRessources);
   }
   useEffect(() => {
     if (summary && books) {
-      getVersionManager();
+      getValidateRessourcesVersionAndErrors();
     }
   }, [summary, books]);
 
@@ -263,6 +279,7 @@ export default function SelectBook() {
               nameBurito={selectedtCoreProject.name}
               reloadProject={() => fetchData()}
               selectedBurrito={selectedtCoreProject}
+              parentBurritoProject={parentBurritoProject}
             />
           )}
         </Box>
@@ -425,7 +442,9 @@ export default function SelectBook() {
                               missingRessourcesCheckBook={
                                 missingRessourcesCheck[book.bookCode]
                               }
-                              callBack={() => getVersionManager()}
+                              callBack={() =>
+                                getValidateRessourcesVersionAndErrors()
+                              }
                             />
                           </Box>
                           <Box
@@ -445,6 +464,7 @@ export default function SelectBook() {
                                     missingRessourcesCheckBook={
                                       missingRessourcesCheck[book.bookCode]
                                     }
+                                    versionManager={ressourcesManager[book.bookCode]}
                                     callBack={() => {
                                       setOpenedBooks((prev) => {
                                         const next = new Set(prev);
@@ -479,7 +499,7 @@ export default function SelectBook() {
                                 tCoreNameProject={book.tCoreName}
                                 callBack={() => {
                                   fetchData();
-                                  getVersionManager();
+                                  getValidateRessourcesVersionAndErrors();
                                 }}
                               />
                             </Box>

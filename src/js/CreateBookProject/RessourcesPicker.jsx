@@ -22,6 +22,7 @@ export default function RessourcesPicker({
   prefLanguage = null,
   listPreSelected = null,
   setBook = null,
+  bookList = null,
 }) {
   const [values, setValues] = useState({
     "parascriptural/x-bcvarticles": ["", ""],
@@ -146,7 +147,15 @@ export default function RessourcesPicker({
           variant="filled"
           onChange={(e) => setSelectedBook(e.target.value)}
         >
-          {ALL_BOOKS.map((b) => (
+          {ALL_BOOKS.filter((b) => {
+            if (bookList) {
+              if (bookList.length > 0) {
+                return bookList.includes(b.code);
+              }
+              return false;
+            }
+            return true;
+          }).map((b) => (
             <MenuItem key={b.code} value={b.code}>
               {b.name} ({b.testament === "old" ? "OT" : "NT"})
             </MenuItem>

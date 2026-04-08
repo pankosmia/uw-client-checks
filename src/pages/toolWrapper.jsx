@@ -438,7 +438,7 @@ export const ToolWrapper = () => {
     if (!book) return;
     if (!ressourcesToFetch) return;
     const loadAll = async () => {
-      const [targetBibleRes, originBibleRes, ultBibleRes, lexiconRes] =
+      const [targetBibleRes, originBibleRes, lexiconRes] =
         await Promise.all([
           getBookFromName(
             projectName,
@@ -458,19 +458,11 @@ export const ToolWrapper = () => {
               .slice(0, 2)
               .join("/"),
           ),
-          getBookFromName(
-            "en_ult",
-            "",
-            book,
-            "gateway_language",
-            "git.door43.org/unfoldingWord",
-          ),
           getLexiconData(ressourcesToFetch["peripheral/x-lexicon"]),
         ]);
 
       setTargetBible(targetBibleRes);
       setOriginBible(originBibleRes);
-      setUltBible(ultBibleRes);
       setLexicon(lexiconRes);
     };
 
@@ -559,7 +551,7 @@ export const ToolWrapper = () => {
   }, [bibles]);
   // Build unified bibles list when dependencies update
   useEffect(() => {
-    if (targetBible && originBible && ultBible) {
+    if (targetBible && originBible) {
       async function getBibles() {
         let init = [
           {
@@ -569,13 +561,13 @@ export const ToolWrapper = () => {
             bibleId: "targetBible",
             owner: "unfoldingWord",
           },
-          {
-            book: ultBible,
-            description: "gateway_language",
-            languageId: "en",
-            bibleId: "ult",
-            owner: "unfoldingWord",
-          },
+          // {
+          //   book: ultBible,
+          //   description: "gateway_language",
+          //   languageId: "en",
+          //   bibleId: "ult",
+          //   owner: "unfoldingWord",
+          // },
           {
             book: originBible,
             description: "original_language",
@@ -609,7 +601,7 @@ export const ToolWrapper = () => {
       }
       getBibles();
     }
-  }, [targetBible, originBible, ultBible, selectedResources]);
+  }, [targetBible, originBible, selectedResources]);
 
   useEffect(() => {
     setLoadingTool(false);
@@ -750,10 +742,9 @@ export const ToolWrapper = () => {
   }, [book, alignmentTargetBible, toolName, originBible, translate]);
 
   const ready =
-    Array.isArray(bibles) &&
+    Array.isArray(bibles) && bibles.length > 1 &&
     targetBible != null &&
     originBible != null &&
-    ultBible != null &&
     (toolName === "wordAlignment"
       ? alignmentTargetBible && Object.keys(alignmentTargetBible).length > 0
       : checkingData != null) &&
@@ -762,11 +753,20 @@ export const ToolWrapper = () => {
       : toolName === "translationNotes"
         ? dataTn != null
         : true) &&
+      
     contextId != null &&
     lexicon != null &&
     saveCheckingData != null &&
     toolSettings != null &&
+    targetLanguageDetails != null &&
     !loadingTool;
+
+
+  if(ready){
+    console.log(contextId)
+    console.log(checkingData)
+    console.log(dataTn)
+  }
   return (
     <div style={{ height: "calc(100vh - 100px)" }}>
       <Box
@@ -856,7 +856,7 @@ export const ToolWrapper = () => {
               groupId: "chapter_1",
             }}
             editedTargetVerse={changeCurrentVerse}
-            gatewayBook={ultBible}
+            // gatewayBook={ultBible}
             getLexiconData={getLexiconData_}
             groupsData={groupsData}
             groupsIndex={groupsIndex}
@@ -887,7 +887,7 @@ export const ToolWrapper = () => {
               height: "100%",
               overflowY: "auto",
             }}
-            alignedGlBible={ultBible}
+            // alignedGlBible={ultBible}
             bibles={bibles}
             checkingData={checkingData}
             checkType={toolName}
@@ -902,6 +902,7 @@ export const ToolWrapper = () => {
             targetBible={targetBible}
             targetLanguageDetails={targetLanguageDetails}
             translate={translate}
+            disableFontMenu={true}
           />
         ))}
     </div>

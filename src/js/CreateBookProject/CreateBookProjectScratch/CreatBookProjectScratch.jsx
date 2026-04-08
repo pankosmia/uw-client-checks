@@ -7,7 +7,7 @@ import {
   IconButton,
   Divider,
 } from "@mui/material";
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { doI18n } from "pithekos-lib";
 import {
   i18nContext,
@@ -83,16 +83,34 @@ export default function CreateBookProjectScratch({
   nameBurrito,
   reloadProject,
   selectedBurrito,
+  parentBurritoProject,
 }) {
   const { enabledRef } = useContext(netContext);
+  const { i18nRef } = useContext(i18nContext);
+
   const [step, setStep] = useState(1);
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const [languageChoices, setLanguageChoices] = useState(["en"]);
   const [finalVersionManager, setFinalVersionManager] = useState({});
   const [book, setBook] = useState("");
-  const { i18nRef } = useContext(i18nContext);
+  const [listBookParentProject, setListBookParentProject] = useState(null);
+
   const [downloadRessourcesDialogueOpen, setDownloadRessourcesDialogueOpen] =
     useState(false);
+
+  useEffect(() => {
+    if (parentBurritoProject) {
+      async function getListBookFromParentProject() {
+        let summary = await getJson(
+          `/burrito/metadata/summary/${parentBurritoProject.path}`,
+        );
+        if (summary.ok) {
+          setListBookParentProject(summary.json.book_codes.map(e => e.toLowerCase()));
+        }
+      }
+      getListBookFromParentProject();
+    }
+  }, [parentBurritoProject]);
 
   async function goNext() {
     if (step === 1) {
@@ -113,7 +131,7 @@ export default function CreateBookProjectScratch({
       reloadProject();
     }
     if (step === 3) {
-      setStep(2)
+      setStep(2);
       return;
     }
   }
@@ -184,6 +202,7 @@ export default function CreateBookProjectScratch({
                   setFinalVersionManager={setFinalVersionManager}
                   prefLanguage={languageChoices}
                   setBook={setBook}
+                  bookList={listBookParentProject}
                 />
               </Box>
             )}
