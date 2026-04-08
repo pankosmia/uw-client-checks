@@ -93,7 +93,7 @@ export default function SelectBook() {
   const [burritos, setBurritos] = useState(null);
 
   const [missingRessourcesCheck, setMissingRessourcesCheck] = useState(null);
-  const [ressourcesManager,setRessourcesManager] = useState(null)
+  const [ressourcesManager, setRessourcesManager] = useState(null);
   useEffect(() => {
     async function fetchSummaries() {
       if (currentProjectRef.current) {
@@ -229,7 +229,7 @@ export default function SelectBook() {
         summary,
       );
     }
-    setRessourcesManager(ressourcesManagerDict)
+    setRessourcesManager(ressourcesManagerDict);
     setMissingRessourcesCheck(missingRessources);
   }
   useEffect(() => {
@@ -464,7 +464,9 @@ export default function SelectBook() {
                                     missingRessourcesCheckBook={
                                       missingRessourcesCheck[book.bookCode]
                                     }
-                                    versionManager={ressourcesManager[book.bookCode]}
+                                    versionManager={
+                                      ressourcesManager[book.bookCode]
+                                    }
                                     callBack={() => {
                                       setOpenedBooks((prev) => {
                                         const next = new Set(prev);

@@ -105,7 +105,9 @@ export default function CreateBookProjectScratch({
           `/burrito/metadata/summary/${parentBurritoProject.path}`,
         );
         if (summary.ok) {
-          setListBookParentProject(summary.json.book_codes.map(e => e.toLowerCase()));
+          setListBookParentProject(
+            summary.json.book_codes.map((e) => e.toLowerCase()),
+          );
         }
       }
       getListBookFromParentProject();

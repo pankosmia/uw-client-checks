@@ -95,7 +95,6 @@ function UsfmExport() {
     setRepoName(paths[2]);
   };
   const getProjectSummary = async () => {
-
     let booksProjectsList = await fsGetRust(
       repoName,
       "book_projects",

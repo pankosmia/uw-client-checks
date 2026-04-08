@@ -301,9 +301,9 @@
       "en": "You are missing resources. Connect to the internet to continue or sideload them.",
       "fr": "Il vous manque des ressources. Connectez-vous à Internet pour continuer ou téléversez-les."
     },
-    "add_version_manager":{
-      "en":"Choose ressources",
-      "fr":"Choisir les ressources"
+    "add_version_manager": {
+      "en": "Choose ressources",
+      "fr": "Choisir les ressources"
     }
   }
 }

@@ -8,15 +8,13 @@ export default function LanguageMenuItem(languageMenuItemProps) {
     menuItem: {
       display: "flex",
       justifyContent: "space-between",
-      color: 'DimGray',
+      color: "DimGray",
     },
   };
 
   return (
-    <div style={(styles.menuItem)}>
-      <div
-        style={styles.menuItem}
-      >
+    <div style={styles.menuItem}>
+      <div style={styles.menuItem}>
         <Typography
           style={{ width: "100%" }}
           noWrap

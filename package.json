@@ -13,7 +13,6 @@
     "@mui/styles": "^5.18.0",
     "@mui/system": "^5.18.0",
     "bible-reference-range": "^1.1.1",
-    "eslint-config-react-app": "^7.0.1",
     "file-saver": "^2.0.5",
     "font-detect-rhl": "^1.1.7",
     "js-yaml": "^4.1.1",
@@ -32,16 +31,17 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@vitejs/plugin-react": "^4.3.4",
-    "react-scripts": "5.0.1",
+    "husky": "^9.1.7",
+    "prettier": "3.8.1",
     "util": "^0.12.5",
     "vite": "^6.0.7",
     "vite-plugin-node-polyfills": "^0.24.0"
   },
   "scripts": {
-    "start": "react-scripts start",
     "build": "vite build",
     "build:vite": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "prepare": "husky"
   },
   "eslintConfig": {
     "extends": [

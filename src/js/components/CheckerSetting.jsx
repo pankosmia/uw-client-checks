@@ -37,8 +37,6 @@ const CheckerSetting = ({
   );
   const [settingJson, setSettingJson] = useState({});
 
-
-
   useEffect(() => {
     if (missingRessourcesCheckBook?.length < 1) {
       setCanWeClose(checkIfOneCategoriesIsOk());

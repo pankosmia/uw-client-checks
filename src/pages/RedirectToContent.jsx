@@ -1,5 +1,4 @@
-
 export function RedirectToContent() {
-    window.location.replace("/clients/content");
-    return <></>
+  window.location.replace("/clients/content");
+  return <></>;
 }

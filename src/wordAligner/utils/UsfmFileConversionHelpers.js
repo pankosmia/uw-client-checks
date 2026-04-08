@@ -1,7 +1,7 @@
 /* eslint-disable no-async-promise-executor, no-throw-literal */
-import usfmjs from 'usfm-js';
+import usfmjs from "usfm-js";
 import cloneDeep from "lodash.clonedeep";
-import {getVerseAlignments, getWordCountInVerse} from "./alignmentHelpers";
+import { getVerseAlignments, getWordCountInVerse } from "./alignmentHelpers";
 
 /**
  * test to see if verse is a verseSpan
@@ -9,7 +9,7 @@ import {getVerseAlignments, getWordCountInVerse} from "./alignmentHelpers";
  * @return {boolean}
  */
 export function isVerseSpan(verse) {
-  return verse.toString().includes('-');
+  return verse.toString().includes("-");
 }
 
 /**
@@ -34,40 +34,55 @@ export function invalidateAlignment(alignment) {
  * @param blankVerseAlignments - raw verse alignments for extracting word counts for each verse
  * @return {{verseObjects}} - original verse span data
  */
-export function convertAlignmentFromVerseToVerseSpanSub(originalVerseSpanData, alignedVerseObjects, chapter, low, hi, blankVerseAlignments) {
+export function convertAlignmentFromVerseToVerseSpanSub(
+  originalVerseSpanData,
+  alignedVerseObjects,
+  chapter,
+  low,
+  hi,
+  blankVerseAlignments,
+) {
   const bibleVerse = { verseObjects: originalVerseSpanData };
   const alignments = getVerseAlignments(alignedVerseObjects.verseObjects);
 
   for (let alignment of alignments) {
-    const ref = alignment.ref || '';
-    const refParts = ref.split(':');
+    const ref = alignment.ref || "";
+    const refParts = ref.split(":");
     let verseRef;
     let chapterRef = chapter; // default to current chapter
     const word = alignment.content;
     let occurrence = alignment.occurrence;
     let occurrences = 0;
 
-    if (refParts.length > 1) { // if both chapter and verse
+    if (refParts.length > 1) {
+      // if both chapter and verse
       verseRef = parseInt(refParts[1]);
       chapterRef = refParts[0];
-    } else { // verse only
+    } else {
+      // verse only
       verseRef = parseInt(refParts[0]);
     }
 
     if (chapterRef.toString() !== chapter.toString()) {
-      console.warn(`convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - chapter in ref "${ref}" does not match current chapter ${chapter} for verse span "${low}-${hi}" - skipping`);
+      console.warn(
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - chapter in ref "${ref}" does not match current chapter ${chapter} for verse span "${low}-${hi}" - skipping`,
+      );
       invalidateAlignment(alignment);
       continue;
     }
 
     if (!(occurrence > 0)) {
-      console.warn(`convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - invalid occurrence in current verse span "${low}-${hi}" - skipping`);
+      console.warn(
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - invalid occurrence in current verse span "${low}-${hi}" - skipping`,
+      );
       invalidateAlignment(alignment);
       continue;
     }
 
-    if (!((verseRef >= low) || (verseRef <= hi))) {
-      console.warn(`convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - verse in ref ${ref} is not within current verse span "${low}-${hi}" - skipping`);
+    if (!(verseRef >= low || verseRef <= hi)) {
+      console.warn(
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - verse in ref ${ref} is not within current verse span "${low}-${hi}" - skipping`,
+      );
       invalidateAlignment(alignment);
       continue;
     }
@@ -82,8 +97,10 @@ export function convertAlignmentFromVerseToVerseSpanSub(originalVerseSpanData, a
       }
     }
 
-    if ((occurrence > occurrences)) {
-      console.warn(`convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - beyond ocurrences ${occurrences} in current verse span "${low}-${hi}" - skipping`);
+    if (occurrence > occurrences) {
+      console.warn(
+        `convertAlignmentFromVerseToVerseSpan() - alignment of word "${word}:${occurrence}" - beyond ocurrences ${occurrences} in current verse span "${low}-${hi}" - skipping`,
+      );
       invalidateAlignment(alignment);
     } else {
       delete alignment.ref;
@@ -99,35 +116,41 @@ export function convertAlignmentFromVerseToVerseSpanSub(originalVerseSpanData, a
  * @param {Object} verseObject - milestone to parse
  * @return {string} text content of milestone
  */
-const parseMilestone = verseObject => {
-  let text = verseObject.text || '';
-  let wordSpacing = '';
+const parseMilestone = (verseObject) => {
+  let text = verseObject.text || "";
+  let wordSpacing = "";
   const length = verseObject.children ? verseObject.children.length : 0;
 
   for (let i = 0; i < length; i++) {
     let child = verseObject.children[i];
 
     switch (child.type) {
-    case 'word':
-      text += wordSpacing + child.text;
-      wordSpacing = ' ';
-      break;
+      case "word":
+        text += wordSpacing + child.text;
+        wordSpacing = " ";
+        break;
 
-    case 'milestone':
-      text += wordSpacing + parseMilestone(child);
-      wordSpacing = ' ';
-      break;
+      case "milestone":
+        text += wordSpacing + parseMilestone(child);
+        wordSpacing = " ";
+        break;
 
-    default:
-      if (child.text) {
-        text += child.text;
-        const lastChar = text.substr(-1);
+      default:
+        if (child.text) {
+          text += child.text;
+          const lastChar = text.substr(-1);
 
-        if ((lastChar !== ',') && (lastChar !== '.') && (lastChar !== '?') && (lastChar !== ';')) { // legacy support, make sure padding before word
-          wordSpacing = '';
+          if (
+            lastChar !== "," &&
+            lastChar !== "." &&
+            lastChar !== "?" &&
+            lastChar !== ";"
+          ) {
+            // legacy support, make sure padding before word
+            wordSpacing = "";
+          }
         }
-      }
-      break;
+        break;
     }
   }
   return text;
@@ -140,41 +163,46 @@ const parseMilestone = verseObject => {
  * @return {*} new verseObject and word spacing
  */
 const replaceWordsAndMilestones = (verseObject, wordSpacing) => {
-  let text = '';
+  let text = "";
 
-  if (verseObject.type === 'word') {
+  if (verseObject.type === "word") {
     text = wordSpacing + verseObject.text;
-  } else if (verseObject.type === 'milestone') {
+  } else if (verseObject.type === "milestone") {
     text = wordSpacing + parseMilestone(verseObject);
   }
 
-  if (text) { // replace with text object
+  if (text) {
+    // replace with text object
     verseObject = {
-      type: 'text',
+      type: "text",
       text,
     };
-    wordSpacing = ' ';
+    wordSpacing = " ";
   } else {
-    wordSpacing = ' ';
+    wordSpacing = " ";
 
     if (verseObject.nextChar) {
-      wordSpacing = ''; // no need for spacing before next word if this item has it
+      wordSpacing = ""; // no need for spacing before next word if this item has it
     } else if (verseObject.text) {
       const lastChar = verseObject.text.substr(-1);
 
-      if (![',', '.', '?', ';'].includes(lastChar)) { // legacy support, make sure padding before next word if punctuation
-        wordSpacing = '';
+      if (![",", ".", "?", ";"].includes(lastChar)) {
+        // legacy support, make sure padding before next word if punctuation
+        wordSpacing = "";
       }
     }
 
-    if (verseObject.children) { // handle nested
+    if (verseObject.children) {
+      // handle nested
       const verseObject_ = cloneDeep(verseObject);
-      let wordSpacing_ = '';
+      let wordSpacing_ = "";
       const length = verseObject.children.length;
 
       for (let i = 0; i < length; i++) {
-        const flattened =
-          replaceWordsAndMilestones(verseObject.children[i], wordSpacing_);
+        const flattened = replaceWordsAndMilestones(
+          verseObject.children[i],
+          wordSpacing_,
+        );
         wordSpacing_ = flattened.wordSpacing;
         verseObject_.children[i] = flattened.verseObject;
       }
@@ -189,8 +217,9 @@ const replaceWordsAndMilestones = (verseObject, wordSpacing) => {
  * @param {String} usfmData
  * @return {Boolean} true if string has alignment markers
  */
-export const hasAlignments = usfmData => {
-  const hasAlignment = usfmData.includes('\\zaln-s') || usfmData.includes('\\w');
+export const hasAlignments = (usfmData) => {
+  const hasAlignment =
+    usfmData.includes("\\zaln-s") || usfmData.includes("\\w");
   return hasAlignment;
 };
 
@@ -199,10 +228,11 @@ export const hasAlignments = usfmData => {
  * @param {String} usfmData - The string to search in
  * @return {String} - cleaned USFM
  */
-export const cleanAlignmentMarkersFromString = usfmData => {
+export const cleanAlignmentMarkersFromString = (usfmData) => {
   if (hasAlignments(usfmData)) {
     // convert string using usfm to JSON
-    const verseObjects = usfmjs.toJSON('\\v 1 ' + usfmData, { chunk: true }).verses['1'];
+    const verseObjects = usfmjs.toJSON("\\v 1 " + usfmData, { chunk: true })
+      .verses["1"];
     return getUsfmForVerseContent(verseObjects);
   }
   return usfmData;
@@ -215,22 +245,23 @@ export const cleanAlignmentMarkersFromString = usfmData => {
  */
 export function convertVerseDataToUSFM(verseData) {
   const outputData = {
-    'chapters': {},
-    'headers': [],
-    'verses': { '1': verseData },
+    chapters: {},
+    headers: [],
+    verses: { 1: verseData },
   };
   const USFM = usfmjs.toUSFM(outputData, { chunk: true, forcedNewLines: true });
-  const split = USFM.split('\\v 1');
+  const split = USFM.split("\\v 1");
 
   if (split.length > 1) {
     let content = split[1];
 
-    if (content.substr(0, 1) === ' ') { // remove space separator
+    if (content.substr(0, 1) === " ") {
+      // remove space separator
       content = content.substr(1);
     }
     return content;
   }
-  return ''; // error on JSON to USFM
+  return ""; // error on JSON to USFM
 }
 
 /**
@@ -241,7 +272,7 @@ export function convertVerseDataToUSFM(verseData) {
 export function removeMilestonesAndWordMarkers(verseData) {
   const verseObjects = verseData?.verseObjects || verseData;
   if (verseObjects) {
-    let wordSpacing = '';
+    let wordSpacing = "";
     const flattenedData = [];
     const length = verseObjects.length;
 
@@ -251,7 +282,8 @@ export function removeMilestonesAndWordMarkers(verseData) {
       wordSpacing = flattened.wordSpacing;
       flattenedData.push(flattened.verseObject);
     }
-    verseData = { // use flattened data
+    verseData = {
+      // use flattened data
       verseObjects: flattenedData,
     };
   }

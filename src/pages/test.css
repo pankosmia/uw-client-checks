@@ -1,9 +1,9 @@
 .MuiListSubheader-root {
-  background-color: var(--accent-color-dark) !important; 
+  background-color: var(--accent-color-dark) !important;
 }
 
 .MuiToolbar-root.expanded-scripture-draggable-handle {
-  width: auto !important; 
+  width: auto !important;
 }
 
 .MuiFormControlLabel-root.MuiFormControlLabel-labelPlacementEnd {
