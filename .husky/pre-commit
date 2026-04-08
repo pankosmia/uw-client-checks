@@ -1,2 +1,2 @@
-prettier --write .
-git add .
+FILES=git diff --name-only --diff-filter=AMC HEAD
+echo "$FILES" | xargs ./node_modules/.bin/prettier --ignore-unknown --write
