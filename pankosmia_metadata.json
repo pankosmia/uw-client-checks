@@ -305,6 +305,14 @@
     "add_version_manager": {
       "en": "Choose ressources",
       "fr": "Choisir les ressources"
+    },
+    "missing_resources_manager": {
+      "en": "You are missing the resources manager file, or some of the resources used for this book project are no longer available here. Please press the button to fix this.",
+      "fr": "Il vous manque le fichier de configuration des ressources, ou certaines des ressources que vous utilisiez pour ce projet de livre ne sont plus présentes. Appuyez sur le bouton pour remédier à ce problème."
+    },
+    "config_ressources": {
+      "en": "config ressources",
+      "fr": "configurations des ressources"
     }
   }
 }
