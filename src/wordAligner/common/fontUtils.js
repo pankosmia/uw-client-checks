@@ -3,5 +3,5 @@
  * @param {string} projectFont - User selected font for target Language project.
  */
 export function getFontClassName(projectFont) {
-  return projectFont && projectFont !== 'default' ? `${projectFont}-text` : '';
+  return projectFont && projectFont !== "default" ? `${projectFont}-text` : "";
 }

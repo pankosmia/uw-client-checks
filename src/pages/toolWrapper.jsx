@@ -438,28 +438,27 @@ export const ToolWrapper = () => {
     if (!book) return;
     if (!ressourcesToFetch) return;
     const loadAll = async () => {
-      const [targetBibleRes, originBibleRes, lexiconRes] =
-        await Promise.all([
-          getBookFromName(
-            projectName,
-            `book_projects/${tCoreName}`,
-            book,
-            "target_language",
-            "_local_/_local_",
-            true,
-          ),
-          getBookFromName(
-            ressourcesToFetch["scripture/textTranslation"][0].split("/")[2],
-            "",
-            book,
-            "original_language",
-            ressourcesToFetch["scripture/textTranslation"][0]
-              .split("/")
-              .slice(0, 2)
-              .join("/"),
-          ),
-          getLexiconData(ressourcesToFetch["peripheral/x-lexicon"]),
-        ]);
+      const [targetBibleRes, originBibleRes, lexiconRes] = await Promise.all([
+        getBookFromName(
+          projectName,
+          `book_projects/${tCoreName}`,
+          book,
+          "target_language",
+          "_local_/_local_",
+          true,
+        ),
+        getBookFromName(
+          ressourcesToFetch["scripture/textTranslation"][0].split("/")[2],
+          "",
+          book,
+          "original_language",
+          ressourcesToFetch["scripture/textTranslation"][0]
+            .split("/")
+            .slice(0, 2)
+            .join("/"),
+        ),
+        getLexiconData(ressourcesToFetch["peripheral/x-lexicon"]),
+      ]);
 
       setTargetBible(targetBibleRes);
       setOriginBible(originBibleRes);
@@ -742,7 +741,8 @@ export const ToolWrapper = () => {
   }, [book, alignmentTargetBible, toolName, originBible, translate]);
 
   const ready =
-    Array.isArray(bibles) && bibles.length > 1 &&
+    Array.isArray(bibles) &&
+    bibles.length > 1 &&
     targetBible != null &&
     originBible != null &&
     (toolName === "wordAlignment"
@@ -753,7 +753,6 @@ export const ToolWrapper = () => {
       : toolName === "translationNotes"
         ? dataTn != null
         : true) &&
-      
     contextId != null &&
     lexicon != null &&
     saveCheckingData != null &&
@@ -761,11 +760,10 @@ export const ToolWrapper = () => {
     targetLanguageDetails != null &&
     !loadingTool;
 
-
-  if(ready){
-    console.log(contextId)
-    console.log(checkingData)
-    console.log(dataTn)
+  if (ready) {
+    console.log(contextId);
+    console.log(checkingData);
+    console.log(dataTn);
   }
   return (
     <div style={{ height: "calc(100vh - 100px)" }}>

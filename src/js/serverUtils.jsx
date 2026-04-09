@@ -22,12 +22,12 @@ export const deleteBookProject = async (repoName, tCoreNameProject) => {
 export const deleteIngredient = async (
   repoName,
   tCoreNameProject,
-  no_bak = true
+  no_bak = true,
 ) => {
   let url =
     DELETE_INGREDIENT_PATH.replace(
       "%Project%",
-      "_local_/_local_" + "/" + repoName
+      "_local_/_local_" + "/" + repoName,
     ) + tCoreNameProject;
   if (no_bak) {
     url += "&no_bak=true";
@@ -47,7 +47,7 @@ export async function fsGetRust(
   ipath,
   intermediatePath = "_local_/_local_",
   debug = false,
-  batchGet = false
+  batchGet = false,
 ) {
   try {
     if (batchGet) {
@@ -105,7 +105,7 @@ export async function fsGetRust(
         if (firstPart) inDirectory.add(firstPart);
       }
       let toBeReturn = Array.from(inDirectory).filter(
-        (p) => !p.endsWith(".bak")
+        (p) => !p.endsWith(".bak"),
       );
       return toBeReturn;
     } else {
@@ -145,7 +145,7 @@ export async function fsWriteRust(
   repoPath,
   ipath,
   data,
-  intermediatePath = "_local_/_local_"
+  intermediatePath = "_local_/_local_",
 ) {
   try {
     let url =
@@ -168,7 +168,7 @@ export async function fsWriteRust(
 }
 export async function updateIngredients(
   repoPath,
-  intermediatePath = "_local_/_local_"
+  intermediatePath = "_local_/_local_",
 ) {
   try {
     let url =
@@ -195,7 +195,7 @@ export async function fsExistsRust(
   repoPath,
   ipath,
   intermediatePath = "_local_/_local_",
-  reloadTreeCache = true
+  reloadTreeCache = true,
 ) {
   try {
     if (treeCache.length <= 0 || reloadTreeCache) {
@@ -222,7 +222,7 @@ export async function fsGetManifest(first, second, third) {
 }
 function getUrlForGetBatchDocumentInProject(
   repoPath,
-  intermediatePath = "_local_/_local_"
+  intermediatePath = "_local_/_local_",
 ) {
   if (!intermediatePath.includes("_local_/_local_")) {
     return (
@@ -230,7 +230,7 @@ function getUrlForGetBatchDocumentInProject(
       "/" +
       IMPORTS_PATH_BATCH.replace("_local_/_local_", intermediatePath).replace(
         "%Project%",
-        `${repoPath}`
+        `${repoPath}`,
       )
     );
   }
@@ -240,7 +240,7 @@ function getUrlForGetBatchDocumentInProject(
 }
 function getUrlForGetDocumentInProject(
   repoPath,
-  intermediatePath = "_local_/_local_"
+  intermediatePath = "_local_/_local_",
 ) {
   if (!intermediatePath.includes("_local_/_local_")) {
     return (
@@ -248,7 +248,7 @@ function getUrlForGetDocumentInProject(
       "/" +
       IMPORTS_PATH.replace("_local_/_local_", intermediatePath).replace(
         "%Project%",
-        `${repoPath}`
+        `${repoPath}`,
       )
     );
   }
@@ -256,7 +256,7 @@ function getUrlForGetDocumentInProject(
 }
 function getUrlForExistDocumentInProject(
   repoPath,
-  intermediatePath = "_local_/_local_"
+  intermediatePath = "_local_/_local_",
 ) {
   if (!intermediatePath.includes("_local_/_local_")) {
     return (

@@ -1,20 +1,20 @@
 import cloneDeep from "lodash.clonedeep";
-import {removeUsfmMarkers, usfmVerseToJson} from "./usfmHelpers";
+import { removeUsfmMarkers, usfmVerseToJson } from "./usfmHelpers";
 import wordaligner from "word-aligner";
 import * as UsfmFileConversionHelpers from "./UsfmFileConversionHelpers";
 import {
   convertAlignmentFromVerseToVerseSpanSub,
   convertVerseDataToUSFM,
-  getUsfmForVerseContent
+  getUsfmForVerseContent,
 } from "./UsfmFileConversionHelpers";
 import {
   getAlignedWordListFromAlignments,
   getOriginalLanguageListForVerseData,
   migrateTargetAlignmentsToOriginal,
-  updateAlignedWordsFromOriginalWordList
+  updateAlignedWordsFromOriginalWordList,
 } from "./migrateOriginalLanguageHelpers";
 import Lexer from "wordmap-lexer";
-import { getVerseSpanRange } from './verseObjects';
+import { getVerseSpanRange } from "./verseObjects";
 
 /**
  * get all the alignments for verse from nested array (finds zaln objects)
@@ -26,7 +26,7 @@ export function getVerseAlignments(verseSpanAlignments) {
 
   if (verseSpanAlignments) {
     for (let alignment of verseSpanAlignments) {
-      if (alignment.tag === 'zaln') {
+      if (alignment.tag === "zaln") {
         alignments.push(alignment);
       }
 
@@ -75,7 +75,7 @@ export function getWordCountInVerse(verseAlignments, matchVerse, word) {
  * @returns {number|*}
  */
 function parseStrToNumber(value) {
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const number = parseInt(value);
     return number;
   }
@@ -90,15 +90,13 @@ function parseStrToNumber(value) {
 function convertOccurrencesInWord(item) {
   const occurrence = parseStrToNumber(item.occurrence);
   const occurrences = parseStrToNumber(item.occurrences);
-  if (
-    (occurrence !== item.occurrence)
-    || (occurrences !== item.occurrences)
-  ) { // if occurrence(s) changed, create new word
+  if (occurrence !== item.occurrence || occurrences !== item.occurrences) {
+    // if occurrence(s) changed, create new word
     return {
       ...item,
       occurrence,
       occurrences,
-    }
+    };
   }
 
   return item;
@@ -110,9 +108,9 @@ function convertOccurrencesInWord(item) {
  * @returns {array}
  */
 export function convertOccurrences(wordlist) {
-  const wordlist_ = wordlist.map(item => {
+  const wordlist_ = wordlist.map((item) => {
     return convertOccurrencesInWord(item);
-  })
+  });
   return wordlist_;
 }
 
@@ -122,15 +120,15 @@ export function convertOccurrences(wordlist) {
  * @return {array}
  */
 export function getWordListFromVerseObjects(verseObjects) {
-  const targetVerseUSFM = getUsfmForVerseContent({verseObjects})
+  const targetVerseUSFM = getUsfmForVerseContent({ verseObjects });
   let targetTokens = Lexer.tokenize(removeUsfmMarkers(targetVerseUSFM));
-  targetTokens = targetTokens.map(token => (
-  { // exclude unneeded data
+  targetTokens = targetTokens.map((token) => ({
+    // exclude unneeded data
     text: token.text || token.word,
     occurrence: token.tokenOccurrence,
     occurrences: token.tokenOccurrences,
     index: token.tokenPos,
-  }))
+  }));
   return targetTokens;
 }
 
@@ -140,68 +138,83 @@ export function getWordListFromVerseObjects(verseObjects) {
  * @param {object|null} sourceVerse - optional source verse in verseObject format to maintain source language word order
  * @return {array} list of alignments in target text
  */
-export function extractAlignmentsFromTargetVerse(alignedTargetVerse, sourceVerse) {
+export function extractAlignmentsFromTargetVerse(
+  alignedTargetVerse,
+  sourceVerse,
+) {
   try {
     const targetVerse = usfmVerseToJson(alignedTargetVerse);
     const alignments = wordaligner.unmerge(targetVerse, sourceVerse);
-    const originalLangWordList = sourceVerse && getOriginalLanguageListForVerseData(sourceVerse);
-    const alignmentsWordList = getAlignedWordListFromAlignments(alignments.alignment);
+    const originalLangWordList =
+      sourceVerse && getOriginalLanguageListForVerseData(sourceVerse);
+    const alignmentsWordList = getAlignedWordListFromAlignments(
+      alignments.alignment,
+    );
     const targetTokens = getWordListFromVerseObjects(targetVerse);
     // clean up metadata in alignments
-    originalLangWordList && updateAlignedWordsFromOriginalWordList(originalLangWordList, alignmentsWordList);
-    if (alignments.alignment) { // for compatibility change alignment to alignments
+    originalLangWordList &&
+      updateAlignedWordsFromOriginalWordList(
+        originalLangWordList,
+        alignmentsWordList,
+      );
+    if (alignments.alignment) {
+      // for compatibility change alignment to alignments
       // convert occurrence(s) from string to number
-      const alignments_ = alignments.alignment.map(alignment => {
+      const alignments_ = alignments.alignment.map((alignment) => {
         const topWords = convertOccurrences(alignment.topWords);
         const bottomWords = convertOccurrences(alignment.bottomWords);
         return {
-          sourceNgram: topWords.map(topWord => { // word aligner uses sourceNgram instead of topWord
+          sourceNgram: topWords.map((topWord) => {
+            // word aligner uses sourceNgram instead of topWord
             if (originalLangWordList) {
-              const pos = originalLangWordList.findIndex(item => (
-                topWord.word === (item.word || item.text) &&
-                topWord.occurrence == item.occurrence //Tricky: we want to allow automatic conversion between string and integer because occurrence could be either
-              ));
+              const pos = originalLangWordList.findIndex(
+                (item) =>
+                  topWord.word === (item.word || item.text) &&
+                  topWord.occurrence == item.occurrence, //Tricky: we want to allow automatic conversion between string and integer because occurrence could be either
+              );
               const newSource = {
                 ...topWord,
                 index: pos,
                 text: topWord.text || topWord.word,
               };
-              delete newSource.word
-              return newSource
+              delete newSource.word;
+              return newSource;
             }
             const newSource = {
               ...topWord,
               text: topWord.text || topWord.word,
             };
-            delete newSource.word
-            delete newSource.position
-            return newSource
+            delete newSource.word;
+            delete newSource.position;
+            return newSource;
           }),
-          targetNgram: bottomWords.map(bottomWord => { // word aligner uses targetNgram instead of bottomWords
-            const word = bottomWord.text || bottomWord.word
+          targetNgram: bottomWords.map((bottomWord) => {
+            // word aligner uses targetNgram instead of bottomWords
+            const word = bottomWord.text || bottomWord.word;
             // noinspection EqualityComparisonWithCoercionJS
-            const pos = targetTokens.findIndex(item => (
-              word === item.text &&
-              // eslint-disable-next-line eqeqeq
-              bottomWord.occurrence == item.occurrence
-            ));
+            const pos = targetTokens.findIndex(
+              (item) =>
+                word === item.text &&
+                // eslint-disable-next-line eqeqeq
+                bottomWord.occurrence == item.occurrence,
+            );
 
             const newTarget = {
               ...bottomWord,
               index: pos,
               text: word,
             };
-            delete newTarget.word
+            delete newTarget.word;
             return newTarget;
           }),
-        }
-      })
+        };
+      });
       alignments.alignments = alignments_;
     }
     return alignments;
   } catch (e) {
-    console.warn(`extractAlignmentsFromTargetVerse()`,e)
-    return null
+    console.warn(`extractAlignmentsFromTargetVerse()`, e);
+    return null;
   }
 }
 
@@ -211,20 +224,30 @@ export function extractAlignmentsFromTargetVerse(alignedTargetVerse, sourceVerse
  * @param {{alignments, wordBank}} verseAlignments - contains all the alignments and wordbank is list of unaligned target words
  * @return {string|null} target verse in USFM format
  */
-export function addAlignmentsToTargetVerseUsingMerge(targetVerseText, verseAlignments) {
-  const verseString = UsfmFileConversionHelpers.cleanAlignmentMarkersFromString(targetVerseText);
+export function addAlignmentsToTargetVerseUsingMerge(
+  targetVerseText,
+  verseAlignments,
+) {
+  const verseString =
+    UsfmFileConversionHelpers.cleanAlignmentMarkersFromString(targetVerseText);
   let verseObjects;
 
   try {
     verseObjects = wordaligner.merge(
-      verseAlignments.alignments, verseAlignments.wordBank, verseString, true,
+      verseAlignments.alignments,
+      verseAlignments.wordBank,
+      verseString,
+      true,
     );
   } catch (e) {
-    console.error(`addAlignmentsToTargetVerseUsingMerge() - invalid alignment`, e);
+    console.error(
+      `addAlignmentsToTargetVerseUsingMerge() - invalid alignment`,
+      e,
+    );
   }
 
   if (verseObjects) {
-    const targetVerse = convertVerseDataToUSFM({verseObjects});
+    const targetVerse = convertVerseDataToUSFM({ verseObjects });
     return targetVerse;
   }
 
@@ -237,15 +260,20 @@ export function addAlignmentsToTargetVerseUsingMerge(targetVerseText, verseAlign
  * @param {array} alignments
  * @returns {array} updated target word list
  */
-export function  markTargetWordsAsDisabledIfAlreadyUsedForAlignments(targetWordList, alignments) {
-  return targetWordList.map(token => {
+export function markTargetWordsAsDisabledIfAlreadyUsedForAlignments(
+  targetWordList,
+  alignments,
+) {
+  return targetWordList.map((token) => {
     let isUsed = false;
 
     for (const alignment of alignments) {
       for (const usedToken of alignment.targetNgram) {
-        if (token.text.toString() === usedToken.text.toString()
-          && token.occurrence === usedToken.occurrence
-          && token.occurrences === usedToken.occurrences) {
+        if (
+          token.text.toString() === usedToken.text.toString() &&
+          token.occurrence === usedToken.occurrence &&
+          token.occurrences === usedToken.occurrences
+        ) {
           isUsed = true;
           break;
         }
@@ -255,13 +283,14 @@ export function  markTargetWordsAsDisabledIfAlreadyUsedForAlignments(targetWordL
       }
     }
 
-    const targetWord = { // exclude unneeded data
+    const targetWord = {
+      // exclude unneeded data
       disabled: isUsed,
       text: token.text,
       occurrence: token.tokenOccurrence,
       occurrences: token.tokenOccurrences,
       index: token.tokenPos,
-    }
+    };
     return targetWord;
   });
 }
@@ -273,18 +302,22 @@ export function  markTargetWordsAsDisabledIfAlreadyUsedForAlignments(targetWordL
  * @param {string} targetVerseText - target verse to receive alignments
  * @return {string|null} target verse in USFM format
  */
-export function addAlignmentsToVerseUSFM(wordBankWords, verseAlignments, targetVerseText) {
-  let wordBank = wordBankWords.filter(item => (!item.disabled))
-  wordBank = wordBank.map(item => ({
+export function addAlignmentsToVerseUSFM(
+  wordBankWords,
+  verseAlignments,
+  targetVerseText,
+) {
+  let wordBank = wordBankWords.filter((item) => !item.disabled);
+  wordBank = wordBank.map((item) => ({
     ...item,
     word: item.word || item.text,
     occurrence: item.occurrence || item.occurrence,
     occurrences: item.occurrences || item.occurrences,
-  }))
+  }));
   // remap sourceNgram:topWords, targetNgram:bottomWords,
-  const alignments_ = verseAlignments.map(item => ({
+  const alignments_ = verseAlignments.map((item) => ({
     ...item,
-    topWords: item.sourceNgram.map(item => ({
+    topWords: item.sourceNgram.map((item) => ({
       strong: item.strong,
       lemma: item.lemma,
       morph: item.morph,
@@ -292,16 +325,19 @@ export function addAlignmentsToVerseUSFM(wordBankWords, verseAlignments, targetV
       occurrences: item.occurrences,
       word: item.word || item.text,
     })),
-    bottomWords: item.targetNgram.map(item => ({
+    bottomWords: item.targetNgram.map((item) => ({
       ...item,
-      word: item.word || item.text
+      word: item.word || item.text,
     })),
   }));
   const alignments = {
     alignments: alignments_,
     wordBank,
-  }
-  const verseUsfm = addAlignmentsToTargetVerseUsingMerge(targetVerseText, alignments);
+  };
+  const verseUsfm = addAlignmentsToTargetVerseUsingMerge(
+    targetVerseText,
+    alignments,
+  );
   return verseUsfm;
 }
 
@@ -317,12 +353,19 @@ export function parseUsfmToWordAlignerData(targetVerseUSFM, sourceVerseUSFM) {
     targetTokens = Lexer.tokenize(removeUsfmMarkers(targetVerseUSFM));
   }
 
-  const sourceVerseObjects = sourceVerseUSFM && usfmVerseToJson(sourceVerseUSFM);
+  const sourceVerseObjects =
+    sourceVerseUSFM && usfmVerseToJson(sourceVerseUSFM);
   let targetWords = [];
-  const targetVerseAlignments = extractAlignmentsFromTargetVerse(targetVerseUSFM, sourceVerseObjects);
+  const targetVerseAlignments = extractAlignmentsFromTargetVerse(
+    targetVerseUSFM,
+    sourceVerseObjects,
+  );
   const verseAlignments = targetVerseAlignments?.alignments;
-  targetWords = markTargetWordsAsDisabledIfAlreadyUsedForAlignments(targetTokens, verseAlignments);
-  return {targetWords, verseAlignments};
+  targetWords = markTargetWordsAsDisabledIfAlreadyUsedForAlignments(
+    targetTokens,
+    verseAlignments,
+  );
+  return { targetWords, verseAlignments };
 }
 
 /**
@@ -344,7 +387,8 @@ export function areAlgnmentsComplete(targetWords, verseAlignments) {
     for (const alignment of verseAlignments) {
       const sourceWordCount = alignment.sourceNgram?.length || 0;
       const targetWordCount = alignment.targetNgram?.length || 0;
-      if (!targetWordCount && sourceWordCount) { // if no target words, but we have source words, then incomplete alignment
+      if (!targetWordCount && sourceWordCount) {
+        // if no target words, but we have source words, then incomplete alignment
         alignmentComplete = false;
         break;
       }
@@ -360,12 +404,17 @@ export function areAlgnmentsComplete(targetWords, verseAlignments) {
  * @param {array} wordBankList - list of target words in the word bank
  * @param {array} verseAlignments - list of verse alignments that may need updating
  */
-export function handleAddedWordsInNewText(targetWordList, wordBankList, verseAlignments) {
+export function handleAddedWordsInNewText(
+  targetWordList,
+  wordBankList,
+  verseAlignments,
+) {
   for (const targetToken of targetWordList) {
-    const pos = wordBankList.findIndex(word => (
-      word.text === targetToken.text &&
-      word.occurrence === targetToken.occurrence
-    ))
+    const pos = wordBankList.findIndex(
+      (word) =>
+        word.text === targetToken.text &&
+        word.occurrence === targetToken.occurrence,
+    );
     if (pos < 0) {
       const occurrences = targetToken.occurrences;
       const tokenWord = targetToken.text;
@@ -374,7 +423,7 @@ export function handleAddedWordsInNewText(targetWordList, wordBankList, verseAli
         for (const targetWord of alignment.targetNgram) {
           var word_ = targetWord.word || targetWord.text;
           if (word_ === tokenWord) {
-            targetWord.occurrences = occurrences
+            targetWord.occurrences = occurrences;
           }
         }
       }
@@ -382,7 +431,7 @@ export function handleAddedWordsInNewText(targetWordList, wordBankList, verseAli
       for (const wordBank of wordBankList) {
         var word_ = wordBank.word || wordBank.text;
         if (word_ === tokenWord) {
-          wordBank.occurrences = occurrences
+          wordBank.occurrences = occurrences;
         }
       }
       wordBankList.push(targetToken);
@@ -397,7 +446,11 @@ export function handleAddedWordsInNewText(targetWordList, wordBankList, verseAli
  * @param {array} targetWordList - list of target words in new verse text
  * @param {array} targetWords - list of target words in alignments
  * */
-export function handleDeletedWords(verseAlignments, targetWordList, targetWords) {
+export function handleDeletedWords(
+  verseAlignments,
+  targetWordList,
+  targetWords,
+) {
   for (const alignment of verseAlignments) {
     let delete_ = [];
     for (let i = 0, l = alignment.targetNgram.length; i < l; i++) {
@@ -428,17 +481,17 @@ export function handleDeletedWords(verseAlignments, targetWordList, targetWords)
 
   // remove extra target words that are not in targetWordList
   for (let i = 0; i < targetWords.length; i++) {
-    let newOccurrences = 0
-    const wordBankWord = targetWords[i]
-    const found = targetWordList.findIndex(word => {
-      if (word.text === wordBankWord.text ) {
+    let newOccurrences = 0;
+    const wordBankWord = targetWords[i];
+    const found = targetWordList.findIndex((word) => {
+      if (word.text === wordBankWord.text) {
         if (word.occurrence === wordBankWord.occurrence) {
-          return true
+          return true;
         }
-        newOccurrences = word.occurrences
+        newOccurrences = word.occurrences;
       }
       return false;
-    })
+    });
     if (found < 0) {
       // update occurrences
       if (newOccurrences) {
@@ -446,14 +499,14 @@ export function handleDeletedWords(verseAlignments, targetWordList, targetWords)
           if (word.text === wordBankWord.text) {
             if (word.occurrences !== newOccurrences) {
               // fixup counts
-              word.occurrences = newOccurrences
+              word.occurrences = newOccurrences;
             }
           }
         }
       }
       // remove extra word
-      targetWords.splice(i, 1)
-      i--
+      targetWords.splice(i, 1);
+      i--;
     }
   }
 }
@@ -464,18 +517,32 @@ export function handleDeletedWords(verseAlignments, targetWordList, targetWords)
  * @param {object[]} targetVerseObjects
  * @param {string} newTargetVerse
  */
-export function updateAlignmentsToTargetVerse(targetVerseObjects, newTargetVerse) {
+export function updateAlignmentsToTargetVerse(
+  targetVerseObjects,
+  newTargetVerse,
+) {
   let targetVerseText = convertVerseDataToUSFM(targetVerseObjects);
-  let { targetWords, verseAlignments } = parseUsfmToWordAlignerData(targetVerseText, null);
-  const targetTokens = getWordListFromVerseObjects(usfmVerseToJson(newTargetVerse));
+  let { targetWords, verseAlignments } = parseUsfmToWordAlignerData(
+    targetVerseText,
+    null,
+  );
+  const targetTokens = getWordListFromVerseObjects(
+    usfmVerseToJson(newTargetVerse),
+  );
   handleAddedWordsInNewText(targetTokens, targetWords, verseAlignments);
   handleDeletedWords(verseAlignments, targetTokens, targetWords);
-  targetVerseText = addAlignmentsToVerseUSFM(targetWords, verseAlignments, newTargetVerse);
+  targetVerseText = addAlignmentsToVerseUSFM(
+    targetWords,
+    verseAlignments,
+    newTargetVerse,
+  );
   if (targetVerseText === null) {
-    console.warn(`updateAlignmentsToTargetVerse() - alignment FAILED for ${newTargetVerse}, removing all alignments`);
+    console.warn(
+      `updateAlignmentsToTargetVerse() - alignment FAILED for ${newTargetVerse}, removing all alignments`,
+    );
     targetVerseText = newTargetVerse;
   }
-  const alignedVerseObjects = usfmVerseToJson(targetVerseText)
+  const alignedVerseObjects = usfmVerseToJson(targetVerseText);
   return {
     targetVerseObjects: alignedVerseObjects,
     targetVerseText,
@@ -489,13 +556,23 @@ export function updateAlignmentsToTargetVerse(targetVerseObjects, newTargetVerse
  * @param {string} newTargetVerse
  * @param {object[]} originalLanguageVerseObjects
  */
-export function updateAlignmentsToTargetVerseWithOriginal(targetVerseObjects, newTargetVerse, originalLanguageVerseObjects) {
+export function updateAlignmentsToTargetVerseWithOriginal(
+  targetVerseObjects,
+  newTargetVerse,
+  originalLanguageVerseObjects,
+) {
   // migrate the initial alignments to current original source
-  const migratedTargetVerseObjects = migrateTargetAlignmentsToOriginal(targetVerseObjects, originalLanguageVerseObjects)
+  const migratedTargetVerseObjects = migrateTargetAlignmentsToOriginal(
+    targetVerseObjects,
+    originalLanguageVerseObjects,
+  );
 
   // apply new verse text
-  const results = updateAlignmentsToTargetVerse(migratedTargetVerseObjects, newTargetVerse)
-  return results
+  const results = updateAlignmentsToTargetVerse(
+    migratedTargetVerseObjects,
+    newTargetVerse,
+  );
+  return results;
 }
 
 /**
@@ -505,7 +582,11 @@ export function updateAlignmentsToTargetVerseWithOriginal(targetVerseObjects, ne
  * @param {object} blankVerseAlignments - object to return verse alignments
  * @return {{low, hi}} get range of verses in verse span
  */
-function getRawAlignmentsForVerseSpan(verseSpan, origLangChapterJson, blankVerseAlignments) {
+function getRawAlignmentsForVerseSpan(
+  verseSpan,
+  origLangChapterJson,
+  blankVerseAlignments,
+) {
   const { low, high } = getVerseSpanRange(verseSpan);
 
   // generate raw alignment data for each verse in range
@@ -513,7 +594,8 @@ function getRawAlignmentsForVerseSpan(verseSpan, origLangChapterJson, blankVerse
     const originalVerse = origLangChapterJson[verse];
 
     if (originalVerse) {
-      const blankAlignments = wordaligner.generateBlankAlignments(originalVerse);
+      const blankAlignments =
+        wordaligner.generateBlankAlignments(originalVerse);
       blankVerseAlignments[verse] = blankAlignments;
     }
   }
@@ -530,7 +612,13 @@ function getRawAlignmentsForVerseSpan(verseSpan, origLangChapterJson, blankVerse
  * @param {object} blankVerseAlignments - raw verse alignments for extracting word counts for each verse
  * @param {number|string} chapterNumber
  */
-function convertAlignmentsFromVerseSpansToVerseSub(verseSpanData, low, hi, blankVerseAlignments, chapterNumber) {
+function convertAlignmentsFromVerseSpansToVerseSub(
+  verseSpanData,
+  low,
+  hi,
+  blankVerseAlignments,
+  chapterNumber,
+) {
   const verseSpanAlignments = verseSpanData && verseSpanData.verseObjects;
   const alignments = getVerseAlignments(verseSpanAlignments);
 
@@ -542,7 +630,8 @@ function convertAlignmentsFromVerseSpansToVerseSub(verseSpanData, low, hi, blank
     for (let verse = low; verse <= hi; verse++) {
       const wordCount = getWordCountInVerse(blankVerseAlignments, verse, word);
 
-      if (occurrence <= wordCount) { // if inside this verse, add reference
+      if (occurrence <= wordCount) {
+        // if inside this verse, add reference
         alignment.ref = `${chapterNumber}:${verse}`;
         alignment.occurrences = wordCount;
         alignment.occurrence = occurrence;
@@ -562,17 +651,34 @@ function convertAlignmentsFromVerseSpansToVerseSub(verseSpanData, low, hi, blank
  * @param {string} verseSpan - range of verses (e.g. '11-13')
  * @return {{alignedTargetVerseObjects: *, originalLanguageVerseObjects: {verseObjects}}}
  */
-export function convertAlignmentFromVerseToVerseSpan(targetLanguageVerse, originalLanguageChapterData, chapter, verseSpan) {
+export function convertAlignmentFromVerseToVerseSpan(
+  targetLanguageVerse,
+  originalLanguageChapterData,
+  chapter,
+  verseSpan,
+) {
   const blankVerseAlignments = {};
-  const alignedTargetVerseObjects = cloneDeep(targetLanguageVerse)
-  const {low, hi} = getRawAlignmentsForVerseSpan(verseSpan, originalLanguageChapterData, blankVerseAlignments);
+  const alignedTargetVerseObjects = cloneDeep(targetLanguageVerse);
+  const { low, hi } = getRawAlignmentsForVerseSpan(
+    verseSpan,
+    originalLanguageChapterData,
+    blankVerseAlignments,
+  );
   let mergedUgntData = [];
   for (let verse = low; verse <= hi; verse++) {
-    const verseObjectsForVerse = originalLanguageChapterData?.[verse]?.verseObjects;
-    mergedUgntData = mergedUgntData.concat(verseObjectsForVerse || [])
+    const verseObjectsForVerse =
+      originalLanguageChapterData?.[verse]?.verseObjects;
+    mergedUgntData = mergedUgntData.concat(verseObjectsForVerse || []);
   }
-  const originalLanguageVerseObjects = convertAlignmentFromVerseToVerseSpanSub(mergedUgntData, alignedTargetVerseObjects, chapter, low, hi, blankVerseAlignments)
-  return {alignedTargetVerseObjects, originalLanguageVerseObjects};
+  const originalLanguageVerseObjects = convertAlignmentFromVerseToVerseSpanSub(
+    mergedUgntData,
+    alignedTargetVerseObjects,
+    chapter,
+    low,
+    hi,
+    blankVerseAlignments,
+  );
+  return { alignedTargetVerseObjects, originalLanguageVerseObjects };
 }
 
 /**
@@ -583,12 +689,27 @@ export function convertAlignmentFromVerseToVerseSpan(targetLanguageVerse, origin
  * @param {string} verseSpan
  * @return {string}
  */
-export function convertAlignmentsFromVerseSpansToVerse(originalLanguageChapterData, alignedTargetVerseObjects, chapter, verseSpan) {
+export function convertAlignmentsFromVerseSpansToVerse(
+  originalLanguageChapterData,
+  alignedTargetVerseObjects,
+  chapter,
+  verseSpan,
+) {
   const blankVerseAlignments = {};
-  const {low, hi} = getRawAlignmentsForVerseSpan(verseSpan, originalLanguageChapterData, blankVerseAlignments);
-  const verseSpanData = cloneDeep(alignedTargetVerseObjects)
-  convertAlignmentsFromVerseSpansToVerseSub(verseSpanData, low, hi, blankVerseAlignments, chapter)
-  const finalUSFM = convertVerseDataToUSFM(verseSpanData)
+  const { low, hi } = getRawAlignmentsForVerseSpan(
+    verseSpan,
+    originalLanguageChapterData,
+    blankVerseAlignments,
+  );
+  const verseSpanData = cloneDeep(alignedTargetVerseObjects);
+  convertAlignmentsFromVerseSpansToVerseSub(
+    verseSpanData,
+    low,
+    hi,
+    blankVerseAlignments,
+    chapter,
+  );
+  const finalUSFM = convertVerseDataToUSFM(verseSpanData);
   return finalUSFM;
 }
 
@@ -600,29 +721,32 @@ export function convertAlignmentsFromVerseSpansToVerse(originalLanguageChapterDa
  */
 export function resetAlignments(verseAlignments_, targetWords_) {
   if (verseAlignments_?.length) {
-    const verseAlignments = cloneDeep(verseAlignments_)
-    const targetWords = cloneDeep(targetWords_)
+    const verseAlignments = cloneDeep(verseAlignments_);
+    const targetWords = cloneDeep(targetWords_);
 
-    for (const alignment of verseAlignments) { // clear out each alignment
-      alignment.targetNgram = [] // remove target words for each alignment
-      if (alignment.sourceNgram?.length > 1) { // if there are multiple source words, split each into separate alignment
+    for (const alignment of verseAlignments) {
+      // clear out each alignment
+      alignment.targetNgram = []; // remove target words for each alignment
+      if (alignment.sourceNgram?.length > 1) {
+        // if there are multiple source words, split each into separate alignment
         for (let i = 1; i < alignment.sourceNgram?.length; i++) {
-          const sourceNgram = alignment.sourceNgram[i]
+          const sourceNgram = alignment.sourceNgram[i];
           const newAlignment = {
             sourceNgram: [sourceNgram],
-            targetNgram: []
-          }
-          verseAlignments.push(newAlignment)
+            targetNgram: [],
+          };
+          verseAlignments.push(newAlignment);
         }
 
-        alignment.sourceNgram = [alignment.sourceNgram[0]]
+        alignment.sourceNgram = [alignment.sourceNgram[0]];
       }
     }
 
-    for (const word of targetWords) { // clear all words marked used
-      word.disabled = false
+    for (const word of targetWords) {
+      // clear all words marked used
+      word.disabled = false;
     }
-    return {verseAlignments, targetWords}
+    return { verseAlignments, targetWords };
   }
-  return { }
+  return {};
 }

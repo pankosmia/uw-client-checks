@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
-import usfmjs from 'usfm-js';
+import usfmjs from "usfm-js";
 // helpers
-import * as bibleHelpers from './bibleHelpers';
+import * as bibleHelpers from "./bibleHelpers";
 
 /**
  * @description Parses the usfm file using usfm-parse library.
@@ -10,7 +10,9 @@ import * as bibleHelpers from './bibleHelpers';
 export function getParsedUSFM(usfmData) {
   try {
     if (usfmData) {
-      return usfmjs.toJSON(usfmData, { convertToInt: ['occurrence', 'occurrences'] });
+      return usfmjs.toJSON(usfmData, {
+        convertToInt: ["occurrence", "occurrences"],
+      });
     }
   } catch (e) {
     console.error(e);
@@ -25,7 +27,7 @@ export function getParsedUSFM(usfmData) {
  */
 export function getHeaderTag(headers, tag) {
   if (headers) {
-    const retVal = headers.find(header => header.tag === tag);
+    const retVal = headers.find((header) => header.tag === tag);
 
     if (retVal) {
       return retVal.content;
@@ -40,8 +42,8 @@ export function getHeaderTag(headers, tag) {
  * @return {*}
  */
 export function getUsfmHeaderInfo(usfmData) {
-  const pos = usfmData.indexOf('\\c ');
-  const header = (pos >= 0) ? usfmData.substr(0, pos) : usfmData; // if chapter marker is found, process only that part
+  const pos = usfmData.indexOf("\\c ");
+  const header = pos >= 0 ? usfmData.substr(0, pos) : usfmData; // if chapter marker is found, process only that part
   return getParsedUSFM(header);
 }
 
@@ -70,35 +72,35 @@ export function getUSFMDetails(usfmObject) {
     language: {
       id: undefined,
       name: undefined,
-      direction: 'ltr',
+      direction: "ltr",
     },
     target_languge: { book: { name: undefined } },
   };
 
   // adding target language book name from usfm headers
-  const targetLangugeBookName = getHeaderTag(usfmObject.headers, 'h');
+  const targetLangugeBookName = getHeaderTag(usfmObject.headers, "h");
   details.target_languge.book.name = targetLangugeBookName;
 
   let headerIDArray = [];
-  const tag = 'id';
+  const tag = "id";
   const id = getHeaderTag(usfmObject.headers, tag);
 
   if (id) {
     // Conditional to determine how USFM should be parsed.
-    let isSpaceDelimited = id.split(' ').length > 1;
-    let isCommaDelimited = id.split(',').length > 1;
+    let isSpaceDelimited = id.split(" ").length > 1;
+    let isCommaDelimited = id.split(",").length > 1;
 
     if (isSpaceDelimited) {
       // i.e. TIT EN_ULB sw_Kiswahili_ltr Wed Jul 26 2017 22:14:55 GMT-0700 (PDT) tc.
       // Could have attached commas if both comma delimited and space delimited
-      headerIDArray = id.split(' ');
+      headerIDArray = id.split(" ");
       headerIDArray.forEach((element, index) => {
-        headerIDArray[index] = element.replace(',', '');
+        headerIDArray[index] = element.replace(",", "");
       });
       details.book.id = headerIDArray[0].trim().toLowerCase();
     } else if (isCommaDelimited) {
       // i.e. TIT, sw_Kiswahili_ltr, EN_ULB, Thu Jul 20 2017 16:03:48 GMT-0700 (PDT), tc.
-      headerIDArray = id.split(',');
+      headerIDArray = id.split(",");
       details.book.id = headerIDArray[0].trim().toLowerCase();
     } else {
       // i.e. EPH
@@ -119,18 +121,18 @@ export function getUSFMDetails(usfmObject) {
       }
     }
 
-    let tcField = headerIDArray[headerIDArray.length - 1] || '';
+    let tcField = headerIDArray[headerIDArray.length - 1] || "";
 
-    if (tcField.trim() === 'tc') {
+    if (tcField.trim() === "tc") {
       details.repo = headerIDArray[1];
 
       // Checking for tC field to parse with more information than standard usfm.
       for (let index in headerIDArray) {
-        let languageCodeArray = headerIDArray[index].trim().split('_');
+        let languageCodeArray = headerIDArray[index].trim().split("_");
 
         if (languageCodeArray.length === 3) {
           details.language.id = languageCodeArray[0].toLowerCase();
-          details.language.name = languageCodeArray[1].split('⋅').join(' '); // restore spaces
+          details.language.name = languageCodeArray[1].split("⋅").join(" "); // restore spaces
           details.language.direction = languageCodeArray[2].toLowerCase();
         }
       }
@@ -150,7 +152,7 @@ export const removeUsfmMarkers = (targetVerseText) => {
 
 export function usfmVerseToJson(verseUSFM) {
   if (verseUSFM) {
-    const verseObjects = usfmjs.toJSON('\\v 1 ' + verseUSFM, {chunk: true});
+    const verseObjects = usfmjs.toJSON("\\v 1 " + verseUSFM, { chunk: true });
 
     if (verseObjects?.verses?.[1]?.verseObjects) {
       return verseObjects.verses[1].verseObjects;

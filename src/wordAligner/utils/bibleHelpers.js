@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import * as Bible from '../common/BooksOfTheBible';
+import * as Bible from "../common/BooksOfTheBible";
 
 /**
  *
@@ -36,7 +36,7 @@ export function isNewTestament(bookId) {
  * @return {boolean}
  */
 export function isValidBibleBook(bookId) {
-  return (isNewTestament(bookId) || isOldTestament(bookId)) ;
+  return isNewTestament(bookId) || isOldTestament(bookId);
 }
 
 /**
@@ -46,8 +46,12 @@ export function isValidBibleBook(bookId) {
  * @return {boolean}
  */
 export function isOriginalLanguageBible(languageId, bookId) {
-  return ((languageId.toLowerCase() === Bible.NT_ORIG_LANG && bookId.toLowerCase() === Bible.NT_ORIG_LANG_BIBLE) ||
-    (languageId.toLowerCase() === Bible.OT_ORIG_LANG && bookId.toLowerCase() === Bible.OT_ORIG_LANG_BIBLE));
+  return (
+    (languageId.toLowerCase() === Bible.NT_ORIG_LANG &&
+      bookId.toLowerCase() === Bible.NT_ORIG_LANG_BIBLE) ||
+    (languageId.toLowerCase() === Bible.OT_ORIG_LANG &&
+      bookId.toLowerCase() === Bible.OT_ORIG_LANG_BIBLE)
+  );
 }
 
 /**
@@ -56,7 +60,10 @@ export function isOriginalLanguageBible(languageId, bookId) {
  * @return {boolean}
  */
 export function isOriginalLanguage(languageId) {
-  return (languageId.toLowerCase() === Bible.NT_ORIG_LANG || languageId.toLowerCase() === Bible.OT_ORIG_LANG);
+  return (
+    languageId.toLowerCase() === Bible.NT_ORIG_LANG ||
+    languageId.toLowerCase() === Bible.OT_ORIG_LANG
+  );
 }
 
 /**
@@ -66,7 +73,7 @@ export function isOriginalLanguage(languageId) {
  */
 export function getOrigLangforBook(bookId) {
   const isOT = isOldTestament(bookId);
-  const languageId = (isOT) ? Bible.OT_ORIG_LANG : Bible.NT_ORIG_LANG;
-  const bibleId = (isOT) ? Bible.OT_ORIG_LANG_BIBLE : Bible.NT_ORIG_LANG_BIBLE;
+  const languageId = isOT ? Bible.OT_ORIG_LANG : Bible.NT_ORIG_LANG;
+  const bibleId = isOT ? Bible.OT_ORIG_LANG_BIBLE : Bible.NT_ORIG_LANG_BIBLE;
   return { languageId, bibleId };
 }

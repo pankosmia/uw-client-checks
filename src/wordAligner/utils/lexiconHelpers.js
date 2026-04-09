@@ -1,7 +1,7 @@
-import { MorphUtils } from 'word-aligner';
+import { MorphUtils } from "word-aligner";
 
-const ZERO_WIDTH_SPACE = '\u200B';
-const ZERO_WIDTH_JOINER = '\u2060';
+const ZERO_WIDTH_SPACE = "\u200B";
+const ZERO_WIDTH_JOINER = "\u2060";
 
 /**
  * splits a word by zero width spaces
@@ -33,7 +33,7 @@ export const getMorphKeys = (morph) => {
   let lastPos = 0;
   let pos = 0;
   let part;
-  const divider = '*:';
+  const divider = "*:";
 
   if ((pos = morphKeys.indexOf(divider)) >= 0) {
     while (pos >= 0) {
@@ -60,7 +60,7 @@ export const getMorphKeys = (morph) => {
  */
 export const getStrongsParts = (strong) => {
   if (strong) {
-    const parts = strong.split(':');
+    const parts = strong.split(":");
     return parts;
   }
   return [];
@@ -90,7 +90,7 @@ export const containsValidStrongsNumber = (strong) => {
  * @return {String} - the id of the lexicon
  */
 export const lexiconIdFromStrongs = (strong) => {
-  const lexiconId = (strong && strong.startsWith('G')) ? 'ugl': 'uhl';
+  const lexiconId = strong && strong.startsWith("G") ? "ugl" : "uhl";
   return lexiconId;
 };
 /**
@@ -100,9 +100,10 @@ export const lexiconIdFromStrongs = (strong) => {
  */
 export const lexiconEntryIdFromStrongs = (strong) => {
   if (strong) {
-    let strongsCode = strong.replace(/\w/, '');
+    let strongsCode = strong.replace(/\w/, "");
 
-    if (!strong.startsWith('H')) { // Greek has an extra 0 at end
+    if (!strong.startsWith("H")) {
+      // Greek has an extra 0 at end
       strongsCode = strongsCode.slice(0, -1);
     }
 
@@ -131,7 +132,12 @@ export const lookupStrongsNumbers = (strong, getLexiconData) => {
       const lexiconData_ = getLexiconData(lexiconId, entryId);
 
       if (lexiconData_) {
-        if (lexiconData && lexiconData_[lexiconId] && lexiconData_[lexiconId][entryId]) { // if already exists combine data
+        if (
+          lexiconData &&
+          lexiconData_[lexiconId] &&
+          lexiconData_[lexiconId][entryId]
+        ) {
+          // if already exists combine data
           if (!lexiconData[lexiconId]) {
             lexiconData[lexiconId] = {};
           }

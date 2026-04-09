@@ -72,7 +72,7 @@ export const ButtonDashBoard = ({
   }
   useEffect(() => {
     async function getRessources() {
-      if (!(missingRessourcesCheckBook === 'null')) {
+      if (!(missingRessourcesCheckBook === "null")) {
         if (missingRessourcesCheckBook.length < 1) {
           let existVM = await fsExistsRust(
             projectName,
@@ -85,35 +85,37 @@ export const ButtonDashBoard = ({
             );
             if (checkKeysVersion(response)) {
               setRessourcesToFetch(response);
-              return
+              return;
             } else {
               setOldVersionManager(response);
               setNeedRessourcesForVersionManager(true);
-              return
+              return;
             }
           } else {
             setNeedRessourcesForVersionManager(true);
-            return
+            return;
           }
         } else {
           let response = await fsGetRust(
             projectName,
             `book_projects/${tCoreName}/version_manager.json`,
           );
-          let keysToRemove = {...response}
+          let keysToRemove = { ...response };
           Object.entries(response).forEach((k, v) => {
-            let keyToRemoved = missingRessourcesCheckBook.find((e) => e[0] === v[0]);
-            if(keyToRemoved){
-              keysToRemove.delete(k)
+            let keyToRemoved = missingRessourcesCheckBook.find(
+              (e) => e[0] === v[0],
+            );
+            if (keyToRemoved) {
+              keysToRemove.delete(k);
             }
           });
-          setOldVersionManager(keysToRemove)
+          setOldVersionManager(keysToRemove);
           setNeedRessourcesForVersionManager(true);
-          return
+          return;
         }
       }
       setNeedRessourcesForVersionManager(true);
-      return
+      return;
     }
     getRessources();
   }, [missingRessourcesCheckBook]);

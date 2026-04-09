@@ -1,5 +1,5 @@
-import React from 'react';
-import SvgIcon from '@mui/material/SvgIcon';
+import React from "react";
+import SvgIcon from "@mui/material/SvgIcon";
 
 export default function InvalidatedIcon(props) {
   return (

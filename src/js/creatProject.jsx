@@ -1203,7 +1203,7 @@ export const convertToProjectFormat = async (
     manifest,
     repoName,
     tCoreProject,
-    ressources["scripture/textTranslation"][0]
+    ressources["scripture/textTranslation"][0],
   );
   await write_version_manager(
     ressources,
