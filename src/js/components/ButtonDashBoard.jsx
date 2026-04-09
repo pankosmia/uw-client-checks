@@ -10,6 +10,7 @@ import {
   Typography,
   CircularProgress,
   DialogContent,
+  Button,
 } from "@mui/material";
 import { Tooltip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -57,16 +58,15 @@ export const ButtonDashBoard = ({
   const [openModal, setOpenModal] = useState(false);
   const [finalVersionManager, setFinalVersionManager] = useState({});
   const [oldVersionManager, setOldVersionManager] = useState({});
-
   function handleCloseModal() {
     if (!needRessourcesForVersionManager) {
       setOpenModal(false);
     } else {
-      setOpenedBooks((prev) => {
-        let newS = new Set(prev);
-        newS.delete(tCoreName.split("_")[2].toUpperCase());
-        return newS;
-      });
+      // setOpenedBooks((prev) => {
+      //   let newS = new Set(prev);
+      //   newS.delete(tCoreName.split("_")[2].toUpperCase());
+      //   return newS;
+      // });
       setOpenModal(false);
     }
   }
@@ -206,14 +206,12 @@ export const ButtonDashBoard = ({
     if (!ressourcesToFetch) {
       if (openedBooks.has(bookCode.toUpperCase())) {
         if (needRessourcesForVersionManager) {
-          setOpenModal(true);
           return;
         }
       }
       return;
     } else if (openedBooks.has(bookCode.toUpperCase())) {
       if (needRessourcesForVersionManager) {
-        setOpenModal(true);
         return;
       }
 
@@ -293,12 +291,16 @@ export const ButtonDashBoard = ({
 
   return (
     <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-        gap: 3,
-        width: "100%",
-      }}
+      sx={
+        needRessourcesForVersionManager
+          ? { width: "100%", justifyContent: "center" }
+          : {
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+              gap: 3,
+              width: "100%",
+            }
+      }
     >
       {!needRessourcesForVersionManager &&
         tools.map((tool) => (
@@ -359,6 +361,31 @@ export const ButtonDashBoard = ({
             {tool === "wordAlignment" && renderProgress(progressWordAlignment)}
           </Box>
         ))}
+      {needRessourcesForVersionManager && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2, // spacing between elements
+          }}
+        >
+          <Typography>
+            {doI18n(
+              "pages:uw-client-checks:missing_ressources_manager",
+              i18nRef.current,
+            )}
+          </Typography>
+
+          <Button variant="outlined" onClick={() => setOpenModal(true)}>
+            <Typography>
+              {doI18n(
+                "pages:uw-client-checks:config_ressources",
+                i18nRef.current,
+              )}
+            </Typography>
+          </Button>
+        </Box>
+      )}
       {openModal && (
         <PanDialog
           isOpen={openModal}

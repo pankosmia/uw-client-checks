@@ -94,6 +94,9 @@ export default function SelectBook() {
 
   const [missingRessourcesCheck, setMissingRessourcesCheck] = useState(null);
   const [ressourcesManager, setRessourcesManager] = useState(null);
+
+  console.log(missingRessourcesCheck);
+
   useEffect(() => {
     async function fetchSummaries() {
       if (currentProjectRef.current) {
@@ -237,7 +240,6 @@ export default function SelectBook() {
       getValidateRessourcesVersionAndErrors();
     }
   }, [summary, books]);
-
   return (
     <Box
       sx={{
@@ -442,9 +444,10 @@ export default function SelectBook() {
                               missingRessourcesCheckBook={
                                 missingRessourcesCheck[book.bookCode]
                               }
-                              callBack={() =>
-                                getValidateRessourcesVersionAndErrors()
-                              }
+                              callBack={() => {
+                                fetchData();
+                                getValidateRessourcesVersionAndErrors();
+                              }}
                             />
                           </Box>
                           <Box
@@ -456,7 +459,7 @@ export default function SelectBook() {
                             }}
                           >
                             <Box sx={{ gap: 1, display: "flex" }}>
-                              {book.hasManifest ? (
+                              {!missingRessourcesCheck[book.bookCode] ? (
                                 <>
                                   <CheckerSetting
                                     repoName={selectedtCoreProject.abbreviation}
