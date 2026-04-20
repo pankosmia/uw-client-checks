@@ -764,7 +764,6 @@ export const ToolWrapper = () => {
     if (
       !ready &&
       targetBible &&
-      checkingData &&
       (toolName === "translationWords" || toolName === "translationNotes")
     ) {
       setTargetBible((prev) => {
