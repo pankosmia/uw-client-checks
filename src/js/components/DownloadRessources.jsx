@@ -39,19 +39,21 @@ const DownloadRessources = ({}) => {
       unfoldingWord: [
         "en_tn",
         "en_tw",
-        "en_ugl",
-        "grc_ugnt",
-        "hbo_uhb",
         "en_ust",
         "en_ult",
         "en_ta",
-        "en_uhl",
+        "el-x-koine_ugnt",
+        "hbo_uhb",
       ],
+      uW: ["en_ugl", "en_uhl"],
     },
   };
 
-  let preSelected = { ...ListTc4 }["git.door43.org"]["unfoldingWord"].map(
-    (e) => "git.door43.org/unfoldingWord/" + e,
+  const base = ListTc4["git.door43.org"];
+
+  // merge both arrays, then map
+  let preSelected = Object.entries(base).flatMap(([key, arr]) =>
+    arr.map((e) => `git.door43.org/${key}/${e}`),
   );
   return (
     <Box>
