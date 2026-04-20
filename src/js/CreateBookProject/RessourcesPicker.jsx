@@ -48,7 +48,7 @@ export default function RessourcesPicker({
 
     setValues((prev) => ({
       ...prev,
-      [field]: [selectedPath, summaries[selectedPath]?.version || "master"],
+      [field]: [selectedPath, summaries[selectedPath]?.version || "main"],
     }));
   };
 
@@ -118,7 +118,7 @@ export default function RessourcesPicker({
 
           if (!listPreSelected && langFiltered.length > 0) {
             const first = langFiltered[0];
-            newValues[t] = [first.path, first.version || "master"];
+            newValues[t] = [first.path, first.version || "main"];
           }
         });
 
