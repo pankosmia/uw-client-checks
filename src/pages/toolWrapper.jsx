@@ -760,11 +760,27 @@ export const ToolWrapper = () => {
     targetLanguageDetails != null &&
     !loadingTool;
 
-  if (ready) {
-    console.log(contextId);
-    console.log(checkingData);
-    console.log(dataTn);
-  }
+  useEffect(() => {
+    if (
+      !ready &&
+      targetBible &&
+      checkingData &&
+      (toolName === "translationWords" || toolName === "translationNotes")
+    ) {
+      setTargetBible((prev) => {
+        let newTargetBible = { ...prev };
+        for (const outerKey of Object.keys(newTargetBible)) {
+          for (const innerKey of Object.keys(newTargetBible[outerKey])) {
+            if (newTargetBible[outerKey][innerKey] === "") {
+              newTargetBible[outerKey][innerKey] = "_";
+            }
+          }
+        }
+        return newTargetBible;
+      });
+    }
+  }, [targetBible, checkingData, toolName, ready]);
+
   return (
     <div style={{ height: "calc(100vh - 100px)" }}>
       <Box
