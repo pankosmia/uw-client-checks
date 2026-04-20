@@ -64,8 +64,8 @@
       "fr": "Ajouter un livre à translationCore 4"
     },
     "add_book": {
-      "en": "Add book",
-      "fr": "Ajouter livre"
+      "en": "Add checks for book",
+      "fr": "Ajouter vérification pour un livre"
     },
     "required_ressources_check": {
       "en": "Missing resources for translationCore 4",
