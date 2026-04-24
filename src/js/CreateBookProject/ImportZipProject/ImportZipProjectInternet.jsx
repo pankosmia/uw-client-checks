@@ -116,16 +116,27 @@ const ImportZipProjectInternet = ({
             );
             if (response.ok) {
               setUsedRessources((prev) => {
-                let prevE = [...prev];
-                prevE.push([
-                  keysValue[kvi][0] +
-                    "/" +
-                    keysValue[kvi][1] +
-                    "/" +
-                    keysValue[kvi][2],
-                  keysValue[kvi][4],
-                ]);
-                return prevE;
+                const exists = prev.some(
+                  ([p, v]) =>
+                    p ===
+                      keysValue[kvi][0] +
+                        "/" +
+                        keysValue[kvi][1] +
+                        "/" +
+                        keysValue[kvi][2] && v === keysValue[kvi][4],
+                );
+                if (exists) return prev;
+                return [
+                  ...prev,
+                  [
+                    [kvi][0] +
+                      "/" +
+                      keysValue[kvi][1] +
+                      "/" +
+                      keysValue[kvi][2],
+                    keysValue[kvi][4],
+                  ],
+                ];
               });
             } else {
               enqueueSnackbar(
@@ -237,15 +248,21 @@ const ImportZipProjectInternet = ({
         );
 
         setUsedRessources((prev) => {
-          let prevE = [...prev];
-          prevE.push([versionRepo[0], versionRepo[1]]);
-          return prevE;
+          const exists = prev.some(
+            ([p, v]) => p === versionRepo[0] && v === versionRepo[1],
+          );
+          if (exists) return prev;
+
+          return [...prev, [versionRepo[0], versionRepo[1]]];
         });
       } else if (response.ok && !isStrangeRepo) {
         setUsedRessources((prev) => {
-          let prevE = [...prev];
-          prevE.push([versionRepo[0], versionRepo[1]]);
-          return prevE;
+          const exists = prev.some(
+            ([p, v]) => p === versionRepo[0] && v === versionRepo[1],
+          );
+          if (exists) return prev;
+
+          return [...prev, [versionRepo[0], versionRepo[1]]];
         });
       }
     }
