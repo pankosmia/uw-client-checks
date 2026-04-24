@@ -36,6 +36,7 @@ export default function ImportZipProjectNoInternet({
         if (version === "master") {
           version = "main";
         }
+
         if (summary.json[path]) {
           let response = await gitCheckout([path, version], i18nRef);
           if (response.ok) {
@@ -57,6 +58,13 @@ export default function ImportZipProjectNoInternet({
 
               return prevE;
             });
+          } else {
+            newKeysValues.push(keysValue[kvi]);
+            setDependaniesDone((prev) => {
+              const copy = [...prev];
+              copy[kvi] = false;
+              return copy;
+            });
           }
         } else {
           newKeysValues.push(keysValue[kvi]);
@@ -72,7 +80,6 @@ export default function ImportZipProjectNoInternet({
     }
     noInternet();
   }, []);
-
   return (
     <Stack spacing={2}>
       {keysValue.map((kv, i) => (

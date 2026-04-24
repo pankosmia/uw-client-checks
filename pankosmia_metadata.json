@@ -313,6 +313,18 @@
     "config_ressources": {
       "en": "config ressources",
       "fr": "configurations des ressources"
+    },
+    "finish": {
+      "en": "finish",
+      "fr": "terminer"
+    },
+    "next": {
+      "en": "next",
+      "fr": "continuer"
+    },
+    "proceed_without_resources": {
+      "en": "proceed without expected resources",
+      "fr": "continuer sans les ressources attendus"
     }
   }
 }

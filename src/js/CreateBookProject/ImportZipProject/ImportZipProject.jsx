@@ -415,7 +415,24 @@ export function ImportZipProject({ repoName, reloadProject }) {
               goNext();
             }}
             closeOnAction={false}
-            actionLabel={step === 3 ? "finish" : "next"}
+            actionLabel={
+              step === 3 ? (
+                doI18n("pages:uw-client-checks:finish", i18nRef.current)
+              ) : step === 2 ? (
+                usedRessources.length < 6 ? (
+                  <Typography color="warning">
+                    {doI18n(
+                      "pages:uw-client-checks:proceed_without_resources",
+                      i18nRef.current,
+                    )}
+                  </Typography>
+                ) : (
+                  doI18n("pages:uw-client-checks:next", i18nRef.current)
+                )
+              ) : (
+                doI18n("pages:uw-client-checks:next", i18nRef.current)
+              )
+            }
             onlyCloseButton={false}
           />
         </PanDialog>
