@@ -4,7 +4,7 @@ import { i18nContext, debugContext } from "pankosmia-rcl";
 import { PanDownload } from "pankosmia-rcl";
 import { postEmptyJson } from "pithekos-lib";
 import { gitCheckout, gitCreatBranch } from "../../gitUtils";
-import { enqueueSnackbar } from "notistack";
+import { enqueueSnackbar, closeSnackbar } from "notistack";
 import { Button, CircularProgress } from "@mui/material";
 const ImportZipProjectInternet = ({
   projectName,
@@ -196,6 +196,14 @@ const ImportZipProjectInternet = ({
     let isStrangeRepo = ["uW", "BurritoTruck"].includes(
       versionRepo[0].split("/")[1],
     );
+    const snackbarId = enqueueSnackbar(
+      `Downloading repo ${versionRepo} this may take a while`,
+      {
+        variant: "info",
+        persist: true,
+      },
+    );
+
     if (
       params.row.topics.some((topic) =>
         ["pushing2sb", "tc-ready"].includes(topic),
@@ -266,6 +274,7 @@ const ImportZipProjectInternet = ({
         });
       }
     }
+    closeSnackbar(snackbarId);
 
     return response;
   }

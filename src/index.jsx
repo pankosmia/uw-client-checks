@@ -113,12 +113,19 @@ function AppLayout() {
     let cores = {};
     document.fonts.ready.then(() => {
       document.fonts.forEach((f) => {
-        cores[f.family.replaceAll(" ", "")] = f.family;
+        const cleanFamily = f.family
+          .replace(/['"]/g, "") // remove quotes " or '
+          .trim() // remove leading/trailing spaces
+          .replace(/\s+/g, " "); // normalize multiple spaces
+
+        console.log(cleanFamily);
+
+        cores[cleanFamily.replaceAll(" ", "")] = cleanFamily;
       });
+
       setFontFamilyCorrespondance(cores);
     });
   }, []);
-
   useEffect(() => {
     if (theme) {
       document.body.style.setProperty(
@@ -146,6 +153,7 @@ function AppLayout() {
       document.head.removeChild(style);
     };
   }, [fontFamily]);
+
   const CustomSnackbarContent = styled(MaterialDesignContent)(() => ({
     "&.notistack-MuiContent-error": {
       backgroundColor: "#FDEDED",

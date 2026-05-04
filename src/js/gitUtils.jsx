@@ -19,7 +19,7 @@ export async function gitCheckout(pathVersion, i18nRef) {
             "pages:uw-client-checks:change_branch",
             i18nRef.current,
           )} : ${pathVersion[0]} ${pathVersion[1]}`,
-          { variant: "success" },
+          { variant: "info" },
         );
       } else {
         enqueueSnackbar(
