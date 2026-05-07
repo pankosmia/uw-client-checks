@@ -460,6 +460,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
                     keysValue={listDependancy}
                     setUsedRessources={setUsedRessources}
                     summary={summary}
+                    GoToNextStep={() => setStep(3)}
                   />
                 </Box>
               )}
