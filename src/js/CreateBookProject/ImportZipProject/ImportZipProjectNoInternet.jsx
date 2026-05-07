@@ -33,10 +33,17 @@ export default function ImportZipProjectNoInternet({
         let path =
           keysValue[kvi][0] + "/" + keysValue[kvi][1] + "/" + keysValue[kvi][2];
         let version = keysValue[kvi][4].split(".zip")[0];
+
         if (version === "master") {
           version = "main";
         }
-
+        //prevent vXX.12 to be use (they dont exist for download)
+        // if(version.includes('v')){
+        //   let number = version.split("v")
+        //   number = Math.floor(parseFloat(number))
+        //   version = 'v'+number
+        // }
+        //to do some exsit some dont
         if (summary.json[path]) {
           let response = await gitCheckout([path, version], i18nRef);
           if (response.ok) {

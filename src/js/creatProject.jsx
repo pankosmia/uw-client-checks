@@ -446,9 +446,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
         } else {
           verseText = convertVerseDataToUSFM(verseParts);
         }
-        console.log(verseText);
         bibleChapter[verse] = trimNewLine(verseText);
-        console.log(bibleChapter, bibleData, chapter, verse);
         if (bibleChapter[verse] && bibleData[chapter]) {
           const chapterData = bibleData[chapter];
           let bibleVerse = chapterData[verse];

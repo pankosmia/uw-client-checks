@@ -299,8 +299,8 @@
       "fr": "Accepter les changements"
     },
     "need_internet_to_download": {
-      "en": "You are missing resources. Connect to the internet to continue or sideload them.",
-      "fr": "Il vous manque des ressources. Connectez-vous à Internet pour continuer ou téléversez-les."
+      "en": "You are missing resources or some ressources are from door43.Catalog. Connect to the internet to continue or sideload them.",
+      "fr": "Il vous manque des ressources our certaine ressources provienne de door43.Catalog. Connectez-vous à Internet pour continuer ou téléversez-les."
     },
     "add_version_manager": {
       "en": "Choose ressources",

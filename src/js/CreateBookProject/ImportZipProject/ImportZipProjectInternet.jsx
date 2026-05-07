@@ -4,7 +4,7 @@ import { i18nContext, debugContext } from "pankosmia-rcl";
 import { PanDownload } from "pankosmia-rcl";
 import { postEmptyJson } from "pithekos-lib";
 import { gitCheckout, gitCreatBranch } from "../../gitUtils";
-import { enqueueSnackbar } from "notistack";
+import { enqueueSnackbar, closeSnackbar } from "notistack";
 import { Button, CircularProgress } from "@mui/material";
 const ImportZipProjectInternet = ({
   projectName,
@@ -12,19 +12,22 @@ const ImportZipProjectInternet = ({
   keysValue,
   setUsedRessources,
   summary,
+  GoToNextStep,
 }) => {
   const { debugRef } = useContext(debugContext);
   const { i18nRef } = useContext(i18nContext);
   const [dependancyVersion, setDependancyVersion] = useState(null);
   const [listDependancy, setListDependancy] = useState(null);
 
+  console.log(listDependancy, dependancyVersion);
   const uploadZip = async (keysValue) => {
     let door43_catalog = (
       await getJson("/gitea/remote-repos/git.door43.org/Door43-Catalog")
     ).json;
 
     keysValue = keysValue.map((e) => {
-      // e[0] = e[0].replace("git", "qa");
+      console.log(e);
+      console.log(door43_catalog);
       if (e[1] === "Door43-Catalog") {
         let catalogRepo = door43_catalog.find((p) => p.name === e[2]);
         if (catalogRepo) {
@@ -41,6 +44,8 @@ const ImportZipProjectInternet = ({
       }
       return e;
     });
+    keysValue = keysValue.filter((e) => !e.includes("Door43-Catalog"));
+    console.log(keysValue);
     let newKeysValues = [];
     for (let kvi = 0; kvi < keysValue.length; kvi++) {
       let path =
@@ -179,6 +184,9 @@ const ImportZipProjectInternet = ({
       version_manager.push([`${e[0]}/${e[1]}/${e[2]}`, e[4].split(".zip")[0]]);
     }
     setDependancyVersion(version_manager);
+    if (Object.entries(jsonList).length < 1) {
+      GoToNextStep();
+    }
   };
 
   useEffect(() => {
@@ -196,6 +204,14 @@ const ImportZipProjectInternet = ({
     let isStrangeRepo = ["uW", "BurritoTruck"].includes(
       versionRepo[0].split("/")[1],
     );
+    const snackbarId = enqueueSnackbar(
+      `Downloading repo ${versionRepo} this may take a while`,
+      {
+        variant: "info",
+        persist: true,
+      },
+    );
+
     if (
       params.row.topics.some((topic) =>
         ["pushing2sb", "tc-ready"].includes(topic),
@@ -266,6 +282,7 @@ const ImportZipProjectInternet = ({
         });
       }
     }
+    closeSnackbar(snackbarId);
 
     return response;
   }
