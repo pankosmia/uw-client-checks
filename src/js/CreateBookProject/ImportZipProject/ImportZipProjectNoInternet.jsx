@@ -8,7 +8,8 @@ import {
   Stack,
 } from "@mui/material";
 import { useEffect, useState, useContext } from "react";
-import { ArrowDownwardRounded, Done } from "@mui/icons-material";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import FileDownloadDoneOutlinedIcon from "@mui/icons-material/FileDownloadDoneOutlined";
 import { gitCheckout } from "../../gitUtils";
 import { i18nContext } from "pankosmia-rcl";
 export default function ImportZipProjectNoInternet({
@@ -104,8 +105,8 @@ export default function ImportZipProjectNoInternet({
             {dependenciesDone[i] === "progress" && (
               <CircularProgress size={20} />
             )}
-            {dependenciesDone[i] === true && <Done />}
-            {dependenciesDone[i] === false && <ArrowDownwardRounded />}
+            {dependenciesDone[i] === true && <FileDownloadDoneOutlinedIcon />}
+            {dependenciesDone[i] === false && <FileDownloadOutlinedIcon />}
           </Box>
         </Box>
       ))}
