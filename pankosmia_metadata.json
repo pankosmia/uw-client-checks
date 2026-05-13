@@ -20,7 +20,7 @@
             {
               "usfm": [
                 {
-                  "doc": "Export to usfm a tCore book",
+                  "doc": "Export to usfm a tCore 4 book",
                   "placeHolders": {
                     "REPO_PATH": {
                       "doc": "The path to the repo in <X>/<Y>/<Z> format"
@@ -61,7 +61,8 @@
     },
     "add_book_tCore": {
       "en": "Add book to translationCore 4",
-      "fr": "Ajouter un livre à translationCore 4"
+      "fr": "Ajouter un livre à translationCore 4",
+      "es": "Agregar libro a translationCore 4"
     },
     "add_book": {
       "en": "Add book",
@@ -153,7 +154,8 @@
     },
     "tCore_resources": {
       "en": "translationCore 4 resources",
-      "fr": "Ressources translationCore 4"
+      "fr": "Ressources translationCore 4",
+      "es": "Recursos de translationCore 4"
     },
     "yes": {
       "en": "Yes",
@@ -201,8 +203,9 @@
       "id": "Bahasa"
     },
     "choose_resources_tCore": {
-      "en": "Choose resources to display in the tCore alongside your documents.",
-      "fr": "Choisissez les ressources à afficher dans l'espace de travail à côté de vos documents."
+      "en": "Choose resources to display in the tCore 4 alongside your documents.",
+      "fr": "Choisissez les ressources à afficher dans l'espace de travail à côté de vos documents.",
+      "es": "Selecciona los recursos que deseas mostrar en tCore 4 junto con tus documentos."
     },
     "editing": {
       "en": "Edit",
