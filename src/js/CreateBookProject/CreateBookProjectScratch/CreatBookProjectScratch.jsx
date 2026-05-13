@@ -148,6 +148,7 @@ export default function CreateBookProjectScratch({
       );
       setOpenResourcesDialog(false);
       reloadProject();
+      console.log("reloadProject");
     }
     if (step === 3) {
       setStep(2);
@@ -170,6 +171,7 @@ export default function CreateBookProjectScratch({
           {doI18n("pages:uw-client-checks:add_book", i18nRef.current)}
         </Typography>
       </Button>
+      <Button onClick={() => window.location.reload()}>Reload</Button>
       {openResourcesDialog && (
         <PanDialog
           showInternetSwitch={true}

@@ -351,10 +351,10 @@ export function ImportZipProject({ repoName, reloadProject }) {
   }
   function makeList() {
     let json = {};
-    console.log("Used resources:", usedRessources);
+    //console.log("Used resources:", usedRessources);
 
     for (let e of usedRessources) {
-      console.log("External resources:", externalResources);
+      //console.log("External resources:", externalResources);
 
       let pair = Object.entries(externalResources).find(
         ([key, value]) => value.includes(e[0].split("/")[2]),
@@ -368,7 +368,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
       }
     }
 
-    console.log("Resulting JSON:", json);
+    //console.log("Resulting JSON:", json);
     return json;
   }
   return (
