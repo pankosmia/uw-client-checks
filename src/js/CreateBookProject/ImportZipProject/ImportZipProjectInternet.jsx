@@ -19,15 +19,15 @@ const ImportZipProjectInternet = ({
   const [dependancyVersion, setDependancyVersion] = useState(null);
   const [listDependancy, setListDependancy] = useState(null);
 
-  console.log(listDependancy, dependancyVersion);
+  //console.log(listDependancy, dependancyVersion);
   const uploadZip = async (keysValue) => {
     let door43_catalog = (
       await getJson("/gitea/remote-repos/git.door43.org/Door43-Catalog")
     ).json;
 
     keysValue = keysValue.map((e) => {
-      console.log(e);
-      console.log(door43_catalog);
+      //console.log(e);
+      //console.log(door43_catalog);
       if (e[1] === "Door43-Catalog") {
         let catalogRepo = door43_catalog.find((p) => p.name === e[2]);
         if (catalogRepo) {
@@ -45,7 +45,7 @@ const ImportZipProjectInternet = ({
       return e;
     });
     keysValue = keysValue.filter((e) => !e.includes("Door43-Catalog"));
-    console.log(keysValue);
+    //console.log(keysValue);
     let newKeysValues = [];
     for (let kvi = 0; kvi < keysValue.length; kvi++) {
       let path =

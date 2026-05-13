@@ -436,7 +436,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
         chapter,
       );
 
-      console.log(verses);
+      //console.log(verses);
       for (let verse of verses) {
         const verseParts = chaptersObject[chapter][verse];
         let verseText;
@@ -461,7 +461,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
           }
 
           const object = wordaligner.unmerge(verseParts, bibleVerse);
-          console.log(object);
+          //console.log(object);
           chapterAlignments[verse] = {
             alignments: object.alignment,
             wordBank: object.wordBank,

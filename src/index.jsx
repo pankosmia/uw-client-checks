@@ -118,7 +118,7 @@ function AppLayout() {
           .trim() // remove leading/trailing spaces
           .replace(/\s+/g, " "); // normalize multiple spaces
 
-        console.log(cleanFamily);
+        //console.log(cleanFamily);
 
         cores[cleanFamily.replaceAll(" ", "")] = cleanFamily;
       });

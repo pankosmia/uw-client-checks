@@ -95,7 +95,7 @@ export default function SelectBook() {
   const [missingRessourcesCheck, setMissingRessourcesCheck] = useState(null);
   const [ressourcesManager, setRessourcesManager] = useState(null);
 
-  console.log(missingRessourcesCheck);
+  //console.log(missingRessourcesCheck);
 
   useEffect(() => {
     async function fetchSummaries() {

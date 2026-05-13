@@ -69,7 +69,7 @@ export async function fsGetRust(
 
         treeCache = data;
         if (debug) {
-          console.log(data);
+          //console.log(data);
         }
       }
       if (!ipath || ipath === "") {
