@@ -346,7 +346,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
         }
       }
       setOpenResourcesDialog(false);
-      reloadProject();
+      await reloadProject();
     }
   }
   function makeList() {
