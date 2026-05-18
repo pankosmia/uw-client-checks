@@ -3,7 +3,7 @@ import ImportZipProjectNoInternet from "./ImportZipProjectNoInternet";
 import { FilePicker } from "react-file-picker";
 import { Box, Button, DialogContent, Divider, Typography } from "@mui/material";
 import { useState, useContext, useEffect } from "react";
-import { doI18n, getJson } from "pithekos-lib";
+import { doI18n, getJson, postJson } from "pithekos-lib";
 import {
   deleteBookProject,
   deleteIngredient,
@@ -21,6 +21,35 @@ import { fsGetRust } from "../../serverUtils";
 import InternetDialog from "../../components/InternetDialog";
 import RessourcesPicker from "../RessourcesPicker";
 import { enqueueSnackbar } from "notistack";
+import { useSearchParams } from "react-router-dom";
+
+async function writeUsfmToOriginProject(repoName, tCoreNameProject) {
+  let insideProject = await fsGetRust(
+    repoName,
+    `book_projects/${tCoreNameProject}`,
+    "_local_/_local_",
+    false,
+    true,
+  );
+
+  const usfmFileName = Object.keys(insideProject).find((e) =>
+    e.includes("usfm"),
+  );
+
+  if (!usfmFileName) return;
+
+  let goodName = usfmFileName.split(".")[0].toUpperCase() + ".usfm";
+
+  const payload = insideProject[usfmFileName];
+
+  await postJson(
+    `/burrito/ingredient/raw/_local_/_local_/${
+      repoName.split("_")[0]
+    }?ipath=${goodName}&update_ingredients`,
+    JSON.stringify({ payload }),
+  );
+}
+
 async function checkIfBookProjectExist(repoName, tCoreNameProject, i18nRef) {
   let bookProjects = await fsExistsRust(
     repoName,
@@ -64,6 +93,23 @@ function checkZipName(name, i18nRef) {
   return response;
 }
 
+async function getZipFromTempFile(ZipUuid, zipName, repoName, i18nRef) {
+  try {
+    const response = await fetch(`/temp/bytes/${ZipUuid}`);
+
+    if (!response.ok) throw new Error("Fetch failed");
+
+    const arrayBuffer = await response.arrayBuffer();
+    const file = new File([arrayBuffer], zipName, {
+      type: "application/zip",
+    });
+    // Reuse existing logic
+    return await getZip(file, repoName, i18nRef);
+  } catch (err) {
+    console.error("getZipFromTempFile failed:", err);
+    throw err;
+  }
+}
 async function getZip(file, repoName, i18nRef) {
   let isValidZip = checkZipName(file.name, i18nRef);
   if (!isValidZip) return null;
@@ -220,6 +266,52 @@ export function ImportZipProject({ repoName, reloadProject }) {
   const [projectName, setProjectName] = useState("");
   const [finalVersionManager, setFinalVersionManager] = useState({});
   const [summary, setSummary] = useState(null);
+  const [type, setType] = useState(null);
+  const [uuid, setUuid] = useState(null);
+  const [searchParams] = useSearchParams();
+
+  const fileName = searchParams.get("fileName") || null;
+  const fileUUID = searchParams.get("uuid") || null;
+
+  useEffect(() => {
+    if (fileName) {
+      if (fileName.includes(".zip")) {
+        setType("zip");
+      }
+    }
+    if (fileUUID) {
+      setUuid(fileUUID);
+    }
+  }, []);
+
+  useEffect(() => {
+    async function ZipUuid() {
+      if (uuid && type) {
+        if (type === "zip") {
+          setOpenResourcesDialog(true);
+          {
+            let zipResponse = await getZipFromTempFile(
+              uuid,
+              fileName,
+              repoName,
+              i18nRef,
+            );
+            if (zipResponse) {
+              let [keysValue, projectNameResponse, externalResourcesType] =
+                zipResponse;
+              setOpenResourcesDialog(true);
+              setKeysValue(keysValue);
+              setProjectName(projectNameResponse);
+              setExternalResources(externalResourcesType);
+              setStep(1);
+            }
+          }
+        }
+      }
+    }
+    ZipUuid();
+  }, [type, uuid]);
+
   useEffect(() => {
     async function getSummary() {
       let summaryFetched = await getJson("/burrito/metadata/summaries");
@@ -248,16 +340,21 @@ export function ImportZipProject({ repoName, reloadProject }) {
     }
     if (step === 3) {
       await write_version(finalVersionManager);
+      if (uuid && type) {
+        if (type === "zip") {
+          await writeUsfmToOriginProject(repoName, projectName);
+        }
+      }
       setOpenResourcesDialog(false);
-      reloadProject();
+      await reloadProject();
     }
   }
   function makeList() {
     let json = {};
-    console.log("Used resources:", usedRessources);
+    //console.log("Used resources:", usedRessources);
 
     for (let e of usedRessources) {
-      console.log("External resources:", externalResources);
+      //console.log("External resources:", externalResources);
 
       let pair = Object.entries(externalResources).find(
         ([key, value]) => value.includes(e[0].split("/")[2]),
@@ -271,7 +368,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
       }
     }
 
-    console.log("Resulting JSON:", json);
+    //console.log("Resulting JSON:", json);
     return json;
   }
   return (
@@ -363,6 +460,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
                     keysValue={listDependancy}
                     setUsedRessources={setUsedRessources}
                     summary={summary}
+                    GoToNextStep={() => setStep(3)}
                   />
                 </Box>
               )}
@@ -415,7 +513,24 @@ export function ImportZipProject({ repoName, reloadProject }) {
               goNext();
             }}
             closeOnAction={false}
-            actionLabel={step === 3 ? "finish" : "next"}
+            actionLabel={
+              step === 3 ? (
+                doI18n("pages:uw-client-checks:finish", i18nRef.current)
+              ) : step === 2 ? (
+                usedRessources.length < 6 ? (
+                  <Typography color="warning">
+                    {doI18n(
+                      "pages:uw-client-checks:proceed_without_resources",
+                      i18nRef.current,
+                    )}
+                  </Typography>
+                ) : (
+                  doI18n("pages:uw-client-checks:next", i18nRef.current)
+                )
+              ) : (
+                doI18n("pages:uw-client-checks:next", i18nRef.current)
+              )
+            }
             onlyCloseButton={false}
           />
         </PanDialog>

@@ -436,7 +436,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
         chapter,
       );
 
-      console.log(verses);
+      //console.log(verses);
       for (let verse of verses) {
         const verseParts = chaptersObject[chapter][verse];
         let verseText;
@@ -446,9 +446,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
         } else {
           verseText = convertVerseDataToUSFM(verseParts);
         }
-        console.log(verseText);
         bibleChapter[verse] = trimNewLine(verseText);
-        console.log(bibleChapter, bibleData, chapter, verse);
         if (bibleChapter[verse] && bibleData[chapter]) {
           const chapterData = bibleData[chapter];
           let bibleVerse = chapterData[verse];
@@ -463,7 +461,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
           }
 
           const object = wordaligner.unmerge(verseParts, bibleVerse);
-          console.log(object);
+          //console.log(object);
           chapterAlignments[verse] = {
             alignments: object.alignment,
             wordBank: object.wordBank,

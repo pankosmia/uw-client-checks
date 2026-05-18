@@ -1,25 +1,37 @@
 import { useState, useContext, useEffect } from "react";
 import { Box } from "@mui/material";
 
-import { postEmptyJson } from "pithekos-lib";
+import { postEmptyJson, doI18n, postJson } from "pithekos-lib";
 import {
   i18nContext,
   netContext,
   PanDownload,
   debugContext,
 } from "pankosmia-rcl";
+import { gitCreatBranch } from "../gitUtils";
 
 const DownloadRessources = ({}) => {
+  const { i18nRef } = useContext(i18nContext);
   const { enabledRef } = useContext(netContext);
   const { debugRef } = useContext(debugContext);
 
   async function DowloadBurrito(params, remoteRepoPath, postType) {
-    const fetchUrl =
+    let fetchUrl =
       postType === "clone"
         ? `/git/clone-repo/${remoteRepoPath}`
         : `/git/pull-repo/origin/${remoteRepoPath}`;
 
-    return await postEmptyJson(fetchUrl, debugRef.current);
+    if (
+      params.row.topics.some((topic) =>
+        ["pushing2sb", "tc-ready"].includes(topic),
+      )
+    ) {
+      if (postType === "clone") fetchUrl += "?branch=main";
+    }
+
+    let response = await postEmptyJson(fetchUrl, debugRef.current);
+
+    return response;
   }
 
   const ListTc4 = {
@@ -27,19 +39,21 @@ const DownloadRessources = ({}) => {
       unfoldingWord: [
         "en_tn",
         "en_tw",
-        "en_ugl",
-        "grc_ugnt",
-        "hbo_uhb",
         "en_ust",
         "en_ult",
         "en_ta",
-        "en_uhl",
+        "el-x-koine_ugnt",
+        "hbo_uhb",
       ],
+      uW: ["en_ugl", "en_uhl"],
     },
   };
 
-  let preSelected = { ...ListTc4 }["git.door43.org"]["unfoldingWord"].map(
-    (e) => "git.door43.org/unfoldingWord/" + e,
+  const base = ListTc4["git.door43.org"];
+
+  // merge both arrays, then map
+  let preSelected = Object.entries(base).flatMap(([key, arr]) =>
+    arr.map((e) => `git.door43.org/${key}/${e}`),
   );
   return (
     <Box>

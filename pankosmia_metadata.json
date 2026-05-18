@@ -65,8 +65,8 @@
       "es": "Agregar libro a translationCore 4"
     },
     "add_book": {
-      "en": "Add book",
-      "fr": "Ajouter livre"
+      "en": "Add checks for book",
+      "fr": "Ajouter vérification pour un livre"
     },
     "required_ressources_check": {
       "en": "Missing resources for translationCore 4",
@@ -302,8 +302,8 @@
       "fr": "Accepter les changements"
     },
     "need_internet_to_download": {
-      "en": "You are missing resources. Connect to the internet to continue or sideload them.",
-      "fr": "Il vous manque des ressources. Connectez-vous à Internet pour continuer ou téléversez-les."
+      "en": "You are missing resources or some ressources are from door43.Catalog. Connect to the internet to continue or sideload them.",
+      "fr": "Il vous manque des ressources our certaine ressources provienne de door43.Catalog. Connectez-vous à Internet pour continuer ou téléversez-les."
     },
     "add_version_manager": {
       "en": "Choose ressources",
@@ -316,6 +316,18 @@
     "config_ressources": {
       "en": "config ressources",
       "fr": "configurations des ressources"
+    },
+    "finish": {
+      "en": "finish",
+      "fr": "terminer"
+    },
+    "next": {
+      "en": "next",
+      "fr": "continuer"
+    },
+    "proceed_without_resources": {
+      "en": "proceed without expected resources",
+      "fr": "continuer sans les ressources attendus"
     }
   }
 }

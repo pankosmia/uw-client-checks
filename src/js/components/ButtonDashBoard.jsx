@@ -371,7 +371,7 @@ export const ButtonDashBoard = ({
         >
           <Typography>
             {doI18n(
-              "pages:uw-client-checks:missing_ressources_manager",
+              "pages:uw-client-checks:missing_resources_manager",
               i18nRef.current,
             )}
           </Typography>

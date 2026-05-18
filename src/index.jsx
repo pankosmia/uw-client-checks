@@ -36,7 +36,7 @@ function AppLayout() {
   const [adjSelectedFontFamilies, setAdjSelectedFontFamilies] = useState(null);
   const [fontFamilyCorrespondance, setFontFamilyCorrespondance] =
     useState(null);
-
+  const [theme, setTheme] = useState(null);
   const isGraphite = GraphiteTest();
   useEffect(() => {
     if (fontFamilyCorrespondance) {
@@ -73,34 +73,87 @@ function AppLayout() {
       }).then();
     }
   });
-  const theme = useMemo(
-    () =>
-      createTheme({
-        ...themeSpec,
-        typography: {
-          ...themeSpec.typography,
-          fontFamily: fontFamily ? fontFamily.join(",") : "",
-        },
-      }),
-    [themeSpec, fontFamily],
-  );
+  useEffect(() => {
+    if (themeSpec && fontFamily) {
+      setTheme(
+        createTheme({
+          ...themeSpec,
+          typography: {
+            ...themeSpec.typography,
+            fontFamily: fontFamily.join(","),
+          },
+          components: {
+            ...themeSpec.components,
+
+            MuiTypography: {
+              styleOverrides: {
+                root: {
+                  fontFamily: fontFamily.join(","),
+                },
+              },
+            },
+
+            MuiListItemText: {
+              styleOverrides: {
+                primary: {
+                  fontFamily: fontFamily.join(","),
+                },
+                secondary: {
+                  fontFamily: fontFamily.join(","),
+                },
+              },
+            },
+          },
+        }),
+      );
+    }
+  }, [themeSpec, fontFamily]);
+
   useEffect(() => {
     let cores = {};
     document.fonts.ready.then(() => {
       document.fonts.forEach((f) => {
-        cores[f.family.replaceAll(" ", "")] = f.family;
+        const cleanFamily = f.family
+          .replace(/['"]/g, "") // remove quotes " or '
+          .trim() // remove leading/trailing spaces
+          .replace(/\s+/g, " "); // normalize multiple spaces
+
+        //console.log(cleanFamily);
+
+        cores[cleanFamily.replaceAll(" ", "")] = cleanFamily;
       });
+
       setFontFamilyCorrespondance(cores);
     });
   }, []);
+  useEffect(() => {
+    if (theme) {
+      document.body.style.setProperty(
+        "--accent-color-dark",
+        theme.palette.primary.main,
+      );
+      document.body.style.setProperty("--background-color-light", "#ffffff");
+    }
+  }, [theme]);
 
   useEffect(() => {
-    document.body.style.setProperty(
-      "--accent-color-dark",
-      theme.palette.primary.main,
-    );
-    document.body.style.setProperty("--background-color-light", "#ffffff");
-  }, [theme.palette.primary.main]);
+    if (!fontFamily?.length) return;
+
+    const style = document.createElement("style");
+
+    style.innerHTML = `
+    .MuiTypography-root {
+      font-family: ${fontFamily.join(",")} !important;
+    }
+  `;
+
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, [fontFamily]);
+
   const CustomSnackbarContent = styled(MaterialDesignContent)(() => ({
     "&.notistack-MuiContent-error": {
       backgroundColor: "#FDEDED",
@@ -119,7 +172,7 @@ function AppLayout() {
       color: "#2E7D32",
     },
   }));
-  return (
+  return theme ? (
     <SnackbarProvider
       Components={{
         error: CustomSnackbarContent,
@@ -140,6 +193,8 @@ function AppLayout() {
         </Box>
       </ThemeProvider>
     </SnackbarProvider>
+  ) : (
+    <></>
   );
 }
 
