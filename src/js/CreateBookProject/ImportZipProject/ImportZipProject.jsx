@@ -1,24 +1,22 @@
 import ImportZipProjectInternet from "./ImportZipProjectInternet";
 import ImportZipProjectNoInternet from "./ImportZipProjectNoInternet";
-import { FilePicker } from "react-file-picker";
+import { useFilePicker } from "use-file-picker";
+
 import { Box, Button, DialogContent, Divider, Typography } from "@mui/material";
 import { useState, useContext, useEffect } from "react";
 import { doI18n, getJson, postJson } from "pithekos-lib";
 import {
   deleteBookProject,
-  deleteIngredient,
   fsExistsRust,
   fsWriteRust,
 } from "../../serverUtils";
 import {
   i18nContext,
-  PanDownload,
   PanDialog,
   PanDialogActions,
   netContext,
 } from "pankosmia-rcl";
 import { fsGetRust } from "../../serverUtils";
-import InternetDialog from "../../components/InternetDialog";
 import RessourcesPicker from "../RessourcesPicker";
 import { enqueueSnackbar } from "notistack";
 import { useSearchParams } from "react-router-dom";
@@ -273,6 +271,29 @@ export function ImportZipProject({ repoName, reloadProject }) {
   const fileName = searchParams.get("fileName") || null;
   const fileUUID = searchParams.get("uuid") || null;
 
+  const { openFilePicker, plainFiles } = useFilePicker({
+    accept: [".zip"],
+    readFilesContent: false,
+  });
+
+  useEffect(() => {
+    async function importTc3Zip() {
+      if (plainFiles.length > 0) {
+        const file = plainFiles[0];
+        let zipResponse = await getZip(file, repoName, i18nRef);
+        if (zipResponse) {
+          let [keysValue, projectNameResponse, externalResourcesType] =
+            zipResponse;
+          setOpenResourcesDialog(true);
+          setKeysValue(keysValue);
+          setProjectName(projectNameResponse);
+          setExternalResources(externalResourcesType);
+          setStep(1);
+        }
+      }
+    }
+    importTc3Zip();
+  }, [plainFiles]);
   useEffect(() => {
     if (fileName) {
       if (fileName.includes(".zip")) {
@@ -373,44 +394,24 @@ export function ImportZipProject({ repoName, reloadProject }) {
   }
   return (
     <>
-      <FilePicker
-        extensions={["zip"]}
-        onChange={async (fileObject) => {
-          try {
-            let zipResponse = await getZip(fileObject, repoName, i18nRef);
-            if (zipResponse) {
-              let [keysValue, projectNameResponse, externalResourcesType] =
-                zipResponse;
-              setOpenResourcesDialog(true);
-              setKeysValue(keysValue);
-              setProjectName(projectNameResponse);
-              setExternalResources(externalResourcesType);
-              setStep(1);
-            }
-          } catch (err) {
-            console.error("Import failed", err);
-          }
+      <Button
+        onClick={() => {
+          openFilePicker();
         }}
-        onError={(errMsg) => {
-          console.error(errMsg);
+        sx={{
+          height: 36,
+          pt: 1.5,
+          pr: 2,
+          pb: 1.5,
+          pl: 2,
+          borderRadius: 1,
+          borderWidth: 1,
+          borderStyle: "solid",
+          whiteSpace: "nowrap",
         }}
       >
-        <Button
-          sx={{
-            height: 36,
-            pt: 1.5,
-            pr: 2,
-            pb: 1.5,
-            pl: 2,
-            borderRadius: 1,
-            borderWidth: 1,
-            borderStyle: "solid",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {doI18n("pages:uw-client-checks:import_book", i18nRef.current)}
-        </Button>
-      </FilePicker>
+        {doI18n("pages:uw-client-checks:import_book", i18nRef.current)}
+      </Button>
       {openResourcesDialog && (
         <PanDialog
           showInternetSwitch={true}
