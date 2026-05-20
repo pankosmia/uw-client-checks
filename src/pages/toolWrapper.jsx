@@ -881,13 +881,13 @@ export const ToolWrapper = () => {
             showPopover={showPopover}
             sourceBook={originBible}
             sourceLanguage={isOldTestament(book) ? "hbo" : "el-x-koine"}
-            styles={{
-              wordListContainer: {
-                minWidth: "100px",
-                // maxWidth: "400px",
-                display: "flex",
-              },
-            }}
+            // styles={{
+            //   // wordListContainer: {
+            //   //   minWidth: "100px",
+            //   //   // maxWidth: "400px",
+            //   //   display: "flex",
+            //   // },
+            // }}
             targetLanguageFont={""}
             targetBook={alignmentTargetBible}
             translate={translate}
