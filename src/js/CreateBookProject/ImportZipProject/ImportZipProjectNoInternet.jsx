@@ -10,7 +10,7 @@ import {
 import { useEffect, useState, useContext } from "react";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import FileDownloadDoneOutlinedIcon from "@mui/icons-material/FileDownloadDoneOutlined";
-import { gitCheckout } from "../../gitUtils";
+import { gitCheckout, gitGetBranches } from "../../gitUtils";
 import { i18nContext } from "pankosmia-rcl";
 export default function ImportZipProjectNoInternet({
   setListDependancy,
@@ -45,27 +45,38 @@ export default function ImportZipProjectNoInternet({
         //   version = 'v'+number
         // }
         //to do some exsit some dont
-        if (summary.json[path]) {
-          let response = await gitCheckout([path, version], i18nRef);
-          if (response.ok) {
-            setDependaniesDone((prev) => {
-              const copy = [...prev];
-              copy[kvi] = true;
-              return copy;
-            });
-            setUsedRessources((prev) => {
-              let prevE = [...prev];
-              prevE.push([
-                keysValue[kvi][0] +
-                  "/" +
-                  keysValue[kvi][1] +
-                  "/" +
-                  keysValue[kvi][2],
-                version,
-              ]);
 
-              return prevE;
-            });
+        if (summary.json[path]) {
+          let branches = await gitGetBranches([path, version], i18nRef);
+          if (branches) {
+            let ourBranch = branches.find((e) => e.name === version);
+            if (ourBranch) {
+              setDependaniesDone((prev) => {
+                const copy = [...prev];
+                copy[kvi] = true;
+                return copy;
+              });
+              setUsedRessources((prev) => {
+                let prevE = [...prev];
+                prevE.push([
+                  keysValue[kvi][0] +
+                    "/" +
+                    keysValue[kvi][1] +
+                    "/" +
+                    keysValue[kvi][2],
+                  version,
+                ]);
+
+                return prevE;
+              });
+            } else {
+              newKeysValues.push(keysValue[kvi]);
+              setDependaniesDone((prev) => {
+                const copy = [...prev];
+                copy[kvi] = false;
+                return copy;
+              });
+            }
           } else {
             newKeysValues.push(keysValue[kvi]);
             setDependaniesDone((prev) => {

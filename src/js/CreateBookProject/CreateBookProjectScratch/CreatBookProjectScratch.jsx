@@ -14,6 +14,7 @@ import {
   PanDialog,
   PanDialogActions,
   netContext,
+  debugContext,
 } from "pankosmia-rcl";
 import RessourcesPicker from "../RessourcesPicker";
 import LangueConfig from "../LanguagePicker/LangueConfig";
@@ -81,7 +82,7 @@ export default function CreateBookProjectScratch({
 }) {
   const { enabledRef } = useContext(netContext);
   const { i18nRef } = useContext(i18nContext);
-
+  const { debugRef } = useContext(debugContext);
   const [step, setStep] = useState(2);
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const [languageChoices, setLanguageChoices] = useState(["en"]);
@@ -145,6 +146,8 @@ export default function CreateBookProjectScratch({
         repoName,
         "book_projects/" + tCoreProject + "/",
         finalVersionManager,
+        i18nRef,
+        debugRef,
       );
       setOpenResourcesDialog(false);
       await reloadProject();

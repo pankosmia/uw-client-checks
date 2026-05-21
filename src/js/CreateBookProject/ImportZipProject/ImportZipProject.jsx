@@ -143,7 +143,6 @@ async function getZip(file, repoName, i18nRef) {
     externalResources = Object.values(externalResources);
     let keysValue = externalResources.map((e) => {
       let splitArray = e.split("/").splice(2);
-      // splitArray[0] = splitArray[0].replace("git.", "qa.");
       return splitArray;
     });
     return [keysValue, projectNameResponse, externalResourcesType];
@@ -366,8 +365,8 @@ export function ImportZipProject({ repoName, reloadProject }) {
           await writeUsfmToOriginProject(repoName, projectName);
         }
       }
-      setOpenResourcesDialog(false);
       await reloadProject();
+      setOpenResourcesDialog(false);
     }
   }
   function makeList() {

@@ -70,3 +70,9 @@ export async function gitCreatBranch(pathVersion, i18nRef, debugRef) {
   }
   return response;
 }
+
+export async function gitGetBranches(pathVersion, i18nRef, debugRef) {
+  let branches = await getJson("/git/branches/" + pathVersion[0]);
+  console.log(branches);
+  return branches?.json?.payload?.branches;
+}

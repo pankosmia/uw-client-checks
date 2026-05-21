@@ -23,7 +23,7 @@ import ArrowBack from "@mui/icons-material/ArrowBack";
 import yaml from "js-yaml";
 import { buildLinkTitleMap } from "../js/checkerUtils";
 import { fixOccurrences, fsGetRust, fsWriteRust } from "../js/serverUtils";
-import { doI18n, getJson } from "pithekos-lib";
+import { debugContext, doI18n, getJson } from "pithekos-lib";
 import { i18nContext } from "pankosmia-rcl";
 import { loadAlignment } from "../js/checkerUtils";
 import { usfmVerseToJson } from "../wordAligner/utils/usfmHelpers";
@@ -49,6 +49,7 @@ import BIBLE_BOOKS from "../common/BooksOfTheBible";
 // const LexiconData = require("../uwSrc/__tests__/fixtures/lexicon/lexicons.json");
 import translations from "../uwSrc/locales/English-en_US.json";
 import AddScriptureModal from "../js/components/AddScriptureModal";
+import { gitCheckout } from "../js/gitUtils";
 
 // Configuration settings
 const showDocument = true; // set to false to disable showing ta or tw document
@@ -58,7 +59,18 @@ const targetLanguageName = "English";
 const targetLanguageDirection = "ltr";
 const gatewayLanguageId = "en";
 const gatewayLanguageOwner = "unfoldingWord";
-
+// async function changeBranchForTools(versionControler,tool,bibles){
+//   let oldBibles = {...bibles}
+//   if(tool === "translationWords"){
+//     let originBibleVersion = versionControler[]
+//   }
+//   if (tool === "translationNotes") {
+//     return "Notes";
+//   }
+//   if (tool === "wordAlignment") {
+//     return "Aligner";
+//   }
+// }
 // Initial context for checking (verse and word to check)
 function changeToolName(tool) {
   if (tool === "translationWords") {
@@ -109,6 +121,7 @@ const saveSettings = (settings) => {};
 export const ToolWrapper = () => {
   const location = useLocation();
   const { i18nRef } = useContext(i18nContext);
+  const { debugRef } = useContext(debugContext);
 
   const tools = ["translationWords", "translationNotes", "wordAlignment"];
   const [loadingTool, setLoadingTool] = useState(false);
@@ -142,6 +155,10 @@ export const ToolWrapper = () => {
         projectName,
         `book_projects/${tCoreName}/version_manager.json`,
       );
+      for (let v of Object.values(response)) {
+        gitCheckout(v, i18nRef, debugRef);
+      }
+
       setRessourcesToFetch(response);
     }
     getRessources();

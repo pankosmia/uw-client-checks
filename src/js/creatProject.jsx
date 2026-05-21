@@ -14,6 +14,7 @@ import {
 } from "./serverUtils";
 import { USER_RESOURCES_PATH, T_NOTES_CATEGORIES } from "../common/constants";
 import { write_version_manager } from "./CreateBookProject/ImportZipProject/ImportZipProject";
+import { gitCheckout } from "./gitUtils";
 /**
  * @description Function that count occurrences of a substring in a string
  * @param {String} string - The string to search in
@@ -1170,12 +1171,18 @@ export const parseTsv = (tsv) => {
 function pathJoin(table) {
   return table.join("/").replace(/\/+/g, "/");
 }
+
 /*################################################################*/
 export const convertToProjectFormat = async (
   repoName,
   tCoreProject,
   ressources,
+  i18nRef,
+  debugContext,
 ) => {
+  for (let r of Object.values(ressources)) {
+    await gitCheckout(r, i18nRef, debugContext);
+  }
   // let book = selectedProjectFilename.split('_')[2]+
   const usfmData = await verifyIsValidUsfmFile(repoName, tCoreProject);
   await generateHelperForTool(
