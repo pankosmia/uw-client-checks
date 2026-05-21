@@ -196,94 +196,119 @@ const ImportZipProjectInternet = ({
   }, [keysValue]);
 
   async function DowloadBurrito(params, remoteRepoPath, postType) {
-    let fetchUrl =
-      postType === "clone"
-        ? `/git/clone-repo/${remoteRepoPath}`
-        : `/git/pull-repo/origin/${remoteRepoPath}`;
-    let versionRepo = dependancyVersion.find((e) => params.row.id === e[0]);
-    let isStrangeRepo = ["uW", "BurritoTruck"].includes(
-      versionRepo[0].split("/")[1],
-    );
-    const snackbarId = enqueueSnackbar(
-      `Downloading repo ${versionRepo} this may take a while`,
-      {
-        variant: "info",
-        persist: true,
-      },
-    );
+    let versionAlreadyDid = [];
+    let response;
 
-    if (
-      params.row.topics.some((topic) =>
-        ["pushing2sb", "tc-ready"].includes(topic),
-      )
-    ) {
-      if (postType === "clone" && !isStrangeRepo) fetchUrl += "?branch=main";
-    }
-
-    let response = await postEmptyJson(fetchUrl, debugRef.current);
-    if (postType === "clone") {
-      if (response.ok && !isStrangeRepo) {
-        response = gitCreatBranch(versionRepo, i18nRef, debugRef);
-
-        let new_branch_zip =
-          "https://" + versionRepo[0] + "/sb/" + versionRepo[1] + ".zip";
-        const downloadResponse = await fetch(new_branch_zip);
-
-        if (!downloadResponse.ok) {
-          throw new Error(
-            doI18n("pages:core-client-rcl:failed_download", i18nRef.current),
-          );
-        }
-
-        const zipBlob = await downloadResponse.blob();
-        const formData = new FormData();
-        formData.append("file", zipBlob);
-        let fetchResponse = await fetch("/temp/bytes", {
-          method: "POST",
-          body: formData,
-        });
-        if (!fetchResponse.ok) {
-          throw new Error(
-            doI18n("pages:core-client-rcl:upload_failed", i18nRef.current),
-          );
-        }
-        const data = await fetchResponse.json();
-        const uuid = data.uuid;
-        response = await postEmptyJson(
-          `/burrito/remake_burrito_from_zip/${uuid}/${versionRepo[0]}`,
-        );
-
-        const addAndCommitUrl = `/git/add-and-commit/${versionRepo[0]}`;
-        const commitJson = JSON.stringify({
-          commit_message: `${versionRepo[1]}`,
-        });
-        const addAndCommitResponse = await postJson(
-          addAndCommitUrl,
-          commitJson,
-          debugRef.current,
-        );
-
-        setUsedRessources((prev) => {
-          const exists = prev.some(
-            ([p, v]) => p === versionRepo[0] && v === versionRepo[1],
-          );
-          if (exists) return prev;
-
-          return [...prev, [versionRepo[0], versionRepo[1]]];
-        });
-      } else if (response.ok && !isStrangeRepo) {
-        setUsedRessources((prev) => {
-          const exists = prev.some(
-            ([p, v]) => p === versionRepo[0] && v === versionRepo[1],
-          );
-          if (exists) return prev;
-
-          return [...prev, [versionRepo[0], versionRepo[1]]];
-        });
+    let versionRepos = dependancyVersion.filter((e) => params.row.id === e[0]);
+    versionRepos.sort((a, b) => {
+      if (a[1] === "master" && b[1] !== "master") return -1;
+      if (a[1] !== "master" && b[1] === "master") return 1;
+      return 0;
+    });
+    for (let versionRepo of versionRepos) {
+      if (versionAlreadyDid.includes(versionRepo[1])) {
+        continue;
       }
-    }
-    closeSnackbar(snackbarId);
+      let fetchUrl =
+        postType === "clone"
+          ? `/git/clone-repo/${remoteRepoPath}`
+          : `/git/pull-repo/origin/${remoteRepoPath}`;
 
+      console.log(versionRepo);
+      let isStrangeRepo = ["uW", "BurritoTruck"].includes(
+        versionRepo[0].split("/")[1],
+      );
+      const snackbarId = enqueueSnackbar(
+        `Downloading repo ${versionRepo} this may take a while`,
+        {
+          variant: "info",
+          persist: true,
+        },
+      );
+
+      if (
+        params.row.topics.some((topic) =>
+          ["pushing2sb", "tc-ready"].includes(topic),
+        )
+      ) {
+        if (postType === "clone" && !isStrangeRepo) fetchUrl += "?branch=main";
+      }
+      if (
+        !(
+          versionAlreadyDid.includes("master") ||
+          versionAlreadyDid.includes("main")
+        )
+      ) {
+        response = await postEmptyJson(fetchUrl, debugRef.current);
+      } else {
+        response = {};
+        response.ok = true;
+      }
+
+      if (postType === "clone") {
+        if (response.ok && !isStrangeRepo) {
+          response = gitCreatBranch(versionRepo, i18nRef, debugRef);
+
+          let new_branch_zip =
+            "https://" + versionRepo[0] + "/sb/" + versionRepo[1] + ".zip";
+          const downloadResponse = await fetch(new_branch_zip);
+
+          if (!downloadResponse.ok) {
+            throw new Error(
+              doI18n("pages:core-client-rcl:failed_download", i18nRef.current),
+            );
+          }
+
+          const zipBlob = await downloadResponse.blob();
+          const formData = new FormData();
+          formData.append("file", zipBlob);
+          let fetchResponse = await fetch("/temp/bytes", {
+            method: "POST",
+            body: formData,
+          });
+          if (!fetchResponse.ok) {
+            throw new Error(
+              doI18n("pages:core-client-rcl:upload_failed", i18nRef.current),
+            );
+          }
+          const data = await fetchResponse.json();
+          const uuid = data.uuid;
+          response = await postEmptyJson(
+            `/burrito/remake_burrito_from_zip/${uuid}/${versionRepo[0]}`,
+          );
+
+          const addAndCommitUrl = `/git/add-and-commit/${versionRepo[0]}`;
+          const commitJson = JSON.stringify({
+            commit_message: `${versionRepo[1]}`,
+          });
+          const addAndCommitResponse = await postJson(
+            addAndCommitUrl,
+            commitJson,
+            debugRef.current,
+          );
+
+          setUsedRessources((prev) => {
+            const exists = prev.some(
+              ([p, v]) => p === versionRepo[0] && v === versionRepo[1],
+            );
+            if (exists) return prev;
+
+            return [...prev, [versionRepo[0], versionRepo[1]]];
+          });
+        } else if (response.ok && !isStrangeRepo) {
+          setUsedRessources((prev) => {
+            const exists = prev.some(
+              ([p, v]) => p === versionRepo[0] && v === versionRepo[1],
+            );
+            if (exists) return prev;
+
+            return [...prev, [versionRepo[0], versionRepo[1]]];
+          });
+        }
+      }
+      closeSnackbar(snackbarId);
+      versionAlreadyDid.push(versionRepo[1]);
+    }
     return response;
   }
 
