@@ -24,6 +24,7 @@ export default function RessourcesPicker({
   setBook = null,
   bookList = null,
 }) {
+  // console.log(bookList)
   const [values, setValues] = useState({
     "parascriptural/x-bcvarticles": ["", ""],
     "parascriptural/x-bcvnotes": ["", ""],
