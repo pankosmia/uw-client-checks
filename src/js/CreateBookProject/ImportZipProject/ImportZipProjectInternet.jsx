@@ -214,7 +214,6 @@ const ImportZipProjectInternet = ({
           ? `/git/clone-repo/${remoteRepoPath}`
           : `/git/pull-repo/origin/${remoteRepoPath}`;
 
-      console.log(versionRepo);
       let isStrangeRepo = ["uW", "BurritoTruck"].includes(
         versionRepo[0].split("/")[1],
       );

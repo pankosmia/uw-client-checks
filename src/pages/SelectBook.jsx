@@ -177,14 +177,9 @@ export default function SelectBook() {
   }
 
   useEffect(() => {
-    console.log("la");
     if (burritos) {
-      console.log(burritos);
       if (selectedtCoreProject) {
-        console.log(selectedtCoreProject);
         let abr = selectedtCoreProject.abbreviation.split("_")[0].toUpperCase();
-        console.log(abr);
-        console.log(burritos.find((e) => e.abbreviation === abr));
         setParentBurritoProject(
           burritos.find(
             (e) => e.abbreviation.toLowerCase() === abr.toLowerCase(),

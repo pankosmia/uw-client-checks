@@ -93,7 +93,6 @@ export default function CreateBookProjectScratch({
   const [uuid, setUuid] = useState(null);
   const [downloadRessourcesDialogueOpen, setDownloadRessourcesDialogueOpen] =
     useState(false);
-  console.log(parentBurritoProject);
   useEffect(() => {
     if (parentBurritoProject) {
       async function getListBookFromParentProject() {
@@ -109,7 +108,6 @@ export default function CreateBookProjectScratch({
       getListBookFromParentProject();
     }
   }, [parentBurritoProject]);
-  console.log(listBookParentProject);
   const [searchParams] = useSearchParams();
 
   const fileName = searchParams.get("fileName") || null;
@@ -151,7 +149,6 @@ export default function CreateBookProjectScratch({
       );
       setOpenResourcesDialog(false);
       await reloadProject();
-      console.log("reloadProject");
     }
     if (step === 3) {
       setStep(2);
