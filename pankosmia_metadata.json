@@ -20,7 +20,7 @@
             {
               "usfm": [
                 {
-                  "doc": "Export to usfm a tCore book",
+                  "doc": "Export to usfm a tC4 book",
                   "placeHolders": {
                     "REPO_PATH": {
                       "doc": "The path to the repo in <X>/<Y>/<Z> format"
@@ -61,7 +61,8 @@
     },
     "add_book_tCore": {
       "en": "Add book to translationCore 4",
-      "fr": "Ajouter un livre à translationCore 4"
+      "fr": "Ajouter un livre à translationCore 4",
+      "es": "Agregar libro a translationCore 4"
     },
     "add_book": {
       "en": "Add checks for book",
@@ -153,7 +154,8 @@
     },
     "tCore_resources": {
       "en": "translationCore 4 resources",
-      "fr": "Ressources translationCore 4"
+      "fr": "Ressources translationCore 4",
+      "es": "Recursos de translationCore 4"
     },
     "yes": {
       "en": "Yes",
@@ -201,8 +203,9 @@
       "id": "Bahasa"
     },
     "choose_resources_tCore": {
-      "en": "Choose resources to display in the tCore alongside your documents.",
-      "fr": "Choisissez les ressources à afficher dans l'espace de travail à côté de vos documents."
+      "en": "Choose resources to display in the tC4 alongside your documents.",
+      "fr": "Choisissez les ressources à afficher dans l'espace de travail à côté de vos documents.",
+      "es": "Selecciona los recursos que deseas mostrar en tC4 junto con tus documentos."
     },
     "editing": {
       "en": "Edit",
@@ -299,8 +302,8 @@
       "fr": "Accepter les changements"
     },
     "need_internet_to_download": {
-      "en": "You are missing resources. Connect to the internet to continue or sideload them.",
-      "fr": "Il vous manque des ressources. Connectez-vous à Internet pour continuer ou téléversez-les."
+      "en": "You are missing resources or some ressources are from door43.Catalog. Connect to the internet to continue or sideload them.",
+      "fr": "Il vous manque des ressources our certaine ressources provienne de door43.Catalog. Connectez-vous à Internet pour continuer ou téléversez-les."
     },
     "add_version_manager": {
       "en": "Choose ressources",
@@ -313,6 +316,18 @@
     "config_ressources": {
       "en": "config ressources",
       "fr": "configurations des ressources"
+    },
+    "finish": {
+      "en": "finish",
+      "fr": "terminer"
+    },
+    "next": {
+      "en": "next",
+      "fr": "continuer"
+    },
+    "proceed_without_resources": {
+      "en": "proceed without expected resources",
+      "fr": "continuer sans les ressources attendus"
     }
   }
 }

@@ -8,8 +8,9 @@ import {
   Stack,
 } from "@mui/material";
 import { useEffect, useState, useContext } from "react";
-import { ArrowDownwardRounded, Done } from "@mui/icons-material";
-import { gitCheckout } from "../../gitUtils";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import FileDownloadDoneOutlinedIcon from "@mui/icons-material/FileDownloadDoneOutlined";
+import { gitCheckout, gitGetBranches } from "../../gitUtils";
 import { i18nContext } from "pankosmia-rcl";
 export default function ImportZipProjectNoInternet({
   setListDependancy,
@@ -33,29 +34,55 @@ export default function ImportZipProjectNoInternet({
         let path =
           keysValue[kvi][0] + "/" + keysValue[kvi][1] + "/" + keysValue[kvi][2];
         let version = keysValue[kvi][4].split(".zip")[0];
+
         if (version === "master") {
           version = "main";
         }
+        //prevent vXX.12 to be use (they dont exist for download)
+        // if(version.includes('v')){
+        //   let number = version.split("v")
+        //   number = Math.floor(parseFloat(number))
+        //   version = 'v'+number
+        // }
+        //to do some exsit some dont
+
         if (summary.json[path]) {
-          let response = await gitCheckout([path, version], i18nRef);
-          if (response.ok) {
+          let branches = await gitGetBranches([path, version], i18nRef);
+          if (branches) {
+            let ourBranch = branches.find((e) => e.name === version);
+            if (ourBranch) {
+              setDependaniesDone((prev) => {
+                const copy = [...prev];
+                copy[kvi] = true;
+                return copy;
+              });
+              setUsedRessources((prev) => {
+                let prevE = [...prev];
+                prevE.push([
+                  keysValue[kvi][0] +
+                    "/" +
+                    keysValue[kvi][1] +
+                    "/" +
+                    keysValue[kvi][2],
+                  version,
+                ]);
+
+                return prevE;
+              });
+            } else {
+              newKeysValues.push(keysValue[kvi]);
+              setDependaniesDone((prev) => {
+                const copy = [...prev];
+                copy[kvi] = false;
+                return copy;
+              });
+            }
+          } else {
+            newKeysValues.push(keysValue[kvi]);
             setDependaniesDone((prev) => {
               const copy = [...prev];
-              copy[kvi] = true;
+              copy[kvi] = false;
               return copy;
-            });
-            setUsedRessources((prev) => {
-              let prevE = [...prev];
-              prevE.push([
-                keysValue[kvi][0] +
-                  "/" +
-                  keysValue[kvi][1] +
-                  "/" +
-                  keysValue[kvi][2],
-                version,
-              ]);
-
-              return prevE;
             });
           }
         } else {
@@ -72,7 +99,6 @@ export default function ImportZipProjectNoInternet({
     }
     noInternet();
   }, []);
-
   return (
     <Stack spacing={2}>
       {keysValue.map((kv, i) => (
@@ -90,8 +116,8 @@ export default function ImportZipProjectNoInternet({
             {dependenciesDone[i] === "progress" && (
               <CircularProgress size={20} />
             )}
-            {dependenciesDone[i] === true && <Done />}
-            {dependenciesDone[i] === false && <ArrowDownwardRounded />}
+            {dependenciesDone[i] === true && <FileDownloadDoneOutlinedIcon />}
+            {dependenciesDone[i] === false && <FileDownloadOutlinedIcon />}
           </Box>
         </Box>
       ))}

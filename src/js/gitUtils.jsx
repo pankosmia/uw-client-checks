@@ -19,7 +19,7 @@ export async function gitCheckout(pathVersion, i18nRef) {
             "pages:uw-client-checks:change_branch",
             i18nRef.current,
           )} : ${pathVersion[0]} ${pathVersion[1]}`,
-          { variant: "success" },
+          { variant: "info" },
         );
       } else {
         enqueueSnackbar(
@@ -69,4 +69,9 @@ export async function gitCreatBranch(pathVersion, i18nRef, debugRef) {
     );
   }
   return response;
+}
+
+export async function gitGetBranches(pathVersion, i18nRef, debugRef) {
+  let branches = await getJson("/git/branches/" + pathVersion[0]);
+  return branches?.json?.payload?.branches;
 }

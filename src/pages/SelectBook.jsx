@@ -95,7 +95,7 @@ export default function SelectBook() {
   const [missingRessourcesCheck, setMissingRessourcesCheck] = useState(null);
   const [ressourcesManager, setRessourcesManager] = useState(null);
 
-  console.log(missingRessourcesCheck);
+  //console.log(missingRessourcesCheck);
 
   useEffect(() => {
     async function fetchSummaries() {
@@ -180,7 +180,11 @@ export default function SelectBook() {
     if (burritos) {
       if (selectedtCoreProject) {
         let abr = selectedtCoreProject.abbreviation.split("_")[0].toUpperCase();
-        setParentBurritoProject(burritos.find((e) => e.abbreviation === abr));
+        setParentBurritoProject(
+          burritos.find(
+            (e) => e.abbreviation.toLowerCase() === abr.toLowerCase(),
+          ),
+        );
       }
     }
   }, [burritos, selectedtCoreProject]);

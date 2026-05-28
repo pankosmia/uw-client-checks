@@ -14,6 +14,7 @@ import {
   PanDialog,
   PanDialogActions,
   netContext,
+  debugContext,
 } from "pankosmia-rcl";
 import RessourcesPicker from "../RessourcesPicker";
 import LangueConfig from "../LanguagePicker/LangueConfig";
@@ -25,13 +26,7 @@ import { convertToProjectFormat } from "../../creatProject";
 import InternetDialog from "../../components/InternetDialog";
 import DownloadRessources from "../../components/DownloadRessources";
 import { Download, Info } from "@mui/icons-material";
-
-async function initialiseProject(sourceProjectPath, selectedProjectFilename) {
-  await convertToProjectFormat(
-    sourceProjectPath,
-    "book_projects/" + selectedProjectFilename + "/",
-  );
-}
+import { useSearchParams } from "react-router-dom";
 
 async function getPathFromOriginalResources(name) {
   const manifestsObj = (await getJson(BASE_URL + "/burrito/metadata/summaries"))
@@ -87,17 +82,17 @@ export default function CreateBookProjectScratch({
 }) {
   const { enabledRef } = useContext(netContext);
   const { i18nRef } = useContext(i18nContext);
-
-  const [step, setStep] = useState(1);
+  const { debugRef } = useContext(debugContext);
+  const [step, setStep] = useState(2);
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);
   const [languageChoices, setLanguageChoices] = useState(["en"]);
   const [finalVersionManager, setFinalVersionManager] = useState({});
   const [book, setBook] = useState("");
   const [listBookParentProject, setListBookParentProject] = useState(null);
-
+  const [type, setType] = useState(null);
+  const [uuid, setUuid] = useState(null);
   const [downloadRessourcesDialogueOpen, setDownloadRessourcesDialogueOpen] =
     useState(false);
-
   useEffect(() => {
     if (parentBurritoProject) {
       async function getListBookFromParentProject() {
@@ -113,7 +108,28 @@ export default function CreateBookProjectScratch({
       getListBookFromParentProject();
     }
   }, [parentBurritoProject]);
+  const [searchParams] = useSearchParams();
 
+  const fileName = searchParams.get("fileName") || null;
+  const fileUUID = searchParams.get("uuid") || null;
+
+  useEffect(() => {
+    if (fileName) {
+      setType(fileName.split(".")[1]);
+      setBook(fileName.split(".")[0]);
+    }
+    if (fileUUID) {
+      setUuid(fileUUID);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (uuid && type) {
+      if (type === "usfm") {
+        setOpenResourcesDialog(true);
+      }
+    }
+  }, [type, uuid]);
   async function goNext() {
     if (step === 1) {
       setStep(2);
@@ -128,9 +144,11 @@ export default function CreateBookProjectScratch({
         repoName,
         "book_projects/" + tCoreProject + "/",
         finalVersionManager,
+        i18nRef,
+        debugRef,
       );
       setOpenResourcesDialog(false);
-      reloadProject();
+      await reloadProject();
     }
     if (step === 3) {
       setStep(2);
@@ -201,6 +219,9 @@ export default function CreateBookProjectScratch({
                 <Divider sx={{ m: 1 }} />
 
                 <RessourcesPicker
+                  book={
+                    uuid && type === "usfm" ? book.toLocaleLowerCase() : null
+                  }
                   setFinalVersionManager={setFinalVersionManager}
                   prefLanguage={languageChoices}
                   setBook={setBook}

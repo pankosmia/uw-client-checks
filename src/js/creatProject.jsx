@@ -14,6 +14,7 @@ import {
 } from "./serverUtils";
 import { USER_RESOURCES_PATH, T_NOTES_CATEGORIES } from "../common/constants";
 import { write_version_manager } from "./CreateBookProject/ImportZipProject/ImportZipProject";
+import { gitCheckout } from "./gitUtils";
 /**
  * @description Function that count occurrences of a substring in a string
  * @param {String} string - The string to search in
@@ -436,7 +437,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
         chapter,
       );
 
-      console.log(verses);
+      //console.log(verses);
       for (let verse of verses) {
         const verseParts = chaptersObject[chapter][verse];
         let verseText;
@@ -446,9 +447,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
         } else {
           verseText = convertVerseDataToUSFM(verseParts);
         }
-        console.log(verseText);
         bibleChapter[verse] = trimNewLine(verseText);
-        console.log(bibleChapter, bibleData, chapter, verse);
         if (bibleChapter[verse] && bibleData[chapter]) {
           const chapterData = bibleData[chapter];
           let bibleVerse = chapterData[verse];
@@ -463,7 +462,7 @@ export const generateTargetLanguageBibleFromUsfm = async (
           }
 
           const object = wordaligner.unmerge(verseParts, bibleVerse);
-          console.log(object);
+          //console.log(object);
           chapterAlignments[verse] = {
             alignments: object.alignment,
             wordBank: object.wordBank,
@@ -1172,12 +1171,18 @@ export const parseTsv = (tsv) => {
 function pathJoin(table) {
   return table.join("/").replace(/\/+/g, "/");
 }
+
 /*################################################################*/
 export const convertToProjectFormat = async (
   repoName,
   tCoreProject,
   ressources,
+  i18nRef,
+  debugContext,
 ) => {
+  for (let r of Object.values(ressources)) {
+    await gitCheckout(r, i18nRef, debugContext);
+  }
   // let book = selectedProjectFilename.split('_')[2]+
   const usfmData = await verifyIsValidUsfmFile(repoName, tCoreProject);
   await generateHelperForTool(
