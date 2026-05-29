@@ -134,7 +134,7 @@ function UsfmExport() {
   useEffect(() => {
     const doFetch = async () => {
       const versificationResponse = await getJson(
-        "/content-utils/versification/eng",
+        "/api/content-utils/versification/eng",
         debugRef.current,
       );
       if (versificationResponse.ok) {

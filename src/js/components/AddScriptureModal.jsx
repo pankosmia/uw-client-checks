@@ -37,7 +37,7 @@ export default function AddScriptureModal({
   const [_selectedResources, _setSelectedResources] = useState([]);
   const getProjectSummaries = async () => {
     const summariesResponse = await getJson(
-      "/burrito/metadata/summaries",
+      "/api/burrito/metadata/summaries",
       debugRef.current,
     );
     if (summariesResponse.ok) {
@@ -50,13 +50,13 @@ export default function AddScriptureModal({
   }, []);
 
   useEffect(() => {
-    fetch("/app-resources/lookups/iso639-1-to-3.json") // ISO_639-1 codes mapped to ISO_639-3 codes
+    fetch("/api/app-resources/lookups/iso639-1-to-3.json") // ISO_639-1 codes mapped to ISO_639-3 codes
       .then((r) => r.json())
       .then((data) => setIsoOneToThreeLookup(data));
   }, []);
 
   useEffect(() => {
-    fetch("/app-resources/lookups/iso639-3.json") // ISO_639-3 2025-02-21 from https://hisregistries.org/rol/ plus zht, zhs, nep
+    fetch("/api/app-resources/lookups/iso639-3.json") // ISO_639-3 2025-02-21 from https://hisregistries.org/rol/ plus zht, zhs, nep
       .then((r) => r.json())
       .then((data) => setIsoThreeLookup(data));
   }, []);

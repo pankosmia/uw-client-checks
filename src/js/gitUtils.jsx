@@ -2,7 +2,7 @@ import { getJson, postJson, doI18n, postEmptyJson } from "pithekos-lib";
 import { enqueueSnackbar } from "notistack";
 
 export async function gitCheckout(pathVersion, i18nRef) {
-  let branches = await getJson("/git/branches/" + pathVersion[0]);
+  let branches = await getJson("/api/git/branches/" + pathVersion[0]);
   let ourBranch = branches.json.payload.branches.find(
     (e) => e.name === pathVersion[1],
   );
@@ -11,7 +11,7 @@ export async function gitCheckout(pathVersion, i18nRef) {
     responce = { ok: true, json: "already on right branch" };
     if (!ourBranch.is_head) {
       responce = await postJson(
-        `/git/branch/${pathVersion[1]}/${pathVersion[0]}`,
+        `/api/git/branch/${pathVersion[1]}/${pathVersion[0]}`,
       );
       if (responce.ok) {
         enqueueSnackbar(
@@ -43,7 +43,7 @@ export async function gitCheckout(pathVersion, i18nRef) {
 }
 
 export async function gitCreatBranch(pathVersion, i18nRef, debugRef) {
-  let branch_url = `/git/new-branch/${pathVersion[1]}/${pathVersion[0]}`;
+  let branch_url = `/api/git/new-branch/${pathVersion[1]}/${pathVersion[0]}`;
   let response = await postEmptyJson(branch_url, debugRef.current);
   if (response.ok) {
     enqueueSnackbar(
@@ -72,6 +72,6 @@ export async function gitCreatBranch(pathVersion, i18nRef, debugRef) {
 }
 
 export async function gitGetBranches(pathVersion, i18nRef, debugRef) {
-  let branches = await getJson("/git/branches/" + pathVersion[0]);
+  let branches = await getJson("/api/git/branches/" + pathVersion[0]);
   return branches?.json?.payload?.branches;
 }

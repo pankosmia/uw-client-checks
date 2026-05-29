@@ -97,7 +97,7 @@ export default function CreateBookProjectScratch({
     if (parentBurritoProject) {
       async function getListBookFromParentProject() {
         let summary = await getJson(
-          `/burrito/metadata/summary/${parentBurritoProject.path}`,
+          `/api/burrito/metadata/summary/${parentBurritoProject.path}`,
         );
         if (summary.ok) {
           setListBookParentProject(

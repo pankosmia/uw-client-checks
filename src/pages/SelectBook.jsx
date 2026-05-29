@@ -101,7 +101,7 @@ export default function SelectBook() {
     async function fetchSummaries() {
       if (currentProjectRef.current) {
         try {
-          const response = await getJson("/burrito/metadata/summaries");
+          const response = await getJson("/api/burrito/metadata/summaries");
           if (!response.ok) throw new Error(`HTTP error ${response.status}`);
           const data = await response.json;
           setSummary(data);
@@ -135,7 +135,7 @@ export default function SelectBook() {
   useEffect(() => {
     async function fetchSummaries() {
       try {
-        const response = await getJson("/burrito/metadata/summaries");
+        const response = await getJson("/api/burrito/metadata/summaries");
         if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const data = await response.json;
         // Filter only those with flavor_type = scripture
@@ -162,7 +162,7 @@ export default function SelectBook() {
   async function fetchData() {
     try {
       if (selectedtCoreProject) {
-        const url = `/burrito/paths/_local_/_local_/${selectedtCoreProject.abbreviation}`;
+        const url = `/api/burrito/paths/_local_/_local_/${selectedtCoreProject.abbreviation}`;
         const res = await getJson(url);
         const data = await res.json;
         const ipath = "book_projects";
