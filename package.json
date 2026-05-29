@@ -1,6 +1,6 @@
 {
   "name": "uw-client-checks",
-  "version": "0.0.9",
+  "version": "0.2.0",
   "private": true,
   "homepage": "/clients/uw-client-checks",
   "dependencies": {
