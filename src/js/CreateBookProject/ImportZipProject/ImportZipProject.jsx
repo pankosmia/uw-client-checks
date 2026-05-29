@@ -93,7 +93,7 @@ function checkZipName(name, i18nRef) {
 
 async function getZipFromTempFile(ZipUuid, zipName, repoName, i18nRef) {
   try {
-    const response = await fetch(`/temp/bytes/${ZipUuid}`);
+    const response = await fetch(`/api/temp/bytes/${ZipUuid}`);
 
     if (!response.ok) throw new Error("Fetch failed");
 
@@ -119,7 +119,7 @@ async function getZip(file, repoName, i18nRef) {
     i18nRef,
   );
   if (already_exist) return null;
-  const url = `/burrito/ingredient/zipped/_local_/_local_/${repoName}?ipath=book_projects/${projectNameResponse}`;
+  const url = `/api/burrito/ingredient/zipped/_local_/_local_/${repoName}?ipath=book_projects/${projectNameResponse}`;
 
   const formData = new FormData();
   formData.append("file", file);
@@ -334,7 +334,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
 
   useEffect(() => {
     async function getSummary() {
-      let summaryFetched = await getJson("/burrito/metadata/summaries");
+      let summaryFetched = await getJson("/api/burrito/metadata/summaries");
       setSummary(summaryFetched);
     }
     getSummary();

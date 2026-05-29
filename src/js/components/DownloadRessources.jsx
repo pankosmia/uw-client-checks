@@ -18,8 +18,8 @@ const DownloadRessources = ({}) => {
   async function DowloadBurrito(params, remoteRepoPath, postType) {
     let fetchUrl =
       postType === "clone"
-        ? `/git/clone-repo/${remoteRepoPath}`
-        : `/git/pull-repo/origin/${remoteRepoPath}`;
+        ? `/api/git/clone-repo/${remoteRepoPath}`
+        : `/api/git/pull-repo/origin/${remoteRepoPath}`;
 
     if (
       params.row.topics.some((topic) =>

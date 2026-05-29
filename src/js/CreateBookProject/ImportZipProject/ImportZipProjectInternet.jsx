@@ -22,7 +22,7 @@ const ImportZipProjectInternet = ({
   //console.log(listDependancy, dependancyVersion);
   const uploadZip = async (keysValue) => {
     let door43_catalog = (
-      await getJson("/gitea/remote-repos/git.door43.org/Door43-Catalog")
+      await getJson("/api/gitea/remote-repos/git.door43.org/Door43-Catalog")
     ).json;
 
     keysValue = keysValue.map((e) => {
@@ -95,7 +95,7 @@ const ImportZipProjectInternet = ({
             const zipBlob = await downloadResponse.blob();
             const formData = new FormData();
             formData.append("file", zipBlob);
-            let fetchResponse = await fetch("/temp/bytes", {
+            let fetchResponse = await fetch("/api/temp/bytes", {
               method: "POST",
               body: formData,
             });
@@ -117,7 +117,7 @@ const ImportZipProjectInternet = ({
             const data = await fetchResponse.json();
             const uuid = data.uuid;
             response = await postEmptyJson(
-              `/burrito/remake_burrito_from_zip/${uuid}/${path}`,
+              `/api/burrito/remake_burrito_from_zip/${uuid}/${path}`,
             );
             if (response.ok) {
               setUsedRessources((prev) => {
@@ -211,8 +211,8 @@ const ImportZipProjectInternet = ({
       }
       let fetchUrl =
         postType === "clone"
-          ? `/git/clone-repo/${remoteRepoPath}`
-          : `/git/pull-repo/origin/${remoteRepoPath}`;
+          ? `/api/git/clone-repo/${remoteRepoPath}`
+          : `/api/git/pull-repo/origin/${remoteRepoPath}`;
 
       let isStrangeRepo = ["uW", "BurritoTruck"].includes(
         versionRepo[0].split("/")[1],
@@ -261,7 +261,7 @@ const ImportZipProjectInternet = ({
           const zipBlob = await downloadResponse.blob();
           const formData = new FormData();
           formData.append("file", zipBlob);
-          let fetchResponse = await fetch("/temp/bytes", {
+          let fetchResponse = await fetch("/api/temp/bytes", {
             method: "POST",
             body: formData,
           });
@@ -273,10 +273,10 @@ const ImportZipProjectInternet = ({
           const data = await fetchResponse.json();
           const uuid = data.uuid;
           response = await postEmptyJson(
-            `/burrito/remake_burrito_from_zip/${uuid}/${versionRepo[0]}`,
+            `/api/burrito/remake_burrito_from_zip/${uuid}/${versionRepo[0]}`,
           );
 
-          const addAndCommitUrl = `/git/add-and-commit/${versionRepo[0]}`;
+          const addAndCommitUrl = `/api/git/add-and-commit/${versionRepo[0]}`;
           const commitJson = JSON.stringify({
             commit_message: `${versionRepo[1]}`,
           });

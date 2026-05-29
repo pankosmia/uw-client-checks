@@ -55,7 +55,7 @@ export default function RessourcesPicker({
 
   useEffect(() => {
     async function fetchSummaries() {
-      const response = await getJson("/burrito/metadata/summaries");
+      const response = await getJson("/api/burrito/metadata/summaries");
       const data = await response.json;
       setSummaries(data);
     }

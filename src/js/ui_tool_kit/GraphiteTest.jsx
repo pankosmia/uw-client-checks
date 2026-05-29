@@ -7,7 +7,7 @@ export default function GraphiteTest() {
 
   const font = new FontFace(
     "Pankosmia-GraphiteTest",
-    "url(/webfonts/awami/AwamiNastaliq-Regular.woff2)",
+    "url(/api/webfonts/awami/AwamiNastaliq-Regular.woff2)",
     {
       style: "normal",
       weight: "normal",
