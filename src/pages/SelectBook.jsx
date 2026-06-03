@@ -244,6 +244,7 @@ export default function SelectBook() {
       getValidateRessourcesVersionAndErrors();
     }
   }, [summary, books]);
+
   return (
     <Box
       sx={{
@@ -463,7 +464,12 @@ export default function SelectBook() {
                             }}
                           >
                             <Box sx={{ gap: 1, display: "flex" }}>
-                              {!missingRessourcesCheck[book.bookCode] ? (
+                              {!missingRessourcesCheck[book.bookCode] ||
+                              (typeof (
+                                missingRessourcesCheck[book.bookCode] === Array
+                              ) &&
+                                missingRessourcesCheck[book.bookCode].length <
+                                  1) ? (
                                 <>
                                   <CheckerSetting
                                     repoName={selectedtCoreProject.abbreviation}
