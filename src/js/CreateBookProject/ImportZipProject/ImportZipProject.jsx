@@ -41,7 +41,7 @@ async function writeUsfmToOriginProject(repoName, tCoreNameProject) {
   const payload = insideProject[usfmFileName];
 
   await postJson(
-    `/burrito/ingredient/raw/_local_/_local_/${
+    `/api/burrito/ingredient/raw/_local_/_local_/${
       repoName.split("_")[0]
     }?ipath=${goodName}&update_ingredients`,
     JSON.stringify({ payload }),
