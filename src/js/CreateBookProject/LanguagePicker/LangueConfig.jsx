@@ -37,7 +37,7 @@ export default function LangueConfigModal({
 
   // load lookup
   useEffect(() => {
-    fetch("/app-resources/lookups/languages.json")
+    fetch("/api/app-resources/lookups/languages.json")
       .then((r) => r.json())
       .then((data) => setLanguageLookup(data));
   }, []);

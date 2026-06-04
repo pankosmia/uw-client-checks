@@ -601,7 +601,7 @@ export const ToolWrapper = () => {
             "gateway_language",
             paths[0] + "/" + paths[1],
           );
-          let summary = await getJson(`/burrito/metadata/summary/${e}`);
+          let summary = await getJson(`/api/burrito/metadata/summary/${e}`);
           if (summary.ok) {
             summary = summary.json;
             init.push({

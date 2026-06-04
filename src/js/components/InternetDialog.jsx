@@ -36,7 +36,7 @@ export default function InternetDialog({ callBack }) {
   };
 
   const enableInternet = () => {
-    postEmptyJson("/net/enable", true);
+    postEmptyJson("/api/net/enable", true);
     setInternetDialogOpen(false);
     if (callBack) {
       callBack();
