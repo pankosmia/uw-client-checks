@@ -283,7 +283,7 @@ export default function SelectBook() {
             <CreateBookProjectScratch
               repoName={selectedtCoreProject.abbreviation}
               nameBurito={selectedtCoreProject.name}
-              reloadProject={() => fetchData()}
+              reloadProject={async () => await fetchData()}
               selectedBurrito={selectedtCoreProject}
               parentBurritoProject={parentBurritoProject}
             />
@@ -293,8 +293,8 @@ export default function SelectBook() {
           <ImportZipProject
             repoName={selectedtCoreProject.abbreviation}
             nameBurito={selectedtCoreProject.name}
-            reloadProject={() => {
-              fetchData();
+            reloadProject={async () => {
+              await fetchData();
             }}
           />
         )}

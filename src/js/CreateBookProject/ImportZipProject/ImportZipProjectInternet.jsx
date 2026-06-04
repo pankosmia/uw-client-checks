@@ -6,6 +6,33 @@ import { postEmptyJson } from "pithekos-lib";
 import { gitCheckout, gitCreatBranch } from "../../gitUtils";
 import { enqueueSnackbar, closeSnackbar } from "notistack";
 import { Button, CircularProgress } from "@mui/material";
+function compareVersions(a, b) {
+  const pa = a.replace(/^v/, "").split(".").map(Number);
+  const pb = b.replace(/^v/, "").split(".").map(Number);
+
+  const len = Math.max(pa.length, pb.length);
+
+  for (let i = 0; i < len; i++) {
+    const na = pa[i] ?? 0;
+    const nb = pb[i] ?? 0;
+
+    if (na < nb) return -1;
+    if (na > nb) return 1;
+  }
+
+  return 0;
+}
+
+function getNextVersion(current, versions) {
+  if (versions.includes(versions)) {
+    return current;
+  }
+  return (
+    versions
+      .filter((v) => compareVersions(v, current) > 0)
+      .sort(compareVersions)[0] ?? null
+  );
+}
 const ImportZipProjectInternet = ({
   projectName,
   repoName,
@@ -246,18 +273,29 @@ const ImportZipProjectInternet = ({
 
       if (postType === "clone") {
         if (response.ok && !isStrangeRepo) {
+          if (versionRepo[1] !== "main" && versionRepo[1] !== "master") {
+            let release = await fetch(
+              "https://git.door43.org/api/v1/repos/" +
+                versionRepo[0].replace("git.door43.org/", "") +
+                `/releases`,
+            );
+            const releaseJson = await release.json();
+
+            versionRepo[1] = getNextVersion(
+              versionRepo[1],
+              releaseJson.map((e) => e.tag_name),
+            );
+          }
           response = gitCreatBranch(versionRepo, i18nRef, debugRef);
 
           let new_branch_zip =
             "https://" + versionRepo[0] + "/sb/" + versionRepo[1] + ".zip";
-          const downloadResponse = await fetch(new_branch_zip);
-
+          let downloadResponse = await fetch(new_branch_zip);
           if (!downloadResponse.ok) {
             throw new Error(
               doI18n("pages:core-client-rcl:failed_download", i18nRef.current),
             );
           }
-
           const zipBlob = await downloadResponse.blob();
           const formData = new FormData();
           formData.append("file", zipBlob);
