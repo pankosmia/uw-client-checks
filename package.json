@@ -22,7 +22,7 @@
     "react": "^17.0.0 || ^18.0.0",
     "react-dom": "^17.0.0 || ^18.0.0",
     "react-router-dom": "^6.27.0",
-    "tc-checking-tool-rcl": "0.9.132",
+    "tc-checking-tool-rcl": "^0.9.143",
     "use-file-picker": "^2.1.4",
     "usfm-js": "^3.4.3",
     "word-aligner-lib": "^1.0.1",

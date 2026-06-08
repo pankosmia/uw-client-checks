@@ -132,10 +132,10 @@ export const ToolWrapper = () => {
   const [targetBible, setTargetBible] = useState(null);
   const [bibles, setBibles] = useState([]);
   const [originBible, setOriginBible] = useState(null);
+  const [gatewayRessource, setGatewayRessource] = useState(null);
   const [dataTw, setDataTW] = useState(null);
   const [dataTn, setDataTn] = useState(null);
   const [checkingData, setCheckingData] = useState(null);
-  const [ultBible, setUltBible] = useState(null);
   const { projectName, tCoreName } = useParams();
   const [lexicon, setLexicon] = useState(null);
   const [contextId, setContextId] = useState({});
@@ -455,31 +455,51 @@ export const ToolWrapper = () => {
     if (!book) return;
     if (!ressourcesToFetch) return;
     const loadAll = async () => {
-      const [targetBibleRes, originBibleRes, lexiconRes] = await Promise.all([
-        getBookFromName(
-          projectName,
-          `book_projects/${tCoreName}`,
-          book,
-          "target_language",
-          "_local_/_local_",
-          true,
-        ),
-        getBookFromName(
-          ressourcesToFetch["scripture/textTranslation"][0].split("/")[2],
-          "",
-          book,
-          "original_language",
-          ressourcesToFetch["scripture/textTranslation"][0]
-            .split("/")
-            .slice(0, 2)
-            .join("/"),
-        ),
-        getLexiconData(ressourcesToFetch["peripheral/x-lexicon"]),
-      ]);
+      const [targetBibleRes, originBibleRes, lexiconRes, gatewayBook] =
+        await Promise.all([
+          getBookFromName(
+            projectName,
+            `book_projects/${tCoreName}`,
+            book,
+            "target_language",
+            "_local_/_local_",
+            true,
+          ),
+          getBookFromName(
+            ressourcesToFetch["scripture/textTranslation"][0].split("/")[2],
+            "",
+            book,
+            "original_language",
+            ressourcesToFetch["scripture/textTranslation"][0]
+              .split("/")
+              .slice(0, 2)
+              .join("/"),
+          ),
+          getLexiconData(ressourcesToFetch["peripheral/x-lexicon"]),
+          getBookFromName(
+            ressourcesToFetch[
+              toolName === "wordAlignment"
+                ? "scripture/textTranslation/alignerGl"
+                : "scripture/textTranslation/chGl"
+            ][0].split("/")[2],
+            "",
+            book,
+            "target_language",
+            ressourcesToFetch[
+              toolName === "wordAlignment"
+                ? "scripture/textTranslation/alignerGl"
+                : "scripture/textTranslation/chGl"
+            ][0]
+              .split("/")
+              .slice(0, 2)
+              .join("/"),
+          ),
+        ]);
 
       setTargetBible(targetBibleRes);
       setOriginBible(originBibleRes);
       setLexicon(lexiconRes);
+      setGatewayRessource(gatewayBook);
     };
 
     loadAll();
@@ -577,13 +597,13 @@ export const ToolWrapper = () => {
             bibleId: "targetBible",
             owner: "unfoldingWord",
           },
-          // {
-          //   book: ultBible,
-          //   description: "gateway_language",
-          //   languageId: "en",
-          //   bibleId: "ult",
-          //   owner: "unfoldingWord",
-          // },
+          {
+            book: gatewayRessource,
+            description: "gateway_language",
+            languageId: "en",
+            bibleId: "ult",
+            owner: "unfoldingWord",
+          },
           {
             book: originBible,
             description: "original_language",
@@ -886,7 +906,7 @@ export const ToolWrapper = () => {
               groupId: "chapter_1",
             }}
             editedTargetVerse={changeCurrentVerse}
-            // gatewayBook={ultBible}
+            gatewayBook={gatewayRessource}
             getLexiconData={getLexiconData_}
             groupsData={groupsData}
             groupsIndex={groupsIndex}
@@ -917,7 +937,7 @@ export const ToolWrapper = () => {
               height: "100%",
               overflowY: "auto",
             }}
-            // alignedGlBible={ultBible}
+            alignedGlBible={gatewayRessource}
             bibles={bibles}
             checkingData={checkingData}
             checkType={toolName}
