@@ -46,15 +46,12 @@ const ImportZipProjectInternet = ({
   const [dependancyVersion, setDependancyVersion] = useState(null);
   const [listDependancy, setListDependancy] = useState(null);
 
-  //console.log(listDependancy, dependancyVersion);
   const uploadZip = async (keysValue) => {
     let door43_catalog = (
       await getJson("/api/gitea/remote-repos/git.door43.org/Door43-Catalog")
     ).json;
 
     keysValue = keysValue.map((e) => {
-      //console.log(e);
-      //console.log(door43_catalog);
       if (e[1] === "Door43-Catalog") {
         let catalogRepo = door43_catalog.find((p) => p.name === e[2]);
         if (catalogRepo) {
@@ -280,18 +277,11 @@ const ImportZipProjectInternet = ({
                 `/releases`,
             );
             const releaseJson = await release.json();
-            console.log(versionRepo[1]);
-            console.log(
-              releaseJson.map((e) => e.tag_name).includes(versionRepo[1]),
-            );
 
             versionRepo[1] = getNextVersion(
               versionRepo[1],
               releaseJson.map((e) => e.tag_name),
             );
-            console.log(releaseJson.map((e) => e.tag_name));
-            console.log(versionRepo[1]);
-            console.log(releaseJson);
           }
           response = gitCreatBranch(versionRepo, i18nRef, debugRef);
 
