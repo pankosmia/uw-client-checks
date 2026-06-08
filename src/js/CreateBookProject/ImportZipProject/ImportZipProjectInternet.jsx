@@ -24,7 +24,7 @@ function compareVersions(a, b) {
 }
 
 function getNextVersion(current, versions) {
-  if (versions.includes(versions)) {
+  if (versions.includes(current)) {
     return current;
   }
   return (
@@ -280,11 +280,18 @@ const ImportZipProjectInternet = ({
                 `/releases`,
             );
             const releaseJson = await release.json();
+            console.log(versionRepo[1]);
+            console.log(
+              releaseJson.map((e) => e.tag_name).includes(versionRepo[1]),
+            );
 
             versionRepo[1] = getNextVersion(
               versionRepo[1],
               releaseJson.map((e) => e.tag_name),
             );
+            console.log(releaseJson.map((e) => e.tag_name));
+            console.log(versionRepo[1]);
+            console.log(releaseJson);
           }
           response = gitCreatBranch(versionRepo, i18nRef, debugRef);
 
