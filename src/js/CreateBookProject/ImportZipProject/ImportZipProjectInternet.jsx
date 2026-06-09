@@ -24,7 +24,7 @@ function compareVersions(a, b) {
 }
 
 function getNextVersion(current, versions) {
-  if (versions.includes(versions)) {
+  if (versions.includes(current)) {
     return current;
   }
   return (
@@ -46,15 +46,12 @@ const ImportZipProjectInternet = ({
   const [dependancyVersion, setDependancyVersion] = useState(null);
   const [listDependancy, setListDependancy] = useState(null);
 
-  //console.log(listDependancy, dependancyVersion);
   const uploadZip = async (keysValue) => {
     let door43_catalog = (
       await getJson("/api/gitea/remote-repos/git.door43.org/Door43-Catalog")
     ).json;
 
     keysValue = keysValue.map((e) => {
-      //console.log(e);
-      //console.log(door43_catalog);
       if (e[1] === "Door43-Catalog") {
         let catalogRepo = door43_catalog.find((p) => p.name === e[2]);
         if (catalogRepo) {

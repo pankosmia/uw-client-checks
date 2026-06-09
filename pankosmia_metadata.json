@@ -328,6 +328,14 @@
     "proceed_without_resources": {
       "en": "proceed without expected resources",
       "fr": "continuer sans les ressources attendus"
+    },
+    "chGl": {
+      "en": "Checking gateway ressource",
+      "fr": "Ressources passerelle pour verification"
+    },
+    "alignerGl": {
+      "en": "Aligner gateway ressource",
+      "fr": "Ressources passerelle pour alignement"
     }
   }
 }

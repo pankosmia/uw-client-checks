@@ -418,7 +418,7 @@ export const ButtonDashBoard = ({
                 );
                 setNeedRessourcesForVersionManager(false);
                 setOpenModal(false);
-                callBack();
+                await callBack();
               } else {
                 enqueueSnackbar(
                   `${doI18n(

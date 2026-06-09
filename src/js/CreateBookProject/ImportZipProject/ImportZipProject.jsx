@@ -180,15 +180,11 @@ export async function write_version_manager(
   repoName,
   tCoreProjectName,
 ) {
-  let isOk = checkKeysVersion(keysValue);
-  if (isOk) {
-    await fsWriteRust(
-      repoName,
-      `book_projects/${tCoreProjectName}/version_manager.json`,
-      keysValue,
-    );
-  }
-  return isOk;
+  await fsWriteRust(
+    repoName,
+    `book_projects/${tCoreProjectName}/version_manager.json`,
+    keysValue,
+  );
 }
 
 function checkIfMendatoryRessourcesArePresent(summary) {
@@ -359,6 +355,7 @@ export function ImportZipProject({ repoName, reloadProject }) {
       setStep(3);
     }
     if (step === 3) {
+      console.log(finalVersionManager);
       await write_version(finalVersionManager);
       if (uuid && type) {
         if (type === "zip") {
