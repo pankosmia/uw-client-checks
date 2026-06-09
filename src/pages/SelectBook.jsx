@@ -296,6 +296,7 @@ export default function SelectBook() {
             nameBurito={selectedtCoreProject.name}
             reloadProject={async () => {
               await fetchData();
+              await getValidateRessourcesVersionAndErrors();
             }}
           />
         )}
@@ -449,9 +450,9 @@ export default function SelectBook() {
                               missingRessourcesCheckBook={
                                 missingRessourcesCheck[book.bookCode]
                               }
-                              callBack={() => {
-                                fetchData();
-                                getValidateRessourcesVersionAndErrors();
+                              callBack={async () => {
+                                await fetchData();
+                                await getValidateRessourcesVersionAndErrors();
                               }}
                             />
                           </Box>

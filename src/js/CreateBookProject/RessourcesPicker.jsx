@@ -23,6 +23,7 @@ export default function RessourcesPicker({
   listPreSelected = null,
   setBook = null,
   bookList = null,
+  reloadProject = null,
 }) {
   // console.log(bookList)
   const [values, setValues] = useState({
