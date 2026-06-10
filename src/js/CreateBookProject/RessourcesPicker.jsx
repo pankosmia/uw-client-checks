@@ -23,6 +23,7 @@ export default function RessourcesPicker({
   listPreSelected = null,
   setBook = null,
   bookList = null,
+  reloadProject = null,
 }) {
   // console.log(bookList)
   const [values, setValues] = useState({
@@ -31,6 +32,8 @@ export default function RessourcesPicker({
     "peripheral/x-lexicon": ["", ""],
     "peripheral/x-peripheralArticles": ["", ""],
     "scripture/textTranslation": ["", ""],
+    "scripture/textTranslation/chGl": ["", ""],
+    "scripture/textTranslation/alignerGl": ["", ""],
   });
   const [options, setOptions] = useState({});
   const [selectedBook, setSelectedBook] = useState(book || "");
@@ -91,8 +94,11 @@ export default function RessourcesPicker({
         let newValues = {};
 
         Object.keys(values).forEach((t) => {
+          let thing =
+            t.split("/").length > 2 ? t.split("/").slice(0, -1).join("/") : t;
+
           let filtered = burritoArray.filter(
-            (b) => `${b.flavor_type}/${b.flavor}` === t,
+            (b) => `${b.flavor_type}/${b.flavor}` === thing,
           );
 
           if (
@@ -173,7 +179,12 @@ export default function RessourcesPicker({
           <Box key={fieldKey} display="flex" alignItems="center" gap={2}>
             <FormControl fullWidth>
               <InputLabel id={`${fieldKey}-label`}>
-                {doI18n(`flavors:names:${fieldKey}`, i18nRef.current)}
+                {doI18n(
+                  fieldKey.split("/").length > 2
+                    ? `pages:uw-client-checks:${fieldKey.split("/")[2]}`
+                    : `flavors:names:${fieldKey}`,
+                  i18nRef.current,
+                )}
               </InputLabel>
 
               <Select
