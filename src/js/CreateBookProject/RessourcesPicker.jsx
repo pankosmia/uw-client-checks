@@ -123,7 +123,7 @@ export default function RessourcesPicker({
 
           newOptions[t] = langFiltered;
 
-          if (!listPreSelected && langFiltered.length > 0) {
+          if (!listPreSelected && langFiltered.length === 1) {
             const first = langFiltered[0];
             newValues[t] = [first.path, first.version || "main"];
           }
@@ -141,17 +141,20 @@ export default function RessourcesPicker({
 
     fetchFromBook();
   }, [summaries, selectedBook]);
-
+  const secondaryBorderSx = {
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "secondary.main",
+    },
+  };
   return (
     <Box display="flex" flexDirection="column" gap={2}>
-      <FormControl fullWidth>
+      <FormControl fullWidth color="secondary" sx={secondaryBorderSx}>
         <InputLabel id="book-label">Book</InputLabel>
         <Select
           labelId="book-label"
           value={selectedBook}
           disabled={book}
           label="Book"
-          variant="filled"
           onChange={(e) => setSelectedBook(e.target.value)}
         >
           {ALL_BOOKS.filter((b) => {
@@ -177,7 +180,7 @@ export default function RessourcesPicker({
 
         return (
           <Box key={fieldKey} display="flex" alignItems="center" gap={2}>
-            <FormControl fullWidth>
+            <FormControl fullWidth color="secondary" sx={secondaryBorderSx}>
               <InputLabel id={`${fieldKey}-label`}>
                 {doI18n(
                   fieldKey.split("/").length > 2
@@ -198,7 +201,12 @@ export default function RessourcesPicker({
                 labelId={`${fieldKey}-label`}
                 value={selectedPath || ""}
                 onChange={handleChange(fieldKey)}
-                label={doI18n(`flavors:names:${fieldKey}`, i18nRef.current)}
+                label={doI18n(
+                  fieldKey.split("/").length > 2
+                    ? `pages:uw-client-checks:${fieldKey.split("/")[2]}`
+                    : `flavors:names:${fieldKey}`,
+                  i18nRef.current,
+                )}
               >
                 {options[fieldKey]?.map((option) => (
                   <MenuItem key={option.path} value={option.path}>
