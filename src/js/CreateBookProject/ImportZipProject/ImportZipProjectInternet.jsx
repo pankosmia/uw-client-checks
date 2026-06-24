@@ -1,11 +1,11 @@
 import { useState, useContext, useEffect } from "react";
-import { doI18n, getJson, postJson } from "pithekos-lib";
+import { postEmptyJson, getJson, postJson } from "pankosmia-lib/http";
 import { i18nContext, debugContext } from "pankosmia-rcl";
 import { PanDownload } from "pankosmia-rcl";
-import { postEmptyJson } from "pithekos-lib";
+import { doI18n } from "pankosmia-lib/i18n";
 import { gitCheckout, gitCreatBranch } from "../../gitUtils";
 import { enqueueSnackbar, closeSnackbar } from "notistack";
-import { Button, CircularProgress } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 function compareVersions(a, b) {
   const pa = a.replace(/^v/, "").split(".").map(Number);
   const pb = b.replace(/^v/, "").split(".").map(Number);

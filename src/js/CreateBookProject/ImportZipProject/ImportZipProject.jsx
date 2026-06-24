@@ -4,7 +4,8 @@ import { useFilePicker } from "use-file-picker";
 
 import { Box, Button, DialogContent, Divider, Typography } from "@mui/material";
 import { useState, useContext, useEffect } from "react";
-import { doI18n, getJson, postJson } from "pithekos-lib";
+import { getJson, postJson } from "pankosmia-lib/http";
+import { doI18n } from "pankosmia-lib/i18n";
 import {
   deleteBookProject,
   fsExistsRust,

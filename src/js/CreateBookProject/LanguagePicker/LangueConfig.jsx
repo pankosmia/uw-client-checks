@@ -1,6 +1,4 @@
-import { PanDialog } from "pankosmia-rcl";
 import {
-  DialogContent,
   ListItem,
   List,
   IconButton,
@@ -14,7 +12,7 @@ import {
 import LanguageMenuItem from "./LanguageMenuItem";
 import { useEffect, useState, useContext } from "react";
 import { i18nContext } from "pankosmia-rcl";
-import { getAndSetJson, doI18n } from "pithekos-lib";
+import { doI18n } from "pankosmia-lib/i18n";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import { DragIndicator } from "@mui/icons-material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";

@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useState, useContext, useEffect } from "react";
-import { doI18n } from "pithekos-lib";
+import { doI18n } from "pankosmia-lib/i18n";
 import { i18nContext } from "pankosmia-rcl";
 import { fsExistsRust, fsGetRust, fsWriteRust } from "../serverUtils";
 import { getAllCheckingCategories } from "../checkerUtils";

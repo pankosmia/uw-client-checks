@@ -1,16 +1,8 @@
-import { getJson, postJson } from "pithekos-lib";
-import { fsGetRust } from "../../serverUtils";
-import {
-  Typography,
-  Box,
-  CircularProgress,
-  Button,
-  Stack,
-} from "@mui/material";
+import { Typography, Box, CircularProgress, Stack } from "@mui/material";
 import { useEffect, useState, useContext } from "react";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import FileDownloadDoneOutlinedIcon from "@mui/icons-material/FileDownloadDoneOutlined";
-import { gitCheckout, gitGetBranches } from "../../gitUtils";
+import { gitGetBranches } from "../../gitUtils";
 import { i18nContext } from "pankosmia-rcl";
 export default function ImportZipProjectNoInternet({
   setListDependancy,

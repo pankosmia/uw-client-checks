@@ -1,4 +1,4 @@
-import { getJson, getText, postJson } from "pithekos-lib";
+import { getJson, getText, postJson } from "pankosmia-lib/http";
 import {
   EXIST_PATH,
   BASE_URL,

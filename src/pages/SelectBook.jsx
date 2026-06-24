@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { doI18n } from "pithekos-lib";
+import { doI18n } from "pankosmia-lib/i18n";
 import { i18nContext, currentProjectContext } from "pankosmia-rcl";
 import DeleteDialogueButton from "../js/components/DeleteDialogueButton";
 import ArrowBack from "@mui/icons-material/ArrowBack";
@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { ImportZipProject } from "../js/CreateBookProject/ImportZipProject/ImportZipProject";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { getJson } from "pithekos-lib";
+import { getJson } from "pankosmia-lib/http";
 import { fsGetRust, fsExistsRust } from "../js/serverUtils";
 import ButtonDashBoard from "../js/components/ButtonDashBoard";
 import CreateBookProjectScratch from "../js/CreateBookProject/CreateBookProjectScratch/CreatBookProjectScratch";

@@ -1,4 +1,5 @@
-import { getJson, postJson, doI18n, postEmptyJson } from "pithekos-lib";
+import { getJson, postJson, postEmptyJson } from "pankosmia-lib/http";
+import { doI18n } from "pankosmia-lib/i18n";
 import { enqueueSnackbar } from "notistack";
 
 export async function gitCheckout(pathVersion, i18nRef) {

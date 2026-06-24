@@ -1,20 +1,18 @@
 import { useState, useContext, useEffect } from "react";
-import { Button, Typography, Box, DialogContent } from "@mui/material";
+import { Typography, DialogContent } from "@mui/material";
 
-import { doI18n, postEmptyJson } from "pithekos-lib";
+import { postEmptyJson } from "pankosmia-lib/http";
+import { doI18n } from "pankosmia-lib/i18n";
 import {
   i18nContext,
   netContext,
-  PanDownload,
   PanDialog,
   PanDialogActions,
-  debugContext,
 } from "pankosmia-rcl";
 
 export default function InternetDialog({ callBack }) {
   const { i18nRef } = useContext(i18nContext);
   const { enabledRef } = useContext(netContext);
-  const { debugRef } = useContext(debugContext);
   const [internetDialogOpen, setInternetDialogOpen] = useState(false);
   useEffect(() => {
     if (!enabledRef.current) {

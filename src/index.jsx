@@ -9,17 +9,13 @@ import { SpaContainer, Header, typographyContext } from "pankosmia-rcl";
 import "./index.css";
 import SelectBook from "./pages/SelectBook";
 import { createTheme, ThemeProvider } from "@mui/material";
-import { getAndSetJson } from "pithekos-lib";
+import { getAndSetJson } from "pankosmia-lib/http";
 import UsfmExport from "./pages/UsfmExport";
-import { useContext, useMemo } from "react";
+import { useContext } from "react";
 import GraphiteTest from "./js/ui_tool_kit/GraphiteTest";
 import { styled } from "@mui/material/styles";
 
-import {
-  enqueueSnackbar,
-  MaterialDesignContent,
-  SnackbarProvider,
-} from "notistack";
+import { MaterialDesignContent, SnackbarProvider } from "notistack";
 function AppLayout() {
   const [themeSpec, setThemeSpec] = useState({
     palette: {

@@ -4,13 +4,13 @@ import {
   DialogContent,
   DialogContentText,
   List,
-  ListItem,
   ListItemText,
   Typography,
   ListItemButton,
 } from "@mui/material";
-import { getText, doI18n, getJson } from "pithekos-lib";
-import { debugContext, i18nContext, Header } from "pankosmia-rcl";
+import { getJson } from "pankosmia-lib/http";
+import { doI18n } from "pankosmia-lib/i18n";
+import { debugContext, i18nContext } from "pankosmia-rcl";
 import { usfmToJSON } from "usfm-js/lib/js/usfmToJson";
 import { addAlignmentsToTargetVerseUsingMerge } from "../wordAligner/utils/alignmentHelpers";
 import { enqueueSnackbar } from "notistack";
