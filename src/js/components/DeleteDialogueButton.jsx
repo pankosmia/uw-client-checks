@@ -1,7 +1,7 @@
 import { Button, Typography, Box, DialogContent } from "@mui/material";
 import { deleteBookProject } from "../serverUtils";
 import { useState, useContext } from "react";
-import { doI18n } from "pithekos-lib";
+import { doI18n } from "pankosmia-lib/i18n";
 import { i18nContext, PanDialog, PanDialogActions } from "pankosmia-rcl";
 const DeleteDialogueButton = ({ repoName, tCoreNameProject, callBack }) => {
   const [openResourcesDialog, setOpenResourcesDialog] = useState(false);

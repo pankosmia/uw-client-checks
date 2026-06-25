@@ -3,12 +3,12 @@ import {
   DialogContent,
   Typography,
   Box,
-  Tooltip,
   IconButton,
   Divider,
 } from "@mui/material";
 import { useState, useContext, useEffect } from "react";
-import { doI18n } from "pithekos-lib";
+import { doI18n } from "pankosmia-lib/i18n";
+import { getJson } from "pankosmia-lib/http";
 import {
   i18nContext,
   PanDialog,
@@ -20,12 +20,10 @@ import RessourcesPicker from "../RessourcesPicker";
 import LangueConfig from "../LanguagePicker/LangueConfig";
 import AddIcon from "@mui/icons-material/Add";
 import { fsGetRust, fsWriteRust } from "../../serverUtils";
-import { getJson } from "pithekos-lib";
 import { BASE_URL } from "../../../common/constants";
 import { convertToProjectFormat } from "../../creatProject";
-import InternetDialog from "../../components/InternetDialog";
 import DownloadRessources from "../../components/DownloadRessources";
-import { Download, Info } from "@mui/icons-material";
+import { Download } from "@mui/icons-material";
 import { useSearchParams } from "react-router-dom";
 
 async function getPathFromOriginalResources(name) {

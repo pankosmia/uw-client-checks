@@ -1,17 +1,10 @@
-import { useState, useContext, useEffect } from "react";
+import { useContext } from "react";
 import { Box } from "@mui/material";
 
-import { postEmptyJson, doI18n, postJson } from "pithekos-lib";
-import {
-  i18nContext,
-  netContext,
-  PanDownload,
-  debugContext,
-} from "pankosmia-rcl";
-import { gitCreatBranch } from "../gitUtils";
+import { postEmptyJson } from "pankosmia-lib/http";
+import { netContext, PanDownload, debugContext } from "pankosmia-rcl";
 
 const DownloadRessources = ({}) => {
-  const { i18nRef } = useContext(i18nContext);
   const { enabledRef } = useContext(netContext);
   const { debugRef } = useContext(debugContext);
 

@@ -15,9 +15,8 @@ import {
 import { Tooltip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getProgressAligment } from "../checkerUtils";
-import { isOldTestament } from "../creatProject";
 import InvalidatedIcon from "../ui_tool_kit/InvalidatedIcon";
-import { doI18n, getJson } from "pithekos-lib";
+import { doI18n } from "pankosmia-lib/i18n";
 import { i18nContext } from "pankosmia-rcl";
 import { useContext } from "react";
 import { PanDialog, PanDialogActions } from "pankosmia-rcl";

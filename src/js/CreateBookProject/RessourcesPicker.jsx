@@ -1,7 +1,8 @@
 import { FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
 import { useState, useEffect, useContext } from "react";
 import { i18nContext } from "pankosmia-rcl";
-import { doI18n, getJson } from "pithekos-lib";
+import { getJson } from "pankosmia-lib/http";
+import { doI18n } from "pankosmia-lib/i18n";
 import BIBLE_BOOKS from "../../common/BooksOfTheBible";
 const ALL_BOOKS = [
   ...Object.entries(BIBLE_BOOKS.oldTestament).map(([code, name]) => ({

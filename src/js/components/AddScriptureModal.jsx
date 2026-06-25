@@ -7,7 +7,8 @@ import {
   Fab,
 } from "@mui/material";
 import { useState, useContext, useEffect } from "react";
-import { doI18n } from "pithekos-lib";
+import { doI18n } from "pankosmia-lib/i18n";
+import { getJson } from "pankosmia-lib/http";
 import {
   PanDialog,
   debugContext,
@@ -15,7 +16,6 @@ import {
   currentProjectContext,
   PanTable,
 } from "pankosmia-rcl";
-import { getJson } from "pithekos-lib";
 import LayoutIcon from "../ui_tool_kit/LayoutIcon";
 
 export default function AddScriptureModal({
